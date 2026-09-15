@@ -1,0 +1,164 @@
+openapi: 3.1.0
+info:
+  title: Multi-Backend Service Industry CRM Platform API
+  version: 1.1.0
+  description: Canonical REST API Schema for Laravel, Express, and FastAPI variants.
+servers:
+  - url: http://localhost:8001/api/v1
+    description: Laravel (PHP)
+  - url: http://localhost:8002/api/v1
+    description: Express (Node.js)
+  - url: http://localhost:8004/api/v1
+    description: FastAPI (Python)
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [SUPER_ADMIN, DISPATCHER, TECHNICIAN, CUSTOMER, DOOR_TO_DOOR_SALES, CUSTOMER_SERVICE_REP, MANAGER]
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenantId:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        propertyId:
+          type: string
+          format: uuid
+        technicianId:
+          type: string
+          format: uuid
+        contractId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [draft, scheduled, in_progress, completed, invoiced, cancelled]
+        scheduledStart:
+          type: string
+          format: date-time
+        scheduledEnd:
+          type: string
+          format: date-time
+    ServiceContract:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        cadence:
+          type: string
+          enum: [ONE_TIME, MONTHLY, BI_MONTHLY, QUARTERLY, SEMI_ANNUALLY, ANNUALLY]
+        startDate:
+          type: string
+          format: date
+        autoRenew:
+          type: boolean
+    Commission:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        salesRepId:
+          type: string
+          format: uuid
+        amount:
+          type: number
+        isClawedBack:
+          type: boolean
+    ContactLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        channel:
+          type: string
+          enum: [PHONE, EMAIL, SMS, IN_PERSON]
+        summary:
+          type: string
+security:
+  - bearerAuth: []
+paths:
+  /auth/login:
+    post:
+      summary: Login user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+  /jobs:
+    get:
+      summary: List all jobs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Job'
+  /contracts:
+    get:
+      summary: List all service contracts
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceContract'

@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: crm_user
+      POSTGRES_PASSWORD: crm_password
+      POSTGRES_DB: crm_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  admin-portal:
+    build:
+      context: ./apps/admin-portal
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/admin-portal:/app
+      - /app/node_modules
+    depends_on:
+      - express-api
+
+  customer-portal:
+    build:
+      context: ./apps/customer-portal
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./apps/customer-portal:/app
+      - /app/node_modules
+    depends_on:
+      - express-api
+
+  laravel-api:
+    build:
+      context: ./backends/laravel-api
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backends/laravel-api:/var/www/html
+      - /var/www/html/vendor
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=crm_db
+      - DB_USERNAME=crm_user
+      - DB_PASSWORD=crm_password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  express-api:
+    build:
+      context: ./backends/express-api
+    ports:
+      - "8002:8000"
+    volumes:
+      - ./backends/express-api:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://crm_user:crm_password@postgres:5432/crm_db
+      - REDIS_URL=redis://redis:6379
+
+  graphql-api:
+    build:
+      context: ./backends/graphql-api
+    ports:
+      - "8003:8000"
+    volumes:
+      - ./backends/graphql-api:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql://crm_user:crm_password@postgres:5432/crm_db
+      - REDIS_URL=redis://redis:6379
+
+  fastapi-api:
+    build:
+      context: ./backends/fastapi-api
+    ports:
+      - "8004:8000"
+    volumes:
+      - ./backends/fastapi-api:/app
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://crm_user:crm_password@postgres:5432/crm_db
+      - REDIS_URL=redis://redis:6379
+
+volumes:
+  pgdata:
+  redisdata:
