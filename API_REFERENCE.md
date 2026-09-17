@@ -42,3 +42,10 @@ The REST architecture operates under `/api/v1`. Currently, the **Express API (Po
 ## Finance
 - `GET /api/v1/finance/report`
   - **Description**: Aggregates the platform's financial health, returning calculated `MRR`, `ARR`, total commissions paid out, and a list of outstanding `unpaid` invoices.
+- `GET /api/v1/finance/invoices`
+  - **Description**: Lists all invoices with eager-loaded job and customer details.
+- `POST /api/v1/finance/invoices`
+  - **Description**: Creates a new invoice for a job and updates the job status to `invoiced`.
+  - **Payload**: `{ "jobId": "...", "totalAmount": 150.0 }`
+- `PATCH /api/v1/finance/invoices/:id/status`
+  - **Description**: Marks a specific invoice as paid.
