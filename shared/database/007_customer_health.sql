@@ -1,0 +1,10 @@
+CREATE TABLE customer_health_scores (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    customer_id UUID NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+    score DECIMAL(5,2) NOT NULL,
+    risk_level VARCHAR(50) NOT NULL,
+    factors JSONB,
+    calculated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

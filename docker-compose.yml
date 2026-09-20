@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: crm_password
       POSTGRES_DB: crm_db
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-3110}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
@@ -16,7 +16,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-3120}:6379"
     volumes:
       - redisdata:/data
     restart: unless-stopped
@@ -25,7 +25,7 @@ services:
     build:
       context: ./apps/admin-portal
     ports:
-      - "3000:3000"
+      - "${ADMIN_PORTAL_PORT:-3100}:3000"
     volumes:
       - ./apps/admin-portal:/app
       - /app/node_modules
@@ -36,9 +36,20 @@ services:
     build:
       context: ./apps/customer-portal
     ports:
-      - "3001:3001"
+      - "${CUSTOMER_PORTAL_PORT:-3101}:3001"
     volumes:
       - ./apps/customer-portal:/app
+      - /app/node_modules
+    depends_on:
+      - express-api
+
+  tech-portal:
+    build:
+      context: ./apps/tech-portal
+    ports:
+      - "${TECH_PORTAL_PORT:-3002}:3002"
+    volumes:
+      - ./apps/tech-portal:/app
       - /app/node_modules
     depends_on:
       - express-api
@@ -47,7 +58,7 @@ services:
     build:
       context: ./backends/laravel-api
     ports:
-      - "8001:8000"
+      - "${LARAVEL_API_PORT:-3181}:8000"
     volumes:
       - ./backends/laravel-api:/var/www/html
       - /var/www/html/vendor
@@ -67,7 +78,7 @@ services:
     build:
       context: ./backends/express-api
     ports:
-      - "8002:8000"
+      - "${EXPRESS_API_PORT:-3182}:8000"
     volumes:
       - ./backends/express-api:/app
       - /app/node_modules
@@ -82,7 +93,7 @@ services:
     build:
       context: ./backends/graphql-api
     ports:
-      - "8003:8000"
+      - "${GRAPHQL_API_PORT:-3183}:8000"
     volumes:
       - ./backends/graphql-api:/app
       - /app/node_modules
@@ -97,7 +108,7 @@ services:
     build:
       context: ./backends/fastapi-api
     ports:
-      - "8004:8000"
+      - "${FASTAPI_API_PORT:-3184}:8000"
     volumes:
       - ./backends/fastapi-api:/app
     depends_on:
