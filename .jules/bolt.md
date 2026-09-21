@@ -1,0 +1,3 @@
+## 2024-09-21 - PostgreSQL Foreign Key Indexing Missing in Initial Schema
+**Learning:** In PostgreSQL, foreign keys are not automatically indexed. The `jobs` table (and likely others) was missing crucial indexes on `tenant_id`, `customer_id`, and `technician_id`. In a multi-tenant CRM, queries are almost always filtered by `tenant_id`, which means omitting this index results in catastrophic full table scans as the dataset grows. This is a critical performance bottleneck specific to how this multi-tenant DB architecture scales.
+**Action:** Always verify that foreign keys used in frequent `WHERE` clauses (especially `tenant_id`) have explicitly defined indexes in the SQL schema files. Add `CREATE INDEX` statements for these foreign keys.
