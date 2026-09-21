@@ -1,0 +1,4 @@
+## 2026-09-21 - [Hardcoded Database Credentials in Orchestration Files]
+**Vulnerability:** Found hardcoded database credentials (`crm_password`, `crm_user`) in plain text inside `docker-compose.yml`. This exposes sensitive connection details directly in version control.
+**Learning:** Even though `docker-compose.yml` is often used for local development, hardcoding credentials in version-controlled infrastructure/orchestration files is a critical anti-pattern that can leak into production environments or expose local data to anyone with repo access.
+**Prevention:** Use environment variables with default fallbacks (e.g., `${POSTGRES_PASSWORD:-default_pass}`) in `docker-compose.yml` and provide a `.env.example` file. Never commit `.env` files containing actual secrets.
