@@ -8,15 +8,16 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crm_password}
       POSTGRES_DB: ${POSTGRES_DB:-crm_db}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
 
   redis:
     image: redis:7-alpine
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis_password}
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redisdata:/data
     restart: unless-stopped
@@ -62,6 +63,7 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD:-crm_password}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
 
   express-api:
     build:
@@ -76,7 +78,7 @@ services:
       - redis
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
 
   graphql-api:
     build:
@@ -91,7 +93,7 @@ services:
       - redis
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
 
   fastapi-api:
     build:
@@ -105,7 +107,7 @@ services:
       - redis
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
 
 volumes:
   pgdata:
