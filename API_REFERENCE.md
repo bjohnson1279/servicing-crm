@@ -8,7 +8,7 @@ The REST architecture operates under `/api/v1`. Currently, the **Express API (Po
   - **Response**: Array of `Job` objects including eager-loaded `customer` and `property` relations.
 - `POST /api/v1/jobs`
   - **Description**: Creates a new draft/scheduled job.
-  - **Payload**: `{ "tenantId": "...", "customerId": "...", "propertyId": "..." }`
+  - **Payload**: `{ "customerId": "...", "propertyId": "..." }`
 - `PATCH /api/v1/jobs/:id/schedule`
   - **Description**: Updates the start/end time and assigned technician for a job (used by drag-and-drop dispatch).
   - **Payload**: `{ "scheduledStart": "...", "scheduledEnd": "...", "technicianId": "..." }`
