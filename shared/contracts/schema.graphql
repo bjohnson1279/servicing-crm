@@ -128,7 +128,7 @@ type Query {
 }
 
 type Mutation {
-  createJob(tenantId: UUID!, customerId: UUID!, propertyId: UUID!, scheduledStart: DateTime): Job!
+  createJob(customerId: UUID!, propertyId: UUID!, scheduledStart: DateTime): Job!
   updateJobStatus(id: UUID!, status: JobStatus!): Job!
   createCanvassPin(salesRepId: UUID!, lat: Float!, lng: Float!, status: LeadStatus!): CanvassPin!
   logContact(customerId: UUID!, channel: ContactChannel!, direction: ContactDirection!, summary: String): ContactLog!
