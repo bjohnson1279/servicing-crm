@@ -4,3 +4,13 @@ __pycache__/
 .env
 .venv
 
+
+# Bot scratch verification files
+test.js
+test_*.ts
+test_*.js
+test.cjs
+fix_*.php
+update_*.php
+scratch_*
+*.scratch

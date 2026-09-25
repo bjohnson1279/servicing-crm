@@ -8,7 +8,7 @@ The platform is powered by a central PostgreSQL schema, providing a single sourc
 ### Ports & Services
 - **Admin Portal**: `http://localhost:3000`
 - **Customer Portal**: `http://localhost:3001`
-- **Express API (Node.js)**: `http://localhost:8002`
+- **Fastify API (Node.js)**: `http://localhost:8002`
 - **FastAPI (Python)**: `http://localhost:8004`
 - **GraphQL API**: `http://localhost:8003`
 - **Laravel API (PHP)**: `http://localhost:8001`
@@ -36,3 +36,4 @@ The platform is powered by a central PostgreSQL schema, providing a single sourc
 
 3. **Verify Health**
    Navigate to `http://localhost:3000` to view the Admin Portal.
+
