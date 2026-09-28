@@ -125,6 +125,9 @@ CREATE TABLE internal_notes (
 
 -- Indexes for performance and reporting (Phase 7 Analytics preparation)
 CREATE INDEX idx_jobs_status ON jobs(status);
+CREATE INDEX idx_jobs_tenant ON jobs(tenant_id);
+CREATE INDEX idx_jobs_customer ON jobs(customer_id);
+CREATE INDEX idx_jobs_technician ON jobs(technician_id);
 CREATE INDEX idx_canvass_pins_status ON canvass_pins(status);
 CREATE INDEX idx_commissions_sales_rep ON commissions(sales_rep_id);
 CREATE INDEX idx_contact_logs_customer ON contact_logs(customer_id);
