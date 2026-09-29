@@ -5,6 +5,3 @@
 ## 2026-09-28 - Multi-tenant Missing tenant_id Indexes
 **Learning:** Found multiple tables (`users`, `routes`, `training_courses`, `canvass_pins`, `commissions`, `service_contracts`, `contact_logs`, `internal_notes`, `onboarding_checklists`, `notification_queue`) missing explicitly defined indexes for `tenant_id`. In this multi-tenant architecture, virtually all queries will filter by `tenant_id`. Without explicit indexes, these queries will degenerate into full table scans causing severe performance bottlenecks.
 **Action:** When adding new tables that belong to a tenant, always explicitly add a `CREATE INDEX` on the `tenant_id` column as part of the schema creation migration to ensure optimal query performance.
-## 2024-10-24 - Testing Migrations with PGlite
-**Learning:** PGlite has issues parsing `CREATE EXTENSION` directives dynamically if they aren't pre-loaded into the configuration of the client.
-**Action:** When testing migrations locally via `pglite`, manually remove `CREATE EXTENSION` statements from the script content before evaluating, or preload them via the `extensions` parameter.
