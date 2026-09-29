@@ -62,58 +62,38 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
       <h3 className="text-lg font-bold mb-4">Property Photos</h3>
       
       <form onSubmit={handleUpload} className="mb-4">
-        <div className="mb-2">
-          <label htmlFor="photo-upload" className="block text-sm font-medium mb-1">
-            Photo
-          </label>
-          <input
-            id="photo-upload"
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={e => setFile(e.target.files?.[0] || null)}
-            className="block w-full focus-visible:ring-2 focus-visible:outline-none"
-          />
-        </div>
-        <div className="mb-2">
-          <label htmlFor="photo-caption" className="block text-sm font-medium mb-1">
-            Caption
-          </label>
-          <input
-            id="photo-caption"
-            type="text"
-            placeholder="Enter caption..."
-            value={caption}
-            onChange={e => setCaption(e.target.value)}
-            className="border p-2 w-full focus-visible:ring-2 focus-visible:outline-none"
-          />
-        </div>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={e => setFile(e.target.files?.[0] || null)}
+          className="mb-2 block w-full"
+        />
+        <input
+          type="text"
+          placeholder="Caption"
+          value={caption}
+          onChange={e => setCaption(e.target.value)}
+          className="border p-2 w-full mb-2"
+        />
         <button 
           type="submit" 
           disabled={!file || loading}
-          aria-busy={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-offset-1"
+          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
         >
           {loading ? 'Uploading...' : 'Upload Photo'}
         </button>
       </form>
 
-      {photos.length === 0 ? (
-        <div className="text-center p-6 border-2 border-dashed rounded text-gray-500">
-          <p>No photos available.</p>
-          <p className="text-sm mt-1">Upload a photo to see it here.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-4">
-          {photos.map(p => (
-            <div key={p.id} className="border rounded p-2">
-              <img src={p.url} alt={p.caption || 'Property photo'} className="w-full h-32 object-cover mb-2" />
-              <p className="text-sm">{p.caption}</p>
-              <span className="text-xs text-gray-500">{new Date(p.uploaded_at).toLocaleDateString()}</span>
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-2 gap-4">
+        {photos.map(p => (
+          <div key={p.id} className="border rounded p-2">
+            <img src={p.url} alt={p.caption} className="w-full h-32 object-cover mb-2" />
+            <p className="text-sm">{p.caption}</p>
+            <span className="text-xs text-gray-500">{new Date(p.uploaded_at).toLocaleDateString()}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
