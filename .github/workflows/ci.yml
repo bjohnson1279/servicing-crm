@@ -6,15 +6,29 @@ on:
   pull_request:
     branches: [ main, master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-express-api:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     defaults:
       run:
         working-directory: backends/express-api
     
     steps:
     - uses: actions/checkout@v4
+
+    - name: Check for Merge Conflict Markers
+      run: |
+        echo "Scanning codebase for git merge conflict markers..."
+        if git grep -n -I -E '^(<{7}|={7}|>{7}|\|{7})([[:space:]]|$)'; then
+          echo "::error::Merge conflict markers detected in tracked files! Please resolve conflicts before merging."
+          exit 1
+        fi
+        echo "No conflict markers detected."
     
     - name: Use Node.js 20
       uses: actions/setup-node@v4
@@ -37,6 +51,7 @@ jobs:
 
   build-portals:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         portal: [admin-portal, customer-portal, tech-portal]
@@ -58,6 +73,7 @@ jobs:
   docker-build:
     needs: [test-express-api, build-portals]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     if: github.event_name == 'push'
     
     steps:
