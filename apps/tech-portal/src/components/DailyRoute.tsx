@@ -35,21 +35,22 @@ export const DailyRoute: React.FC = () => {
     <div>
       <h2>Daily Route</h2>
       <div style={{ height: '400px', width: '100%' }}>
-        <MapContainer center={[40.7200, -73.9950]} zoom={13} style={{ height: '100%', width: '100%' }}>
-          <TileLayer
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution="&copy; OpenStreetMap contributors"
-          />
-          <Polyline positions={mockRoute as any} color="blue" />
-          {mockJobs.map(job => (
-            <Marker key={job.id} position={[job.lat, job.lng]}>
-              <Popup>
-                {job.title} <br/>
-                <Link to={`/job/${job.id}`}>View Details</Link>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        {React.createElement(MapContainer as any, { center: [40.7200, -73.9950], zoom: 13, style: { height: '100%', width: '100%' } },
+          React.createElement(TileLayer as any, {
+            url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            attribution: "&copy; OpenStreetMap contributors"
+          }),
+          React.createElement(Polyline as any, { positions: mockRoute, color: "blue" }),
+          mockJobs.map(job => (
+            React.createElement(Marker as any, { key: job.id, position: [job.lat, job.lng] },
+              React.createElement(Popup as any, null,
+                job.title,
+                React.createElement('br'),
+                React.createElement(Link, { to: `/job/${job.id}` }, 'View Details')
+              )
+            )
+          ))
+        )}
       </div>
     </div>
   );
