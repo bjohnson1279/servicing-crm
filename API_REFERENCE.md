@@ -251,6 +251,39 @@ The platform operates across four interchangeable backends designed with identic
   - Technician completion rates and route efficiency
   - Door-to-door sales representative leaderboard (closing percentages and revenue)
 
+### `GET /api/v1/analytics/pest-risk/climate`
+- **Description**: Connects to the real-time Open-Meteo Climate API to retrieve current weather metrics (temperature, relative humidity, precipitation, wind speed, WMO weather code) with automated pest activity impact evaluation and a 30-minute in-memory/Redis coordinate cache with deterministic offline fallback.
+- **Query Parameters**:
+  - `lat` (optional float, default `39.7817`): Latitude coordinate.
+  - `lng` (optional float, default `-89.6501`): Longitude coordinate.
+- **Response**:
+  ```json
+  {
+    "latitude": 39.7817,
+    "longitude": -89.6501,
+    "temperature": 72.4,
+    "temperatureUnit": "fahrenheit",
+    "relativeHumidity": 55.0,
+    "precipitation": 0.0,
+    "windSpeed": 6.8,
+    "weatherCode": 1,
+    "conditionSummary": "Mainly Clear",
+    "pestActivityImpact": "Optimal temperature range (72.4°F) supports aggressive surface foraging.",
+    "source": "open-meteo",
+    "cached": false
+  }
+  ```
+
+### `GET /api/v1/analytics/pest-risk/heatmap`
+- **Description**: Retrieves geographic coordinate clusters and composite risk scores across customer properties for interactive map visualization.
+
+### `GET /api/v1/analytics/pest-risk/:propertyId`
+- **Description**: Generates an AI-driven multi-factor pest resurgence prediction for a specific property, incorporating live climate data, historical chemical decay half-life, seasonal vectors, and structural vulnerability tags.
+
+### `POST /api/v1/analytics/pest-risk/recalculate`
+- **Description**: Triggers a tenant-wide background re-scoring of all active service properties against current weather conditions.
+
+
 ---
 
 ## 8. GraphQL API Schema Reference (`/graphql`)

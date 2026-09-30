@@ -158,6 +158,21 @@ done
 
 ## Verification & Testing
 
+### Cross-Backend Conformance Test Suite
+The repository includes a comprehensive, cross-backend conformance verification suite that validates behavioral equivalence and golden schema compliance across all 4 backends:
+
+```bash
+# Run full cross-backend conformance suite against available backends
+python -u tests/run_conformance.py
+
+# Target a specific domain (e.g. analytics, dispatch, billing)
+python -u tests/run_conformance.py --domain analytics
+
+# Run against a specific backend target (express, fastapi, graphql, laravel)
+python -u tests/run_conformance.py --backend express
+```
+
+### Individual Backend Unit & Integration Tests
 Each backend variant contains automated unit and integration tests:
 
 ```bash
@@ -173,3 +188,27 @@ cd backends/graphql-api && npx tsc --noEmit
 # Laravel API
 cd backends/laravel-api && php artisan test
 ```
+
+---
+
+## Docker Compose Production Profiling & Health Orchestration
+
+The project includes pre-configured Docker Compose service profiles (`default`, `all`, `express`, `fastapi`, `graphql`, `laravel`, `apps`) and an orchestration utility:
+
+```bash
+# Inspect compose configuration
+python scripts/docker_orchestrate.py config
+
+# Start core services with Express backend
+python scripts/docker_orchestrate.py up --profile express
+
+# Start all backends and frontend applications
+python scripts/docker_orchestrate.py up --profile all
+
+# Check container status and fast TCP health probes (<0.1s)
+python scripts/docker_orchestrate.py test-health
+
+# Tear down all running containers
+python scripts/docker_orchestrate.py down
+```
+
