@@ -1,0 +1,170 @@
+# Golden Schemas for Polyglot CRM Conformance Testing
+# Defines required fields and types across all 4 backends
+
+Job:
+  type: object
+  required:
+    - id
+    - status
+    - propertyId
+    - customerId
+  properties:
+    id: { type: string }
+    status: { type: string, enum: ["draft", "scheduled", "in_progress", "completed", "invoiced", "cancelled", "DRAFT", "SCHEDULED", "IN_PROGRESS", "COMPLETED", "INVOICED", "CANCELLED"] }
+    propertyId: { type: string }
+    customerId: { type: string }
+    technicianId: { type: ["string", "null"] }
+
+ServiceContract:
+  type: object
+  required:
+    - id
+    - customerId
+    - propertyId
+    - cadence
+    - recurringAmount
+  properties:
+    id: { type: string }
+    customerId: { type: string }
+    propertyId: { type: string }
+    cadence: { type: string }
+    recurringAmount: { type: number }
+
+Invoice:
+  type: object
+  required:
+    - id
+    - totalAmount
+    - status
+  properties:
+    id: { type: string }
+    totalAmount: { type: number }
+    status: { type: string }
+
+Quote:
+  type: object
+  required:
+    - id
+    - totalAmount
+    - status
+  properties:
+    id: { type: string }
+    totalAmount: { type: number }
+    status: { type: string }
+
+InventoryItem:
+  type: object
+  required:
+    - id
+    - name
+    - sku
+    - quantity
+    - minimumThreshold
+  properties:
+    id: { type: string }
+    name: { type: string }
+    sku: { type: string }
+    quantity: { type: integer }
+    minimumThreshold: { type: integer }
+
+EpaReport:
+  type: object
+  required:
+    - totalApplications
+    - summary
+  properties:
+    totalApplications: { type: integer }
+    summary:
+      type: array
+      items:
+        type: object
+        required:
+          - chemicalName
+          - totalQuantity
+          - unit
+
+Territory:
+  type: object
+  required:
+    - id
+    - name
+    - polygonCoordinates
+  properties:
+    id: { type: string }
+    name: { type: string }
+    quotaTarget: { type: number }
+    isActive: { type: boolean }
+
+DoNotKnockRecord:
+  type: object
+  required:
+    - id
+    - address
+    - reason
+  properties:
+    id: { type: string }
+    address: { type: string }
+    reason: { type: string }
+
+ChatConversation:
+  type: object
+  required:
+    - id
+    - customerId
+    - status
+  properties:
+    id: { type: string }
+    customerId: { type: string }
+    status: { type: string }
+
+PestRiskPrediction:
+  type: object
+  required:
+    - propertyId
+    - overallRiskScore
+    - riskLevel
+    - primaryTargetPest
+    - resurgenceProbability
+    - daysToProjectedResurgence
+    - recommendedTreatment
+  properties:
+    propertyId: { type: string }
+    overallRiskScore: { type: integer }
+    riskLevel: { type: string, enum: ["LOW", "MEDIUM", "HIGH", "CRITICAL"] }
+    primaryTargetPest: { type: string }
+    resurgenceProbability: { type: number }
+    daysToProjectedResurgence: { type: integer }
+    recommendedTreatment: { type: string }
+    upsellRecommendation: { type: ["string", "null"] }
+
+PestRiskHeatmapPoint:
+  type: object
+  required:
+    - propertyId
+    - lat
+    - lng
+    - overallRiskScore
+    - riskLevel
+    - primaryTargetPest
+  properties:
+    propertyId: { type: string }
+    lat: { type: number }
+    lng: { type: number }
+    overallRiskScore: { type: integer }
+    riskLevel: { type: string }
+    primaryTargetPest: { type: string }
+
+AnalyticsDashboard:
+  type: object
+  required:
+    - mrr
+    - arr
+    - totalCommissions
+    - techLeaderboard
+    - salesLeaderboard
+  properties:
+    mrr: { type: number }
+    arr: { type: number }
+    totalCommissions: { type: number }
+    techLeaderboard: { type: array }
+    salesLeaderboard: { type: array }

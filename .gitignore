@@ -3,6 +3,7 @@ vendor/
 __pycache__/
 .env
 .venv
+.pytest_cache/
 
 
 # Bot scratch verification files

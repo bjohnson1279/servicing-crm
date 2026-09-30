@@ -1,0 +1,11 @@
+{
+  "tenantId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+  "customerId": "c1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
+  "propertyId": "b8a5b28a-7c9e-4b45-a1d2-7c98b63481e1",
+  "technicianId": "e7f8a9b0-c1d2-4e3f-8a9b-0c1d2e3f4a5b",
+  "salesRepId": "f1a2b3c4-d5e6-4f7a-8b9c-0d1e2f3a4b5c",
+  "defaultCoordinates": {
+    "lat": 39.7817,
+    "lng": -89.6501
+  }
+}
