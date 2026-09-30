@@ -122,7 +122,7 @@ type ErpSyncLog {
 type Query {
   jobs(status: JobStatus): [Job!]!
   serviceContracts(customerId: UUID): [ServiceContract!]!
-  commissions(salesRepId: UUID): [Commission!]!
+  commissions: [Commission!]!
   quotes(customerId: UUID): [Quote!]!
   invoices(customerId: UUID): [Invoice!]!
 }
@@ -130,7 +130,7 @@ type Query {
 type Mutation {
   createJob(customerId: UUID!, propertyId: UUID!, scheduledStart: DateTime): Job!
   updateJobStatus(id: UUID!, status: JobStatus!): Job!
-  createCanvassPin(salesRepId: UUID!, lat: Float!, lng: Float!, status: LeadStatus!): CanvassPin!
+  createCanvassPin(lat: Float!, lng: Float!, status: LeadStatus!): CanvassPin!
   logContact(customerId: UUID!, channel: ContactChannel!, direction: ContactDirection!, summary: String): ContactLog!
   createQuote(customerId: UUID!, propertyId: UUID!, totalAmount: Float!): Quote!
   acceptQuote(id: UUID!): Quote!

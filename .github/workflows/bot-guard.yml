@@ -47,7 +47,7 @@ jobs:
           fi
 
           # 4. Reject Destructive Line Deletions in Critical Entrypoints & Schemas
-          DELETED_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | grep -E 'schema\.prisma|src/index\.ts|public/index\.php|docker/postgres/init/|db/schema\.rb|routes/|routes\.php' | awk '{print $5}' | grep '-' || true)
+          DELETED_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | grep -E 'schema\.prisma|src/index\.ts|public/index\.php|docker/postgres/init/|db/schema\.rb|routes/|routes\.php|shared/database/|shared/contracts/' | awk '{print $5}' | grep '-' || true)
           for count in $DELETED_LINES; do
             num=$(echo "$count" | tr -d '-')
             if [ "$num" -gt 15 ]; then
@@ -61,6 +61,13 @@ jobs:
           if [ -n "$CI_DIFF" ]; then
             echo "❌ ERROR: Bot PR modifies .github/workflows to suppress errors ('|| true' or 'continue-on-error: true'). Auto-failing."
             echo "$CI_DIFF"
+            exit 1
+          fi
+
+          # 6. Reject Fabricated .gitmodules Additions
+          GITMODULES_DIFF=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '^\.gitmodules$' || true)
+          if [ -n "$GITMODULES_DIFF" ]; then
+            echo "❌ ERROR: Bot PR introduces or modifies .gitmodules. Submodule configuration must not be altered by automated bots. Auto-failing."
             exit 1
           fi
 

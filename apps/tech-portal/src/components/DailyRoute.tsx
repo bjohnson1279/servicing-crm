@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
@@ -31,6 +31,19 @@ const mockRoute = [
 ];
 
 export const DailyRoute: React.FC = () => {
+  // Memoize marker rendering to prevent unnecessary recalculation of Map elements during component re-renders
+  const markers = useMemo(() => {
+    return mockJobs.map(job => (
+      React.createElement(Marker as any, { key: job.id, position: [job.lat, job.lng] },
+        React.createElement(Popup as any, null,
+          job.title,
+          React.createElement('br'),
+          React.createElement(Link, { to: `/job/${job.id}` }, 'View Details')
+        )
+      )
+    ));
+  }, [mockJobs]);
+
   return (
     <div>
       <h2>Daily Route</h2>
@@ -41,15 +54,7 @@ export const DailyRoute: React.FC = () => {
             attribution: "&copy; OpenStreetMap contributors"
           }),
           React.createElement(Polyline as any, { positions: mockRoute, color: "blue" }),
-          mockJobs.map(job => (
-            React.createElement(Marker as any, { key: job.id, position: [job.lat, job.lng] },
-              React.createElement(Popup as any, null,
-                job.title,
-                React.createElement('br'),
-                React.createElement(Link, { to: `/job/${job.id}` }, 'View Details')
-              )
-            )
-          ))
+          markers
         )}
       </div>
     </div>
