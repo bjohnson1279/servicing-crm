@@ -1,4 +1,26 @@
-version: '3.8'
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-backend-deploy: &default-backend-deploy
+  resources:
+    limits:
+      cpus: '1.0'
+      memory: 512M
+    reservations:
+      cpus: '0.2'
+      memory: 128M
+
+x-frontend-deploy: &default-frontend-deploy
+  resources:
+    limits:
+      cpus: '0.75'
+      memory: 384M
+    reservations:
+      cpus: '0.1'
+      memory: 64M
 
 services:
   postgres:
@@ -12,6 +34,23 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-internal
+    deploy:
+      resources:
+        limits:
+          cpus: '1.5'
+          memory: 1024M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-crm_user} -d $${POSTGRES_DB:-crm_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -21,60 +60,25 @@ services:
     volumes:
       - redisdata:/data
     restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-internal
+    deploy:
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
-  admin-portal:
-    build:
-      context: ./apps/admin-portal
-    ports:
-      - "${ADMIN_PORTAL_PORT:-3100}:3000"
-    volumes:
-      - ./apps/admin-portal:/app
-      - /app/node_modules
-    depends_on:
-      - express-api
-
-  customer-portal:
-    build:
-      context: ./apps/customer-portal
-    ports:
-      - "${CUSTOMER_PORTAL_PORT:-3101}:3001"
-    volumes:
-      - ./apps/customer-portal:/app
-      - /app/node_modules
-    depends_on:
-      - express-api
-
-  tech-portal:
-    build:
-      context: ./apps/tech-portal
-    ports:
-      - "${TECH_PORTAL_PORT:-3002}:3002"
-    volumes:
-      - ./apps/tech-portal:/app
-      - /app/node_modules
-    depends_on:
-      - express-api
-
-  laravel-api:
-    build:
-      context: ./backends/laravel-api
-    ports:
-      - "${LARAVEL_API_PORT:-3181}:8000"
-    volumes:
-      - ./backends/laravel-api:/var/www/html
-      - /var/www/html/vendor
-    depends_on:
-      - postgres
-      - redis
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - DB_DATABASE=${POSTGRES_DB:-crm_db}
-      - DB_USERNAME=${POSTGRES_USER:-crm_user}
-      - DB_PASSWORD=${POSTGRES_PASSWORD:-crm_password}
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+  # === Backends ===
 
   express-api:
     build:
@@ -84,12 +88,72 @@ services:
     volumes:
       - ./backends/express-api:/app
       - /app/node_modules
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-internal
+      - crm-public
+    profiles:
+      - default
+      - express
+      - all
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=8000
+    deploy: *default-backend-deploy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  laravel-api:
+    build:
+      context: ./backends/laravel-api
+    ports:
+      - "${LARAVEL_API_PORT:-3181}:8000"
+    volumes:
+      - ./backends/laravel-api:/var/www/html
+      - /var/www/html/vendor
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-internal
+      - crm-public
+    profiles:
+      - laravel
+      - polyglot
+      - all
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=${POSTGRES_DB:-crm_db}
+      - DB_USERNAME=${POSTGRES_USER:-crm_user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD:-crm_password}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
+      - APP_ENV=${APP_ENV:-development}
+    deploy: *default-backend-deploy
+    healthcheck:
+      test: ["CMD-SHELL", "php -r \"file_get_contents('http://127.0.0.1:8000/api/v1/health') !== false ? exit(0) : exit(1);\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   graphql-api:
     build:
@@ -99,12 +163,32 @@ services:
     volumes:
       - ./backends/graphql-api:/app
       - /app/node_modules
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-internal
+      - crm-public
+    profiles:
+      - graphql
+      - polyglot
+      - all
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=8000
+    deploy: *default-backend-deploy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   fastapi-api:
     build:
@@ -113,12 +197,120 @@ services:
       - "${FASTAPI_API_PORT:-3184}:8000"
     volumes:
       - ./backends/fastapi-api:/app
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-internal
+      - crm-public
+    profiles:
+      - fastapi
+      - polyglot
+      - all
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-crm_user}:${POSTGRES_PASSWORD:-crm_password}@postgres:5432/${POSTGRES_DB:-crm_db}
       - REDIS_URL=redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      - FASTAPI_ENV=${FASTAPI_ENV:-development}
+    deploy: *default-backend-deploy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').getcode() == 200 else 1)"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # === Frontend Portals ===
+
+  admin-portal:
+    build:
+      context: ./apps/admin-portal
+    ports:
+      - "${ADMIN_PORTAL_PORT:-3100}:3000"
+    volumes:
+      - ./apps/admin-portal:/app
+      - /app/node_modules
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-public
+    profiles:
+      - default
+      - apps
+      - all
+    depends_on:
+      express-api:
+        condition: service_healthy
+    deploy: *default-frontend-deploy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  customer-portal:
+    build:
+      context: ./apps/customer-portal
+    ports:
+      - "${CUSTOMER_PORTAL_PORT:-3101}:3001"
+    volumes:
+      - ./apps/customer-portal:/app
+      - /app/node_modules
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-public
+    profiles:
+      - default
+      - apps
+      - all
+    depends_on:
+      express-api:
+        condition: service_healthy
+    deploy: *default-frontend-deploy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  tech-portal:
+    build:
+      context: ./apps/tech-portal
+    ports:
+      - "${TECH_PORTAL_PORT:-3002}:3002"
+    volumes:
+      - ./apps/tech-portal:/app
+      - /app/node_modules
+    restart: unless-stopped
+    logging: *default-logging
+    networks:
+      - crm-public
+    profiles:
+      - default
+      - apps
+      - all
+    depends_on:
+      express-api:
+        condition: service_healthy
+    deploy: *default-frontend-deploy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3002/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+networks:
+  crm-internal:
+    driver: bridge
+  crm-public:
+    driver: bridge
 
 volumes:
   pgdata:
