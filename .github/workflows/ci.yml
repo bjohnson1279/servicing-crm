@@ -21,7 +21,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: false
+        submodules: true
 
     - name: Check for Merge Conflict Markers
       run: |
@@ -61,7 +61,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: false
+        submodules: true
     
     - name: Use Node.js 20
       uses: actions/setup-node@v4
@@ -83,7 +83,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
       with:
-        submodules: false
+        submodules: true
     
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3

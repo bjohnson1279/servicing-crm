@@ -1,0 +1,18 @@
+[submodule "apps/admin-portal"]
+	path = apps/admin-portal
+	url = https://github.com/bjohnson1279/admin-portal
+[submodule "apps/customer-portal"]
+	path = apps/customer-portal
+	url = https://github.com/bjohnson1279/customer-portal
+[submodule "backends/express-api"]
+	path = backends/express-api
+	url = https://github.com/bjohnson1279/express-api
+[submodule "backends/fastapi-api"]
+	path = backends/fastapi-api
+	url = https://github.com/bjohnson1279/fastapi-api
+[submodule "backends/graphql-api"]
+	path = backends/graphql-api
+	url = https://github.com/bjohnson1279/graphql-api
+[submodule "backends/laravel-api"]
+	path = backends/laravel-api
+	url = https://github.com/bjohnson1279/laravel-api
