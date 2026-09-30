@@ -1,7 +1,7 @@
 # Cross-Backend Conformance & E2E Verification Report
 
-Generated: `2026-09-30 07:02:32`
-Execution Duration: `7.68s`
+Generated: `2026-09-30 07:54:20`
+Execution Duration: `7.04s`
 
 ---
 
@@ -18,10 +18,10 @@ Execution Duration: `7.68s`
 
 ## 2. Test Execution Summary
 
-- **Total Test Cases**: `80`
+- **Total Test Cases**: `16`
 - **Passed**: `0`
 - **Failed**: `0`
-- **Skipped (Offline Targets)**: `80`
+- **Skipped (Offline Targets)**: `16`
 
 ---
 

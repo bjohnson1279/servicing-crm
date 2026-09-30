@@ -37,3 +37,17 @@ async def test_pest_risk_prediction_for_property(api_client: httpx.AsyncClient, 
         assert_conformance(data, expected_schema="PestRiskPrediction")
     else:
         assert resp.status_code in [200, 404, 500]
+
+
+@pytest.mark.asyncio
+async def test_pest_risk_climate(api_client: httpx.AsyncClient):
+    """Assert real-time climate API endpoint returns weather factors and pest activity impact."""
+    resp = await api_client.get("/api/v1/analytics/pest-risk/climate?lat=39.7817&lng=-89.6501")
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}: {resp.text}"
+
+    data = resp.json()
+    assert_conformance(data, expected_schema="ClimateData")
+    assert "temperature" in data
+    assert "pestActivityImpact" in data
+    assert "conditionSummary" in data
+

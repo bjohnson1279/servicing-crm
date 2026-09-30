@@ -168,3 +168,31 @@ AnalyticsDashboard:
     totalCommissions: { type: number }
     techLeaderboard: { type: array }
     salesLeaderboard: { type: array }
+
+ClimateData:
+  type: object
+  required:
+    - latitude
+    - longitude
+    - temperature
+    - relativeHumidity
+    - precipitation
+    - windSpeed
+    - weatherCode
+    - conditionSummary
+    - pestActivityImpact
+    - source
+  properties:
+    latitude: { type: number }
+    longitude: { type: number }
+    temperature: { type: number }
+    temperatureUnit: { type: string }
+    relativeHumidity: { type: number }
+    precipitation: { type: number }
+    windSpeed: { type: number }
+    weatherCode: { type: integer }
+    conditionSummary: { type: string }
+    pestActivityImpact: { type: string }
+    source: { type: string }
+    cached: { type: boolean }
+
