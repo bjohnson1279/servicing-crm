@@ -76,11 +76,13 @@ All four backends are strictly organized into **7 domain modules** (vertical sli
    - Persistent Notification Queue with background worker cron.
    - Twilio inbound webhook processor logging two-way SMS conversations to customer contact logs.
    - Real-Time Server-Sent Events (SSE) Event Bus (`/api/events`) broadcasting dispatch updates, technician location, and inbound SMS.
+   - Two-Way Live Chat (Customer ↔ CSR) with canned response templates, conversation routing, and contact log synchronization.
 5. **`Sales`**:
    - Spatial canvassing map pins (Leaflet) with lead states (`NOT_HOME`, `NOT_INTERESTED`, `PITCHED`, `SOLD`).
    - Automated commission calculations and clawback tracking.
    - Digital Service Agreements with dynamic PDF generation, in-browser e-signatures, and auto-activation.
    - Marketing campaigns and automated customer retention follow-ups.
+   - Sales Territory Management with interactive polygon boundary drawing, rep quota targets, penetration analytics, and legal Do-Not-Knock compliance.
 6. **`HR`**:
    - Internal staff directory with role-based access control (RBAC).
    - Mandatory and optional training course tracking.
@@ -90,6 +92,10 @@ All four backends are strictly organized into **7 domain modules** (vertical sli
    - Executive revenue dashboard (Monthly Recurring Revenue / Annual Recurring Revenue).
    - Technician productivity leaderboard (completed jobs).
    - Sales representative revenue leaderboard (commissions earned).
+   - AI-Powered Pest Risk Scoring & Geospatial Heatmap (chemical decay half-life, seasonal vector, weather humidity/heat index, structural vulnerability tags).
+   - Projected pest resurgence timeline and automated upsell package recommendations.
+
+
 
 ---
 
