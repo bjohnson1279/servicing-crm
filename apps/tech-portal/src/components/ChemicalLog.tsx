@@ -156,7 +156,8 @@ export const ChemicalLog: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chemicalName.trim()) {
-      alert('Please enter or select a chemical name');
+      setResultMessage({ type: 'error', text: 'Please enter or select a chemical name' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
@@ -227,6 +228,8 @@ export const ChemicalLog: React.FC = () => {
 
       {resultMessage && (
         <div
+          role="alert"
+          aria-live="assertive"
           style={{
             padding: '14px',
             borderRadius: '8px',
