@@ -34,7 +34,7 @@ export const syncQueue = async () => {
       });
       await store.delete(item.id);
     } catch (e) {
-      console.error('Failed to sync item', item, e);
+      console.error('Failed to sync item');
     }
   }
 };

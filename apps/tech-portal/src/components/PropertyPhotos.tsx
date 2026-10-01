@@ -25,7 +25,7 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
       const res = await axios.get(`/api/v1/properties/${propertyId}/photos`);
       setPhotos(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch property photos');
     }
   };
 
@@ -51,7 +51,7 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
       setCaption('');
       fetchPhotos();
     } catch (err) {
-      console.error(err);
+      console.error('Failed to upload property photo');
     } finally {
       setLoading(false);
     }

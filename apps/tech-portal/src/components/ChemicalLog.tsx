@@ -74,7 +74,7 @@ export const ChemicalLog: React.FC = () => {
           setInventoryItems(data);
         }
       } catch (err) {
-        console.warn('Could not fetch inventory items (running offline or backend offline):', err);
+        console.warn('Could not fetch inventory items (running offline or backend offline)');
       }
     };
     fetchInventory();
@@ -118,7 +118,7 @@ export const ChemicalLog: React.FC = () => {
         videoRef.current.srcObject = stream;
       }
     } catch (e) {
-      console.error('Camera access error:', e);
+      console.error('Camera access error');
       alert('Camera access unavailable. You can use file upload instead.');
       setCameraActive(false);
     }
@@ -202,7 +202,7 @@ export const ChemicalLog: React.FC = () => {
         throw new Error(`HTTP ${res.status}`);
       }
     } catch (err) {
-      console.warn('Network request failed, queueing offline:', err);
+      console.warn('Network request failed, queueing offline');
       await enqueueRequest('/api/v1/inventory/chemical-logs', 'POST', payload);
       setResultMessage({
         type: 'warning',
