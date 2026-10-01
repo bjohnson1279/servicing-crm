@@ -71,6 +71,20 @@ jobs:
             exit 1
           fi
 
+          # 7. Reject Out-of-Sync Package Manifests
+          MANIFEST_DIFF=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E 'package\.json$' || true)
+          for manifest in $MANIFEST_DIFF; do
+            dir=$(dirname "$manifest")
+            lockfile="$dir/package-lock.json"
+            if [ -f "$lockfile" ]; then
+              LOCK_IN_DIFF=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -Fx "$lockfile" || true)
+              if [ -z "$LOCK_IN_DIFF" ]; then
+                echo "❌ ERROR: PR modifies $manifest without updating $lockfile. Lockfiles must be synchronized in the same commit to prevent CI 'npm ci' failures."
+                exit 1
+              fi
+            fi
+          done
+
           echo "✅ Basic Bot Diff Guardrail Passed."
 
       - name: Syntax & Script Verification Gate
