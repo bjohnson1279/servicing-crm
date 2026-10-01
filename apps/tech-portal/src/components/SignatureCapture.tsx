@@ -35,6 +35,7 @@ export const SignatureCapture: React.FC = () => {
       <div style={{ border: '1px solid #ccc', width: '300px', height: '200px' }}>
         <SignatureCanvas 
           ref={sigCanvas}
+          // @ts-ignore - react-signature-canvas types are missing onBegin
           onBegin={() => setError(null)}
           canvasProps={{ width: 300, height: 200, className: 'sigCanvas', 'aria-label': 'Signature Pad' }}
         />
