@@ -11,7 +11,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      express-api: ${{ steps.filter.outputs.express-api }}
+      admin-portal: ${{ steps.filter.outputs.admin-portal }}
+      customer-portal: ${{ steps.filter.outputs.customer-portal }}
+      tech-portal: ${{ steps.filter.outputs.tech-portal }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: dorny/paths-filter@v3
+      id: filter
+      with:
+        filters: |
+          express-api:
+            - 'backends/express-api/**'
+            - 'shared/**'
+            - '.github/workflows/ci.yml'
+          admin-portal:
+            - 'apps/admin-portal/**'
+            - 'shared/**'
+            - '.github/workflows/ci.yml'
+          customer-portal:
+            - 'apps/customer-portal/**'
+            - 'shared/**'
+            - '.github/workflows/ci.yml'
+          tech-portal:
+            - 'apps/tech-portal/**'
+            - 'shared/**'
+            - '.github/workflows/ci.yml'
+
   test-express-api:
+    needs: changes
+    if: github.event_name == 'push' || needs.changes.outputs.express-api == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     
@@ -66,6 +98,7 @@ jobs:
       run: npm test
 
   build-portals:
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -76,31 +109,41 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    - name: Check Portal Availability
+    - name: Check Portal Availability and Changes
       id: check_portal
       run: |
-        if [ -f "apps/${{ matrix.portal }}/package.json" ]; then
-          echo "available=true" >> $GITHUB_OUTPUT
-        else
+        if [ ! -f "apps/${{ matrix.portal }}/package.json" ]; then
           echo "Portal apps/${{ matrix.portal }} is not checked out in this runner. Skipping."
-          echo "available=false" >> $GITHUB_OUTPUT
+          echo "should_run=false" >> $GITHUB_OUTPUT
+        elif [ "${{ github.event_name }}" = "push" ]; then
+          echo "Push event on default branch; running full build."
+          echo "should_run=true" >> $GITHUB_OUTPUT
+        else
+          CHANGED="${{ needs.changes.outputs[matrix.portal] }}"
+          if [ "$CHANGED" = "true" ]; then
+            echo "Portal apps/${{ matrix.portal }} has modifications. Running build."
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          else
+            echo "Portal apps/${{ matrix.portal }} has no changes in this PR. Skipping."
+            echo "should_run=false" >> $GITHUB_OUTPUT
+          fi
         fi
 
     - name: Use Node.js 20
-      if: steps.check_portal.outputs.available == 'true'
+      if: steps.check_portal.outputs.should_run == 'true'
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         
     - name: Build Portal
-      if: steps.check_portal.outputs.available == 'true'
+      if: steps.check_portal.outputs.should_run == 'true'
       run: |
         cd apps/${{ matrix.portal }}
         npm ci
         npm run build
 
   docker-build:
-    needs: [test-express-api, build-portals]
+    needs: [changes, test-express-api, build-portals]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     if: github.event_name == 'push'
@@ -129,3 +172,4 @@ jobs:
         context: ./backends/express-api
         push: false
         tags: servicing-crm/express-api:latest
+
