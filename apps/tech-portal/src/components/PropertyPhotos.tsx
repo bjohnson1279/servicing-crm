@@ -107,7 +107,8 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
         <div className="grid grid-cols-2 gap-4">
           {photos.map(p => (
             <div key={p.id} className="border rounded p-2">
-              <img src={p.url} alt={p.caption || 'Property photo'} className="w-full h-32 object-cover mb-2" />
+              {/* ⚡ Bolt Optimization: Added loading="lazy" to defer loading off-screen images and improve initial render time */}
+              <img src={p.url} alt={p.caption || 'Property photo'} loading="lazy" className="w-full h-32 object-cover mb-2" />
               <p className="text-sm">{p.caption}</p>
               <span className="text-xs text-gray-500">{new Date(p.uploaded_at).toLocaleDateString()}</span>
             </div>
