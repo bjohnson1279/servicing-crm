@@ -28,7 +28,7 @@ export const SignatureCapture: React.FC = () => {
     <div>
       <h2>Customer Signature - Job {id}</h2>
       {error && (
-        <div role="alert" style={{ color: '#991b1b', backgroundColor: '#fef2f2', padding: '10px', borderRadius: '4px', marginBottom: '10px', border: '1px solid #fecaca', width: '278px' }}>
+        <div role="alert" aria-live="assertive" style={{ color: '#991b1b', backgroundColor: '#fef2f2', padding: '10px', borderRadius: '4px', marginBottom: '10px', border: '1px solid #fecaca', width: '278px' }}>
           {error}
         </div>
       )}
