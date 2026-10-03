@@ -1,0 +1,87 @@
+
+// Feature #17
+model ApiUsageMetric {
+  id           String   @id @default(uuid()) @db.Uuid
+  tenantId     String   @map("tenant_id") @db.Uuid
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  endpoint     String   @db.VarChar(255)
+  method       String   @db.VarChar(10)
+  date         DateTime @db.Date
+  requestCount Int      @default(0) @map("request_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@unique([tenantId, endpoint, method, date])
+  @@index([date])
+  @@map("api_usage_metrics")
+}
+
+// Feature #18
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actorId     String?  @map("actor_id") @db.Uuid
+  actor       User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole   String?  @map("actor_role") @db.VarChar(50)
+  action      String   @db.VarChar(50)
+  entityType  String   @map("entity_type") @db.VarChar(100)
+  entityId    String   @map("entity_id") @db.Uuid
+  oldValues   Json?    @map("old_values")
+  newValues   Json?    @map("new_values")
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("audit_logs")
+}
+
+// Feature #19
+model NotificationPreference {
+  id               String    @id @default(uuid()) @db.Uuid
+  customerId       String    @unique @map("customer_id") @db.Uuid
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  smsEnabled       Boolean   @default(true) @map("sms_enabled")
+  emailEnabled     Boolean   @default(true) @map("email_enabled")
+  voiceEnabled     Boolean   @default(false) @map("voice_enabled")
+  pushEnabled      Boolean   @default(false) @map("push_enabled")
+  quietHoursStart  DateTime? @map("quiet_hours_start") @db.Time
+  quietHoursEnd    DateTime? @map("quiet_hours_end") @db.Time
+  optOutTimestamp  DateTime? @map("opt_out_timestamp")
+  tcpaConsentDate  DateTime? @map("tcpa_consent_date")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @map("updated_at")
+
+  @@map("notification_preferences")
+}
+
+// Feature #20
+model Survey {
+  id           String          @id @default(uuid()) @db.Uuid
+  tenantId     String          @map("tenant_id") @db.Uuid
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customerId   String          @map("customer_id") @db.Uuid
+  customer     Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobId        String?         @map("job_id") @db.Uuid
+  job          Job?            @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  technicianId String?         @map("technician_id") @db.Uuid
+  technician   Technician?     @relation(fields: [technicianId], references: [id], onDelete: SetNull)
+  status       String          @default("sent") @db.VarChar(50)
+  sentAt       DateTime        @default(now()) @map("sent_at")
+  expiresAt    DateTime?       @map("expires_at")
+  response     SurveyResponse?
+
+  @@map("surveys")
+}
+
+model SurveyResponse {
+  id           String   @id @default(uuid()) @db.Uuid
+  surveyId     String   @unique @map("survey_id") @db.Uuid
+  survey       Survey   @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  npsScore     Int?     @map("nps_score")
+  comments     String?  @db.Text
+  respondedAt  DateTime @default(now()) @map("responded_at")
+
+  @@map("survey_responses")
+}

@@ -140,6 +140,7 @@ jobs:
       run: |
         cd apps/${{ matrix.portal }}
         npm ci
+        npm test --if-present
         npm run build
 
   docker-build:

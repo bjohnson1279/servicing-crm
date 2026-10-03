@@ -13,7 +13,6 @@ export const SignatureCapture: React.FC = () => {
       setError('Please provide a signature first.');
       return;
     }
-    // const dataUrl = sigCanvas.current?.getTrimmedCanvas().toDataURL('image/png');
     console.log('Signature saved successfully');
     // TODO: enqueue offline request to save signature (using dataUrl)
     navigate(`/job/${id}`);

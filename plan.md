@@ -487,3 +487,166 @@ RUN npx prisma migrate dev && npm run build && npm test
 All phases depend on: **Prisma ORM v5.10, Express API (ports 8002/8003), JWT authentication middleware.** No new tech stack changes required — just expand existing APIs and add database tables via migrations.
 
 ## **Recommended Execution Order:** Start Phase 1 → validate foundation → move to Phase 2 → iterate through remaining phases in order, as each builds on the previous phase's data models.
+
+
+---
+
+## **Phase 7: Platform Hardening & Feature Expansion (Features #16–#25)**
+
+*Added: October 2, 2026 — Based on comprehensive gap analysis of all backends, frontends, schema, and infrastructure.*
+
+### Implementation Order
+
+| Priority | # | Feature | Effort | Key Rationale |
+|:---:|:---:|---|:---:|---|
+| 🔴 P0 | **16** | Territory & DNK Management UI | Low | Backend 100% complete, frontend-only work |
+| 🔴 P0 | **17** | API Rate Limiting & Usage Metering | Low | Security/abuse prevention, Redis already provisioned |
+| 🟠 P1 | **18** | Audit Trail & Activity Logging System | Medium | SOC 2 readiness, compliance requirement |
+| 🟠 P1 | **19** | Multi-Channel Notification Preferences & Opt-Out | Medium | TCPA/CAN-SPAM compliance, legal risk |
+| 🟡 P2 | **20** | Customer Satisfaction Surveys & NPS Scoring | Medium | Closes feedback loop for churn engine |
+| 🟡 P2 | **21** | Customer Self-Service Booking & Rescheduling | Medium-High | Reduces inbound call volume 30-40% |
+| 🟢 P3 | **22** | Technician Time Tracking & Labor Cost Analytics | Medium | #1 cost center visibility |
+| 🟢 P3 | **23** | OpenAPI 3.1 Auto-Generation & Interactive API Docs | Low | Developer onboarding, FastAPI built-in |
+| 🟢 P3 | **24** | Recurring Service Visit Calendar & Customer Reminders | Medium | Reduces no-access failures, improves retention |
+| 🟢 P3 | **25** | Scheduled Report Generation & Export Engine | Medium-High | Franchise operator engagement |
+
+---
+
+### Feature #16: Territory & DNK Management UI (Admin Portal)
+
+**Status**: NOT STARTED
+**Effort**: Low — Backend CRUD is 100% complete across all 4 backends. This is frontend-only.
+
+**Scope**:
+- `apps/admin-portal/src/features/sales/TerritoryManager.tsx` — Interactive Leaflet polygon drawing on map, sales rep assignment dropdown, quota target configuration, territory color picker, active/inactive toggle.
+- `apps/admin-portal/src/features/sales/DoNotKnockManager.tsx` — Address search with geocoding, map pin placement, expiration date picker, reason field, bulk import capability.
+- Wire both components into the admin portal's existing React Router and sidebar navigation.
+
+**Existing Backend Endpoints** (already implemented in all 4 backends):
+- `GET/POST /api/v1/sales/territories`
+- `PUT/DELETE /api/v1/sales/territories/:id`
+- `GET/POST /api/v1/sales/territories/:id/dnk`
+- `DELETE /api/v1/sales/territories/dnk/:id`
+- GraphQL: `territories`, `doNotKnockRecords` queries; `createTerritory`, `updateTerritory`, `deleteTerritory`, `createDoNotKnock`, `deleteDoNotKnock` mutations.
+
+---
+
+### Feature #17: API Rate Limiting & Usage Metering
+
+**Status**: NOT STARTED
+**Effort**: Low — Redis already provisioned on port 3120.
+
+**Scope**:
+- Token bucket / sliding window rate limiter middleware in all 4 backends.
+- Per-tenant and per-user rate limits stored in Redis.
+- `429 Too Many Requests` responses with `Retry-After` headers.
+- New `api_usage_metrics` table for usage metering (requests per tenant per endpoint per day).
+- Admin Portal: API usage dashboard component.
+
+---
+
+### Feature #18: Audit Trail & Activity Logging System
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- New `014_audit_trail.sql` migration: `audit_logs` table (id, tenant_id, actor_id, actor_role, action, entity_type, entity_id, old_values JSONB, new_values JSONB, ip_address, user_agent, created_at).
+- Automatic mutation capture middleware/interceptor in all 4 backends.
+- Admin Portal: Activity feed on Customer 360 page and global audit log viewer with filters.
+- GraphQL: `auditLogs(entityType, entityId, actorId, dateRange)` query.
+
+---
+
+### Feature #19: Multi-Channel Notification Preferences & Opt-Out Management
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- New `notification_preferences` table: per-customer channel toggles (SMS, email, voice, push), quiet hours window, opt-out timestamps, TCPA consent records.
+- Backend: Preference check before every notification dispatch in all 4 backends.
+- Customer Portal: Notification settings page with toggle switches and quiet hours configuration.
+- Twilio webhook: Automatic opt-out processing for "STOP" SMS replies.
+- Email: Unsubscribe link generation with one-click opt-out.
+
+---
+
+### Feature #20: Customer Satisfaction Surveys & NPS Scoring
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- New `surveys` and `survey_responses` tables.
+- Post-service automated survey delivery (email/SMS via existing Twilio/SMTP comms engine).
+- NPS collection: 0–10 rating scale with free-text comment.
+- Integration with `CustomerHealthScore` model — real NPS data feeds into churn prediction algorithm.
+- Customer Portal: Survey response widget.
+- Admin Portal: NPS trend dashboard with per-technician satisfaction scores.
+
+---
+
+### Feature #21: Customer Self-Service Booking & Rescheduling
+
+**Status**: NOT STARTED
+**Effort**: Medium-High
+
+**Scope**:
+- New customer-facing availability API: returns open time slots based on technician schedules, territory, and service type.
+- Rescheduling endpoint with configurable business rules (minimum notice period, blackout dates).
+- Customer Portal: Calendar picker with available slots, confirmation flow, reschedule/cancel buttons.
+- Automatic notifications to assigned technician and dispatcher via existing SSE + SMS infrastructure.
+
+---
+
+### Feature #22: Technician Time Tracking & Labor Cost Analytics
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- New fields on Job model: `actual_arrival`, `actual_departure`, `drive_time_minutes`, `on_site_time_minutes`.
+- Tech Portal: Clock-in/clock-out buttons on JobDetail.tsx with GPS coordinate verification.
+- Analytics: Labor cost per job, average time on-site by service type, technician efficiency metrics.
+- Admin Portal: Timesheet approval workflow and labor cost reports.
+
+---
+
+### Feature #23: OpenAPI 3.1 Auto-Generation & Interactive API Docs
+
+**Status**: NOT STARTED
+**Effort**: Low
+
+**Scope**:
+- FastAPI: Enable built-in `/docs` (Swagger UI) and `/openapi.json` endpoints.
+- Express: Add `swagger-jsdoc` + `swagger-ui-express` to auto-generate from route JSDoc annotations.
+- Laravel: Add `l5-swagger` package for OpenAPI generation from PHP docblocks.
+- GraphQL: Enable Apollo Sandbox/Playground for non-production environments.
+- CI: Validate OpenAPI spec doesn't drift from implementation.
+
+---
+
+### Feature #24: Recurring Service Visit Calendar & Customer Reminders
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- Admin Portal: Full calendar view (FullCalendar.js) showing scheduled, projected, and completed service visits.
+- Customer Portal: "My Service Schedule" calendar showing upcoming visits with countdown.
+- Automated pre-visit reminders: 48-hour and same-day SMS/email via existing comms engine.
+- Post-visit "service completed" confirmation notification.
+
+---
+
+### Feature #25: Scheduled Report Generation & Export Engine
+
+**Status**: NOT STARTED
+**Effort**: Medium-High
+
+**Scope**:
+- Report templates: Revenue Summary, Technician Productivity, Chemical Usage/EPA Compliance, Customer Churn Risk, Territory Performance.
+- CSV and PDF export endpoints across all 4 backends.
+- Scheduled delivery via existing notification queue + email infrastructure.
+- Admin Portal: Report builder UI with template selection, date range picker, and delivery schedule configuration.
