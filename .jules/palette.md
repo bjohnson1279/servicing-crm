@@ -47,3 +47,6 @@
 ## 2026-10-02 - Dynamic Action Button Labeling, Focus Visibility & Mandatory Journaling
 **Learning:** State advancement buttons with changing text (e.g. advancing job status across lifecycle steps) can confuse screen readers and keyboard users if assistive attributes and visual focus indicators are omitted. Omitting learnings from `.jules/palette.md` also leads to recurrent omissions across PRs.
 **Action:** Always provide explicit dynamic `aria-label` attributes describing the exact state transition (e.g. `aria-label={`Mark job status as ${nextStatus}`}`). Add Tailwind `focus-visible:ring-2 focus-visible:ring-offset-2` keyboard rings to all actionable buttons and links. Always append newly established patterns to `.jules/palette.md` before submitting the Pull Request.
+## 2024-10-03 - [Tailwind CSS Missing in Tech Portal]
+**Learning:** Tailwind CSS is not currently configured or active in the React frontends (e.g., `apps/tech-portal`), despite the presence of Tailwind-like class usage in some component prompts.
+**Action:** Do not use Tailwind utility classes for UI styling in frontends unless the framework is explicitly added and configured. Rely on standard inline styles or existing custom CSS stylesheets.
