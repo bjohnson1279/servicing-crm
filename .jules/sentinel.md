@@ -61,3 +61,8 @@
 **Vulnerability:** Frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) and offline handlers (`offlineQueue.ts`) were logging raw error objects and payloads directly to the browser console (e.g., `console.error('Failed to sync item', item, e);`).
 **Learning:** Logging raw error objects in the frontend can inadvertently leak sensitive stack traces, PII, or internal application state to the client-side console, which is a common vector for information disclosure vulnerabilities.
 **Prevention:** Always sanitize error messages logged to the console on the frontend. Use generic, descriptive string messages (e.g., `console.error('Failed to sync item');`) and never pass raw `Error` instances, payloads, or unhandled exceptions directly to logging functions accessible to end users.
+
+## 2026-10-02 - [Information Disclosure via Raw Success Logging]
+**Vulnerability:** The frontend component `SignatureCapture.tsx` logged the raw base64 `dataUrl` of the customer's signature to the browser console upon successful capture (e.g., `console.log('Saved Signature:', dataUrl);`).
+**Learning:** Logging sensitive data, even on successful operations, to the client-side console can expose PII (like signatures) to installed extensions or potential XSS vectors. This is a continuation of the information disclosure pattern seen previously with error logging.
+**Prevention:** Avoid logging sensitive payloads, PII, or raw user inputs to the frontend console, whether in error handlers or success paths. Use safe, generic confirmation messages (e.g., `console.log('Signature saved successfully');`).
