@@ -53,3 +53,6 @@
 ## 2026-10-03 - [Tailwind CSS Missing in Tech Portal]
 **Learning:** Tailwind CSS is not currently configured or active in the React frontends (e.g., `apps/tech-portal`), despite the presence of Tailwind-like class usage in some component prompts.
 **Action:** Do not use Tailwind utility classes for UI styling in frontends unless the framework is explicitly added and configured. Rely on standard inline styles or existing custom CSS stylesheets.
+## 2026-10-04 - Dynamic Disabled State & Tooltip in SignatureCapture
+**Learning:** The 'Save' button in `SignatureCapture` was originally enabled even when the canvas was blank, and it lacked visual feedback for its disabled state.
+**Action:** Adding a `hasSignature` state tracked via `onEnd`, along with `disabled={!hasSignature}`, a helpful `title` tooltip, and dynamic inline styles (`opacity`, `cursor`) improves the user experience by preventing invalid submissions and clearly communicating the button's state.

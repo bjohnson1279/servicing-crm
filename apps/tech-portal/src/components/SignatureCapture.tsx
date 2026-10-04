@@ -7,6 +7,7 @@ export const SignatureCapture: React.FC = () => {
   const navigate = useNavigate();
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasSignature, setHasSignature] = useState(false);
 
   const saveSignature = () => {
     if (sigCanvas.current?.isEmpty()) {
@@ -21,6 +22,7 @@ export const SignatureCapture: React.FC = () => {
   const clearSignature = () => {
     sigCanvas.current?.clear();
     setError(null);
+    setHasSignature(false);
   };
 
   return (
@@ -36,12 +38,25 @@ export const SignatureCapture: React.FC = () => {
           ref={sigCanvas}
           // @ts-ignore - react-signature-canvas types are missing onBegin
           onBegin={() => setError(null)}
+          // @ts-ignore - react-signature-canvas types are missing onEnd
+          onEnd={() => setHasSignature(true)}
           canvasProps={{ width: 300, height: 200, className: 'sigCanvas', 'aria-label': 'Signature Pad' }}
         />
       </div>
       <div style={{ marginTop: '10px' }}>
         <button onClick={clearSignature}>Clear</button>
-        <button onClick={saveSignature} style={{ marginLeft: '10px' }}>Save</button>
+        <button
+          onClick={saveSignature}
+          disabled={!hasSignature}
+          title={!hasSignature ? "Please draw a signature before saving" : "Save signature"}
+          style={{
+            marginLeft: '10px',
+            opacity: !hasSignature ? 0.6 : 1,
+            cursor: !hasSignature ? 'not-allowed' : 'pointer'
+          }}
+        >
+          Save
+        </button>
       </div>
       <div style={{ marginTop: '20px' }}>
         <button onClick={() => navigate(`/job/${id}`)}>Cancel</button>
