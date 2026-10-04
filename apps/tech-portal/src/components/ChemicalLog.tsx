@@ -531,9 +531,11 @@ export const ChemicalLog: React.FC = () => {
             </div>
           ) : (
             <div>
+              {/* ⚡ Bolt Optimization: Added loading="lazy" to defer loading off-screen images and improve initial render time */}
               <img
                 src={photo}
                 alt="Chemical Application"
+                loading="lazy"
                 style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', borderRadius: '8px' }}
               />
               <div style={{ marginTop: '6px' }}>
