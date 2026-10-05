@@ -19,3 +19,4 @@ scratch_*
 fix_*.cjs
 patch_*.py
 patch_*.sh
+.clinerules

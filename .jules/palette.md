@@ -56,3 +56,4 @@
 ## 2026-10-04 - Dynamic Disabled State & Tooltip in SignatureCapture
 **Learning:** The 'Save' button in `SignatureCapture` was originally enabled even when the canvas was blank, and it lacked visual feedback for its disabled state.
 **Action:** Adding a `hasSignature` state tracked via `onEnd`, along with `disabled={!hasSignature}`, a helpful `title` tooltip, and dynamic inline styles (`opacity`, `cursor`) improves the user experience by preventing invalid submissions and clearly communicating the button's state.
+\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/palette.md`).** Do not edit or create journal files for other personas.\n
