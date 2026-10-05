@@ -294,3 +294,39 @@ code {
     border-right-color: var(--border);
   }
 }
+
+/* Toast Notification Styles */
+.toast-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--accent);
+  color: var(--bg);
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.toast-close {
+  background: transparent;
+  border: none;
+  color: var(--bg);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+.toast-close:hover {
+  background: var(--accent-border);
+}
+.toast-close:focus-visible {
+  outline: 2px solid var(--text-h);
+  outline-offset: 2px;
+}
