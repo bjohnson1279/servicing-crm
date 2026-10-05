@@ -598,3 +598,4 @@ export const ChemicalLog: React.FC = () => {
     </div>
   );
 };
+export default ChemicalLog;
