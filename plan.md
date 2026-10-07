@@ -732,3 +732,96 @@ This plan details the technical execution strategy for the remaining features on
 ### Frontend (Admin Portal)
 - **`src/features/analytics/ReportBuilder.tsx`**:
   - A wizard interface where admins can select a report type, apply date filters, choose PDF or CSV, and click "Download" or "Schedule Weekly Delivery".
+
+---
+
+## **Phase 9: AI, Field Operations, & Advanced Integrations (Features #26–#32)**
+
+*Added: October 7, 2026 — Based on platform evaluation and roadmap expansion.*
+
+### Implementation Order
+
+| Priority | # | Feature | Effort | Key Rationale |
+|:---:|:---:|---|:---:|---|
+| 🔴 P0 | **26** | Offline Vector Maps & Routing | High | Critical for deep rural field ops without cellular connectivity. |
+| 🔴 P0 | **27** | OSHA/EPA Safety Checklists | Medium | Regulatory compliance and risk mitigation during chemical usage. |
+| 🟠 P1 | **28** | Dynamic Pricing Engine | High | Maximizes revenue based on tech availability, distance, and pest risk. |
+| 🟠 P1 | **29** | Barcode/QR Material Scanning | Medium | Increases accuracy in inventory tracking and chemical usage logs. |
+| 🟡 P2 | **30** | LLM Triage Chatbot | Medium-High | Scales customer support, reducing CSR load for simple scheduling queries. |
+| 🟡 P2 | **31** | Fleet Management & Telematics | High | Asset tracking, maintenance schedules, and fuel cost reduction. |
+| 🟢 P3 | **32** | Integrated VoIP Web Dialer | Medium | Seamless in-browser outbound calls tied directly to Customer 360 logs. |
+
+---
+
+### Feature #26: Offline Vector Maps & Routing (Technician PWA)
+
+**Status**: NOT STARTED
+**Effort**: High
+
+**Scope**:
+- Technician PWA: Downloadable offline map tiles (e.g., using Mapbox GL JS offline or Leaflet with local tile caching).
+- Local OSRM routing engine integrated via WebAssembly or pre-calculated routes synced during online state.
+- Background sync for job status updates when connectivity is restored.
+
+### Feature #27: OSHA/EPA Safety Checklists
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- New `safety_checklists` and `job_safety_logs` tables in database schema.
+- Mandatory digital pre-job safety checklists tailored to specific chemical classifications.
+- PPE (Personal Protective Equipment) photo verification upload requirement before transitioning job to `in_progress`.
+- Admin Portal: Safety compliance dashboard and exportable audit logs.
+
+### Feature #28: Dynamic Pricing Engine (AI/ML)
+
+**Status**: NOT STARTED
+**Effort**: High
+
+**Scope**:
+- New ML models to score quote pricing based on travel distance, localized pest risk scores, and current schedule density.
+- Backend APIs: Pricing endpoints in all 4 backends that adjust base service rates dynamically.
+- Integration with existing `Quotes` module to provide "Recommended Price" vs "Base Price".
+- Admin Portal: Pricing rule configuration UI and margin analytics.
+
+### Feature #29: Barcode/QR Material Scanning
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- Technician PWA: Camera integration for scanning UPC/QR codes on chemical bottles and equipment.
+- Backend APIs: Barcode lookup and automatic decrementing of `inventory_items` and logging to `material_usage`.
+- Admin Portal: Inventory item management to associate barcodes with SKUs.
+
+### Feature #30: LLM Triage Chatbot
+
+**Status**: NOT STARTED
+**Effort**: Medium-High
+
+**Scope**:
+- Customer Portal: Embed an AI chatbot widget.
+- Backend: LLM integration (e.g., Gemini or OpenAI) with RAG (Retrieval-Augmented Generation) based on customer FAQs and company policies.
+- Intent detection for booking, rescheduling, and billing inquiries.
+- Seamless handoff to human CSRs via the existing two-way live chat system (Comms domain).
+
+### Feature #31: Fleet Management & Telematics
+
+**Status**: NOT STARTED
+**Effort**: High
+
+**Scope**:
+- New `Fleet` domain slice: `vehicles`, `maintenance_logs`, `telematics_data` tables.
+- Integration with third-party OBD2 telematics APIs (e.g., Samsara or Geotab) for real-time mileage and fuel tracking.
+- Admin Portal: Fleet dashboard showing vehicle locations, maintenance alerts, and driver safety scores.
+
+### Feature #32: Integrated VoIP Web Dialer
+
+**Status**: NOT STARTED
+**Effort**: Medium
+
+**Scope**:
+- Admin Portal: WebRTC softphone embedded in the UI (via Twilio Client).
+- Click-to-call functionality from Customer 360 profiles and Dispatch Board.
+- Backend: Call recording storage and automatic generation of `contact_logs` tied to the customer.
