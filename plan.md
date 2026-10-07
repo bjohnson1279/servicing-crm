@@ -650,3 +650,85 @@ All phases depend on: **Prisma ORM v5.10, Express API (ports 8002/8003), JWT aut
 - CSV and PDF export endpoints across all 4 backends.
 - Scheduled delivery via existing notification queue + email infrastructure.
 - Admin Portal: Report builder UI with template selection, date range picker, and delivery schedule configuration.
+
+# Phase 8: Backlog Implementation Plan
+
+This plan details the technical execution strategy for the remaining features on our roadmap. As with previous phases, every feature will be implemented with **100% parity** across all 4 backends (Express, FastAPI, Laravel, GraphQL) and integrated into the React frontends.
+
+---
+
+## 1. Technician Time Tracking & Labor Cost Analytics (#20)
+**Goal:** Track exact arrival, departure, and drive times to calculate accurate labor costs and technician efficiency.
+
+### Database Changes
+- Modify the `Job` model in `schema.prisma`:
+  - Add `actualArrival DateTime?`
+  - Add `actualDeparture DateTime?`
+  - Add `driveTimeMinutes Int?`
+  - Add `onSiteTimeMinutes Int?`
+
+### Backend APIs
+- **Express, FastAPI, Laravel**: 
+  - `POST /api/v1/jobs/:id/clock-in`: Captures `actualArrival` timestamp and GPS coordinates.
+  - `POST /api/v1/jobs/:id/clock-out`: Captures `actualDeparture`, calculates `onSiteTimeMinutes`.
+  - `GET /api/v1/analytics/labor-costs`: Aggregates labor costs by technician and service type.
+- **GraphQL**:
+  - Mutations: `clockInJob(id: UUID!)`, `clockOutJob(id: UUID!)`
+  - Query: `laborCostAnalytics`
+
+### Frontend (Admin Portal)
+- **`src/features/dispatch/TimeTracker.tsx`**: A dashboard view for dispatchers to see who is currently on-site vs driving.
+- **`src/features/analytics/LaborCostDashboard.tsx`**: Charts displaying profitability and efficiency metrics per technician.
+
+---
+
+## 2. OpenAPI 3.1 Auto-Generation & Interactive Docs (#23)
+**Goal:** Provide auto-generated, interactive Swagger/OpenAPI documentation for all REST APIs and a Sandbox for GraphQL.
+
+### Backend Implementations
+- **FastAPI**: 
+  - *Already built-in.* We will customize the `app.main` metadata (Title, Version, Tags) to ensure `/docs` generates a pristine OpenAPI 3.1 schema.
+- **Express API**: 
+  - Install `swagger-ui-express` and `swagger-autogen`.
+  - Create a script to parse JSDoc comments and route definitions into a `swagger_output.json` file served at `/api/docs`.
+- **Laravel API**:
+  - Install `darkaonline/l5-swagger`.
+  - Add PHP attributes/annotations to controllers and run `php artisan l5-swagger:generate` to serve docs at `/api/documentation`.
+- **GraphQL API**:
+  - Enable Apollo Server's landing page plugin to serve the Apollo Studio Sandbox at the root `/graphql` endpoint for interactive queries.
+
+---
+
+## 3. Recurring Service Visit Calendar & Reminders (#25)
+**Goal:** Visualize upcoming service cadences for customers and dispatchers, and automate SMS/Email reminders.
+
+### Backend APIs & Workers
+- **Cron Jobs**: 
+  - Extend the existing `NotificationCron` or create `ReminderCron` to scan for `Jobs` scheduled within the next 48 hours that haven't had a reminder sent.
+  - Automatically queue Twilio SMS and Nodemailer emails ("Reminder: Your pest control service is scheduled for tomorrow at 10 AM").
+- **APIs**:
+  - `GET /api/v1/jobs/calendar`: Returns job data optimized for calendar rendering (start/end dates, color-coded status).
+
+### Frontend
+- **Customer Portal (`src/features/account/ServiceCalendar.tsx`)**:
+  - Implement a calendar view (e.g., using `react-big-calendar` or fullcalendar) showing past and upcoming visits.
+- **Admin Portal (`src/features/dispatch/MasterCalendar.tsx`)**:
+  - A global drag-and-drop calendar for dispatchers to visualize the entire fleet's schedule.
+
+---
+
+## 4. Report Generation & Export Engine (#18)
+**Goal:** Allow regional managers and franchise owners to export and schedule PDF/CSV summary reports.
+
+### Backend APIs
+- **Express, FastAPI, Laravel**:
+  - `GET /api/v1/reports/export?type={revenue|productivity|chemicals}&format={csv|pdf}`
+  - *Express*: Use `pdfkit` and `json2csv`.
+  - *FastAPI*: Use `reportlab` and `csv`.
+  - *Laravel*: Use `dompdf` and native CSV streams.
+- **GraphQL**:
+  - `Query.generateReportUrl(type: String!, format: String!)` returning a downloadable CDN link or base64 string.
+
+### Frontend (Admin Portal)
+- **`src/features/analytics/ReportBuilder.tsx`**:
+  - A wizard interface where admins can select a report type, apply date filters, choose PDF or CSV, and click "Download" or "Schedule Weekly Delivery".

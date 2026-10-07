@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { TimeTracker } from './TimeTracker';
 
 type JobStatus = 'Available' | 'En Route' | 'On Site' | 'Completed';
 
@@ -27,6 +28,10 @@ export const JobDetail: React.FC = () => {
           Mark as {status === 'Available' ? 'En Route' : status === 'En Route' ? 'On Site' : 'Completed'}
         </button>
       )}
+
+      {status === 'En Route' || status === 'On Site' ? (
+        <TimeTracker jobId={id || ''} onStatusChange={(s) => setStatus(s as JobStatus)} />
+      ) : null}
 
       <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <Link
