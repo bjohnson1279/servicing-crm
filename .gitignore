@@ -21,3 +21,8 @@ patch_*.py
 patch_*.sh
 .clinerules
 servicing-crm.code-workspace
+
+*.diff
+*.patch
+patch.diff
+*.timestamp-*.mjs
