@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { DailyRoute } from './components/DailyRoute';
-import { JobDetail } from './components/JobDetail';
-import { ChemicalLog } from './components/ChemicalLog';
-import { SignatureCapture } from './components/SignatureCapture';
 import './offlineQueue';
+
+// ⚡ Bolt Optimization: Lazy load route components to reduce initial bundle size,
+// specifically delaying the loading of heavy dependencies like react-leaflet and react-signature-canvas
+const DailyRoute = lazy(() => import('./components/DailyRoute').then(m => ({ default: m.DailyRoute })));
+const JobDetail = lazy(() => import('./components/JobDetail').then(m => ({ default: m.JobDetail })));
+const ChemicalLog = lazy(() => import('./components/ChemicalLog').then(m => ({ default: m.ChemicalLog })));
+const SignatureCapture = lazy(() => import('./components/SignatureCapture').then(m => ({ default: m.SignatureCapture })));
 
 function App() {
   const [notification, setNotification] = useState<string | null>(null);
@@ -43,12 +46,14 @@ function App() {
           </div>
         )}
         <h1>Tech Portal</h1>
-        <Routes>
-          <Route path="/" element={<DailyRoute />} />
-          <Route path="/job/:id" element={<JobDetail />} />
-          <Route path="/job/:id/chemicals" element={<ChemicalLog />} />
-          <Route path="/job/:id/signature" element={<SignatureCapture />} />
-        </Routes>
+        <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>Loading...</div>}>
+          <Routes>
+            <Route path="/" element={<DailyRoute />} />
+            <Route path="/job/:id" element={<JobDetail />} />
+            <Route path="/job/:id/chemicals" element={<ChemicalLog />} />
+            <Route path="/job/:id/signature" element={<SignatureCapture />} />
+          </Routes>
+        </Suspense>
       </div>
     </Router>
   );

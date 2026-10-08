@@ -64,3 +64,7 @@
 ## 2026-10-05 - Multi-Commit Retention & Foreign Key Indexes Part 3
 **Learning:** Even late-stage domain expansion (like Feature #17-20 in 020_platform_hardening.sql) might introduce foreign keys that are missing corresponding indexes. These indexes are essential for avoiding table scans during ON DELETE CASCADE and JOIN operations.
 **Action:** Created `shared/database/021_missing_fk_indexes_pt3.sql` to cleanly add the missing foreign key indexes (`api_usage_metrics(tenant_id)`, `audit_logs(actor_id)`, etc.) safely without polluting previous migrations.
+
+## 2026-10-08 - Route-based Code Splitting to Reduce Initial Bundle Size
+**Learning:** The tech-portal Vite React application was importing heavy dependencies like `react-leaflet` and `react-signature-canvas` statically in the main entry point (App.tsx), bloating the initial main chunk and negatively impacting Time To Interactive (TTI).
+**Action:** Replaced static route imports with `React.lazy()` and `<Suspense>` boundaries in `App.tsx`. This splits individual routes into separate chunks that are loaded on demand.
