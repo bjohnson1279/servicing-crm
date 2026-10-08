@@ -20,3 +20,4 @@ fix_*.cjs
 patch_*.py
 patch_*.sh
 .clinerules
+servicing-crm.code-workspace
