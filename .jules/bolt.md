@@ -25,7 +25,12 @@
 ## 2026-10-02 - Image Lazy Loading, Cumulative Layout Shift Prevention & Mandatory Journaling
 **Learning:** Loading property and media images eagerly consumes technician mobile bandwidth and degrades initial First Contentful Paint (FCP). Adding native `loading="lazy"` defers off-screen asset requests. However, unconstrained lazy images cause Cumulative Layout Shift (CLS) when scrolled into viewport. Furthermore, omitting task learnings from `.jules/bolt.md` causes repetitive re-discovery of known patterns.
 **Action:** Always add `loading="lazy"` to repeated image grids and media lists. Pair with fixed dimension classes or aspect ratio containers (e.g. Tailwind `aspect-video`, `h-32 object-cover`) to eliminate CLS. Always append newly implemented optimization patterns to `.jules/bolt.md` before opening the Pull Request.
-\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/bolt.md`).** Do not edit or create journal files for other personas.\n
+
+
+## Important Process Rules
+- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
+- **Only write your journal to your matching file (`.jules/bolt.md`).** Do not edit or create journal files for other personas.
+
 
 ## 2026-10-05 - Multi-Commit Retention & Foreign Key Indexes Part 3
 **Learning:** Even late-stage domain expansion (like Feature #17-20 in 020_platform_hardening.sql) might introduce foreign keys that are missing corresponding indexes. These indexes are essential for avoiding table scans during ON DELETE CASCADE and JOIN operations.
@@ -81,3 +86,7 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
+
+- **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
+
+- **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.

@@ -21,7 +21,12 @@
 ## 2026-10-04 - Dynamic Disabled State & Tooltip in SignatureCapture
 **Learning:** The 'Save' button in `SignatureCapture` was originally enabled even when the canvas was blank, and it lacked visual feedback for its disabled state.
 **Action:** Adding a `hasSignature` state tracked via `onEnd`, along with `disabled={!hasSignature}`, a helpful `title` tooltip, and dynamic inline styles (`opacity`, `cursor`) improves the user experience by preventing invalid submissions and clearly communicating the button's state.
-\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/palette.md`).** Do not edit or create journal files for other personas.\n
+
+
+## Important Process Rules
+- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
+- **Only write your journal to your matching file (`.jules/palette.md`).** Do not edit or create journal files for other personas.
+
 
 ## 2026-10-05 - Accessible Toast Notifications Over Blocking Alerts
 **Learning:** Using native browser `alert()` for asynchronous, background events (like server-sent "job assigned" updates) blocks the main thread, halts user interaction, and provides a poor experience—especially for users with assistive technology, as it interrupts their current task abruptly.
@@ -81,3 +86,7 @@
 ## 2026-10-07 - Non-Blocking Notifications Over Alerts
 **Learning:** Using the native `alert()` in React components blocks the main thread, halting user interaction and breaking the seamless flow of the application, especially on mobile PWAs where users expect a fluid experience. This is also inaccessible to screen readers that cannot gracefully parse or bypass blocking alerts in context.
 **Action:** Replace `alert()` usage with accessible, non-blocking state-driven notifications (like the existing `resultMessage` state tied to an `aria-live="assertive"` element). This provides a better UX by rendering the error directly in the UI without freezing the app.
+
+- **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
+
+- **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.

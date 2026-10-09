@@ -69,7 +69,12 @@
 **Vulnerability:** The frontend component `SignatureCapture.tsx` logged the raw base64 `dataUrl` of the customer's signature to the browser console upon successful capture (e.g., `console.log('Saved Signature:', dataUrl);`).
 **Learning:** Logging sensitive data, even on successful operations, to the client-side console can expose PII (like signatures) to installed extensions or potential XSS vectors. This is a continuation of the information disclosure pattern seen previously with error logging.
 **Prevention:** Avoid logging sensitive payloads, PII, or raw user inputs to the frontend console, whether in error handlers or success paths. Use safe, generic confirmation messages (e.g., `console.log('Signature saved successfully');`).
-\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/sentinel.md`).** Do not edit or create journal files for other personas.\n
+
+
+## Important Process Rules
+- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
+- **Only write your journal to your matching file (`.jules/sentinel.md`).** Do not edit or create journal files for other personas.
+
 ## Additive Documentation & Scratch Cleanliness Directives
 - **Strictly Additive Journal Updates**: When updating `.jules/*.md`, strictly append new dated entries (`## YYYY-MM-DD - Title`). NEVER delete, truncate, or overwrite historical learnings or previous entries.
 - **Substantive Code Diff Requirement**: Pull requests must include substantive code changes in `src/`, `app/`, `lib/`, or `tests/`. Never open PRs that modify only `.jules/*.md` journals or root scratch scripts.
@@ -79,3 +84,7 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
+
+- **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
+
+- **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
