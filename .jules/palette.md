@@ -77,3 +77,7 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
+
+## 2026-10-07 - Non-Blocking Notifications Over Alerts
+**Learning:** Using the native `alert()` in React components blocks the main thread, halting user interaction and breaking the seamless flow of the application, especially on mobile PWAs where users expect a fluid experience. This is also inaccessible to screen readers that cannot gracefully parse or bypass blocking alerts in context.
+**Action:** Replace `alert()` usage with accessible, non-blocking state-driven notifications (like the existing `resultMessage` state tied to an `aria-live="assertive"` element). This provides a better UX by rendering the error directly in the UI without freezing the app.

@@ -119,7 +119,10 @@ export const ChemicalLog: React.FC = () => {
       }
     } catch (e) {
       console.error('Camera access error');
-      alert('Camera access unavailable. You can use file upload instead.');
+      setResultMessage({
+        type: 'warning',
+        text: 'Camera access unavailable. You can use file upload instead.',
+      });
       setCameraActive(false);
     }
   };
