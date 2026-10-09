@@ -330,3 +330,75 @@ code {
   outline: 2px solid var(--text-h);
   outline-offset: 2px;
 }
+
+/* TimeTracker Styles */
+.time-tracker-container {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--bg);
+  box-shadow: var(--shadow);
+}
+
+.time-tracker-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  margin-top: 0;
+}
+
+.time-tracker-alert {
+  color: #991b1b;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 8px 12px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.time-tracker-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-clock-in,
+.btn-clock-out {
+  padding: 8px 16px;
+  color: white;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.btn-clock-in {
+  background-color: #22c55e;
+}
+
+.btn-clock-in:hover:not(:disabled) {
+  background-color: #16a34a;
+}
+
+.btn-clock-out {
+  background-color: #ef4444;
+}
+
+.btn-clock-out:hover:not(:disabled) {
+  background-color: #dc2626;
+}
+
+.btn-clock-in:disabled,
+.btn-clock-out:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-clock-in:focus-visible,
+.btn-clock-out:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text-h);
+}
