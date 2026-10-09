@@ -5,9 +5,35 @@
 ## 2026-09-28 - Multi-tenant Missing tenant_id Indexes
 **Learning:** Found multiple tables (`users`, `routes`, `training_courses`, `canvass_pins`, `commissions`, `service_contracts`, `contact_logs`, `internal_notes`, `onboarding_checklists`, `notification_queue`) missing explicitly defined indexes for `tenant_id`. In this multi-tenant architecture, virtually all queries will filter by `tenant_id`. Without explicit indexes, these queries will degenerate into full table scans causing severe performance bottlenecks.
 **Action:** When adding new tables that belong to a tenant, always explicitly add a `CREATE INDEX` on the `tenant_id` column as part of the schema creation migration to ensure optimal query performance.
+
 ## 2024-10-24 - Testing Migrations with PGlite
 **Learning:** PGlite has issues parsing `CREATE EXTENSION` directives dynamically if they aren't pre-loaded into the configuration of the client.
 **Action:** When testing migrations locally via `pglite`, manually remove `CREATE EXTENSION` statements from the script content before evaluating, or preload them via the `extensions` parameter.
+
+## 2026-09-29 - Surgical Optimization Edits and No Scratch Script Commits
+**Learning:** Running whole-file formatters or regenerating entire components while performing performance optimizations introduces massive whitespace/formatting diffs (1,000+ lines), masking the real optimization, invalidating git blame, and causing painful merge conflicts with concurrent PRs. Additionally, committing scratch benchmark or patch scripts (`patch_*.py`, `test.cjs`) pollutes production repositories and triggers CI guardrail failures.
+**Action:** Restrict all algorithmic and performance optimizations to strictly scoped replacement chunks. Diff size must reflect only the functional optimization. Always clean up temporary benchmark or patch scripts with `git rm -f` before committing.
+
+## 2026-09-30 - Multi-Commit Retention & Foreign Key Indexes
+**Learning:** When generating multi-commit Pull Requests, bots risk accidentally dropping, reverting, or deleting domain deliverables staged in earlier commits (such as database migrations `*.sql`) when attempting secondary optimizations (like frontend React memoizations). Furthermore, new SQL migration scripts must check `main` to ensure chronological, non-colliding numeric prefixes (e.g., `018_...`).
+**Action:** Never delete or discard previously staged schema migrations or architectural deliverables across multi-commit branches. Verify sequential numbering against existing files in `shared/database/` before naming migrations. Ensure frontend memoization (`useMemo`) and database indexing are cleanly committed without dropping either enhancement.
+
+## 2026-10-01 - Never dynamically create or modify package.json for testing
+**Learning:** During optimization efforts, attempting to install ad-hoc testing dependencies (like `@electric-sql/pglite`) dynamically creates or modifies `package.json` and `package-lock.json` in the root repository. This violates the core constraints against modifying these files without explicit instructions. It also pollutes the commit space and triggers blocking code review failures.
+**Action:** When testing optimizations, utilize existing environment tools (like Python with `pglite` or locally available Node scripts without `npm install`). Never invoke `npm install` or generate `package.json` files unless specifically instructed. Ensure `git status` reveals no unauthorized files before proceeding to submit.
+
+## 2026-10-02 - Image Lazy Loading, Cumulative Layout Shift Prevention & Mandatory Journaling
+**Learning:** Loading property and media images eagerly consumes technician mobile bandwidth and degrades initial First Contentful Paint (FCP). Adding native `loading="lazy"` defers off-screen asset requests. However, unconstrained lazy images cause Cumulative Layout Shift (CLS) when scrolled into viewport. Furthermore, omitting task learnings from `.jules/bolt.md` causes repetitive re-discovery of known patterns.
+**Action:** Always add `loading="lazy"` to repeated image grids and media lists. Pair with fixed dimension classes or aspect ratio containers (e.g. Tailwind `aspect-video`, `h-32 object-cover`) to eliminate CLS. Always append newly implemented optimization patterns to `.jules/bolt.md` before opening the Pull Request.
+\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/bolt.md`).** Do not edit or create journal files for other personas.\n
+
+## 2026-10-05 - Multi-Commit Retention & Foreign Key Indexes Part 3
+**Learning:** Even late-stage domain expansion (like Feature #17-20 in 020_platform_hardening.sql) might introduce foreign keys that are missing corresponding indexes. These indexes are essential for avoiding table scans during ON DELETE CASCADE and JOIN operations.
+**Action:** Created `shared/database/021_missing_fk_indexes_pt3.sql` to cleanly add the missing foreign key indexes (`api_usage_metrics(tenant_id)`, `audit_logs(actor_id)`, etc.) safely without polluting previous migrations.
+
+## 2026-10-08 - Route-based Code Splitting to Reduce Initial Bundle Size
+**Learning:** The tech-portal Vite React application was importing heavy dependencies like `react-leaflet` and `react-signature-canvas` statically in the main entry point (App.tsx), bloating the initial main chunk and negatively impacting Time To Interactive (TTI).
+**Action:** Replaced static route imports with `React.lazy()` and `<Suspense>` boundaries in `App.tsx`. This splits individual routes into separate chunks that are loaded on demand.
 
 ## Prevention Directives for Automated Refactoring
 - **Never Overwrite Complete Files**: Always use range-scoped replacement chunks for edits to `schema.prisma`, `index.ts`, `public/index.php`, `db/schema.rb`, or DDL SQL scripts.
@@ -33,10 +59,10 @@
 ## Assertiveness, Decisive PR Execution & Comparative Recommendations
 - **Proactive & Decisive PR Submission**: Do NOT repeatedly pause to ask permission to open a pull request (e.g., avoid "Would you like me to open a PR for this?", "Can I submit the PR?", "Should I go ahead and create the PR?"). When an optimization, fix, or feature satisfies requirements, passes local test runners/linters, and preserves architectural invariants, proceed decisively to create and submit the Pull Request with a clear, structured summary and rationale.
 - **Explicit Recommendations on Options**: When presenting multiple implementation strategies or architecture options (e.g., Option A vs. Option B), NEVER leave the choice open-ended or passive. Always make an explicit, reasoned recommendation (prefixed with `(Recommended)`) based on **overall technical effectiveness**:
-  1. *Algorithmic & Complexity Gains*: Time and space complexity impact (O(N*M) -> O(N+M), reduction of nested scans).
-  2. *Resource Overhead*: Heap allocations, memory pressure, and GC pause reduction.
-  3. *Domain & Architecture Invariants*: Strict backward compatibility, contract stability, and prevention of regression risks.
-  4. *Security & Reliability*: Input validation, cryptographic safety, and concurrency safety.
+1. *Algorithmic & Complexity Gains*: Time and space complexity impact (O(N*M) -> O(N+M), reduction of nested scans).
+2. *Resource Overhead*: Heap allocations, memory pressure, and GC pause reduction.
+3. *Domain & Architecture Invariants*: Strict backward compatibility, contract stability, and prevention of regression risks.
+4. *Security & Reliability*: Input validation, cryptographic safety, and concurrency safety.
 - **Lead with Recommended Path**: State clearly why the recommended solution delivers the highest net value and immediately execute or propose it as the primary course of action rather than asking open-ended questions.
 
 ## Scope Verification, Minimal Churn & CI Protection Directives
@@ -45,25 +71,6 @@
 - **Zero Scratch File Commits**: Never stage or commit ad-hoc verification, patch, or debug scripts (`test.cjs`, `fix_*.cjs`, `fix_*.php`, `patch_*.py`, `patch_*.sh`, `scratch_*`). Execute checks via the project's native test commands (`npm test`, `pytest`, `phpunit`, etc.) and delete temporary scripts before creating git commits.
 - **Never Weaken CI Workflows**: Do not modify `.github/workflows/**` to bypass failures (e.g. adding `|| true`, setting `continue-on-error: true`, or commenting out assertions). Always resolve the defect in the source code or test fixture.
 - **Explicit Parameter & Variable Types**: In TypeScript files, avoid implicit `any` by always providing explicit types on functions, parameters, and arrow callbacks (e.g. `(id: string) => ...`). Verify zero type errors with `tsc --noEmit` before committing.
-
-## 2026-09-29 - Surgical Optimization Edits and No Scratch Script Commits
-**Learning:** Running whole-file formatters or regenerating entire components while performing performance optimizations introduces massive whitespace/formatting diffs (1,000+ lines), masking the real optimization, invalidating git blame, and causing painful merge conflicts with concurrent PRs. Additionally, committing scratch benchmark or patch scripts (`patch_*.py`, `test.cjs`) pollutes production repositories and triggers CI guardrail failures.
-**Action:** Restrict all algorithmic and performance optimizations to strictly scoped replacement chunks. Diff size must reflect only the functional optimization. Always clean up temporary benchmark or patch scripts with `git rm -f` before committing.
-
-## 2026-09-30 - Multi-Commit Retention & Foreign Key Indexes
-**Learning:** When generating multi-commit Pull Requests, bots risk accidentally dropping, reverting, or deleting domain deliverables staged in earlier commits (such as database migrations `*.sql`) when attempting secondary optimizations (like frontend React memoizations). Furthermore, new SQL migration scripts must check `main` to ensure chronological, non-colliding numeric prefixes (e.g., `018_...`).
-**Action:** Never delete or discard previously staged schema migrations or architectural deliverables across multi-commit branches. Verify sequential numbering against existing files in `shared/database/` before naming migrations. Ensure frontend memoization (`useMemo`) and database indexing are cleanly committed without dropping either enhancement.
-## 2026-10-01 - Never dynamically create or modify package.json for testing
-**Learning:** During optimization efforts, attempting to install ad-hoc testing dependencies (like `@electric-sql/pglite`) dynamically creates or modifies `package.json` and `package-lock.json` in the root repository. This violates the core constraints against modifying these files without explicit instructions. It also pollutes the commit space and triggers blocking code review failures.
-**Action:** When testing optimizations, utilize existing environment tools (like Python with `pglite` or locally available Node scripts without `npm install`). Never invoke `npm install` or generate `package.json` files unless specifically instructed. Ensure `git status` reveals no unauthorized files before proceeding to submit.
-
-## 2026-10-02 - Image Lazy Loading, Cumulative Layout Shift Prevention & Mandatory Journaling
-**Learning:** Loading property and media images eagerly consumes technician mobile bandwidth and degrades initial First Contentful Paint (FCP). Adding native `loading="lazy"` defers off-screen asset requests. However, unconstrained lazy images cause Cumulative Layout Shift (CLS) when scrolled into viewport. Furthermore, omitting task learnings from `.jules/bolt.md` causes repetitive re-discovery of known patterns.
-**Action:** Always add `loading="lazy"` to repeated image grids and media lists. Pair with fixed dimension classes or aspect ratio containers (e.g. Tailwind `aspect-video`, `h-32 object-cover`) to eliminate CLS. Always append newly implemented optimization patterns to `.jules/bolt.md` before opening the Pull Request.
-\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/bolt.md`).** Do not edit or create journal files for other personas.\n
-## 2026-10-05 - Multi-Commit Retention & Foreign Key Indexes Part 3
-**Learning:** Even late-stage domain expansion (like Feature #17-20 in 020_platform_hardening.sql) might introduce foreign keys that are missing corresponding indexes. These indexes are essential for avoiding table scans during ON DELETE CASCADE and JOIN operations.
-**Action:** Created `shared/database/021_missing_fk_indexes_pt3.sql` to cleanly add the missing foreign key indexes (`api_usage_metrics(tenant_id)`, `audit_logs(actor_id)`, etc.) safely without polluting previous migrations.
 
 ## Additive Documentation & Scratch Cleanliness Directives
 - **Strictly Additive Journal Updates**: When updating `.jules/*.md`, strictly append new dated entries (`## YYYY-MM-DD - Title`). NEVER delete, truncate, or overwrite historical learnings or previous entries.
