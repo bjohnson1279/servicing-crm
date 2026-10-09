@@ -6,11 +6,11 @@ interface TimeTrackerProps {
 }
 
 export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange }) => {
-  const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<'in' | 'out' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const clockIn = async () => {
-    setLoading(true);
+    setActiveAction('in');
     setError(null);
     try {
       const res = await fetch(`http://localhost:8000/api/jobs/${jobId}/clock-in`, {
@@ -21,12 +21,12 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
 
   const clockOut = async () => {
-    setLoading(true);
+    setActiveAction('out');
     setError(null);
     try {
       const res = await fetch(`http://localhost:8000/api/jobs/${jobId}/clock-out`, {
@@ -37,7 +37,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
 
@@ -48,17 +48,19 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
       <div className="flex gap-2">
         <button
           onClick={clockIn}
-          disabled={loading}
-          className="bg-green-500 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 transition-colors"
+          disabled={activeAction !== null}
+          aria-busy={activeAction === 'in'}
+          className={`bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 transition-colors ${activeAction !== null ? 'opacity-50 cursor-not-allowed' : ''} ${activeAction === 'in' ? 'cursor-wait' : ''}`}
         >
-          Clock In
+          {activeAction === 'in' ? 'Clocking In...' : 'Clock In'}
         </button>
         <button
           onClick={clockOut}
-          disabled={loading}
-          className="bg-red-500 text-white px-4 py-2 rounded disabled:opacity-50 hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 transition-colors"
+          disabled={activeAction !== null}
+          aria-busy={activeAction === 'out'}
+          className={`bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 transition-colors ${activeAction !== null ? 'opacity-50 cursor-not-allowed' : ''} ${activeAction === 'out' ? 'cursor-wait' : ''}`}
         >
-          Clock Out
+          {activeAction === 'out' ? 'Clocking Out...' : 'Clock Out'}
         </button>
       </div>
     </div>
