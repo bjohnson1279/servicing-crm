@@ -65,6 +65,11 @@
 **Learning:** Logging raw error objects in the frontend can inadvertently leak sensitive stack traces, PII, or internal application state to the client-side console, which is a common vector for information disclosure vulnerabilities.
 **Prevention:** Always sanitize error messages logged to the console on the frontend. Use generic, descriptive string messages (e.g., `console.error('Failed to sync item');`) and never pass raw `Error` instances, payloads, or unhandled exceptions directly to logging functions accessible to end users.
 
+## 2026-10-10 - [Insecure File Upload Handling / DoS Risk]
+**Vulnerability:** Frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) lacked file size and type validation before processing uploads. This allowed potentially massive (e.g. 50MB+) or malicious non-image files to be read into client memory via `FileReader` as Base64 strings and transmitted to the server.
+**Learning:** Accepting file uploads without strict client-side (and server-side) constraints is a classic Denial of Service (DoS) and memory exhaustion vector, especially in constrained frontend environments (like mobile browsers running PWAs) which can easily crash when reading massive files into the main thread.
+**Prevention:** Always implement explicit file size limits (e.g. `file.size > 5 * 1024 * 1024`) and mime-type checks (e.g. `file.type.startsWith('image/')`) synchronously before invoking `FileReader` or submitting the `FormData` payload.
+
 ## 2026-10-02 - [Information Disclosure via Raw Success Logging]
 **Vulnerability:** The frontend component `SignatureCapture.tsx` logged the raw base64 `dataUrl` of the customer's signature to the browser console upon successful capture (e.g., `console.log('Saved Signature:', dataUrl);`).
 **Learning:** Logging sensitive data, even on successful operations, to the client-side console can expose PII (like signatures) to installed extensions or potential XSS vectors. This is a continuation of the information disclosure pattern seen previously with error logging.

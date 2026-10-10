@@ -19,6 +19,7 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [caption, setCaption] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const fetchPhotos = async () => {
     try {
@@ -36,6 +37,16 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Invalid file type. Only images are allowed.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      setError('File size must be under 5MB.');
+      return;
+    }
+    setError(null);
 
     setLoading(true);
     const formData = new FormData();
@@ -60,6 +71,11 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
   return (
     <div className="p-4 bg-white rounded shadow">
       <h3 className="text-lg font-bold mb-4">Property Photos</h3>
+      {error && (
+        <div role="alert" aria-live="assertive" className="mb-4 text-red-700 bg-red-50 p-2 rounded border border-red-200">
+          {error}
+        </div>
+      )}
       
       <form onSubmit={handleUpload} className="mb-4">
         <div className="mb-2">
