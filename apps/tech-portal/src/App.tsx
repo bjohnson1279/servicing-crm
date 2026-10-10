@@ -1,6 +1,7 @@
 import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import './offlineQueue';
+import { syncCallbackOutcomes } from './callbackOfflineQueue';
 
 // ⚡ Bolt Optimization: Lazy load route components to reduce initial bundle size,
 // specifically delaying the loading of heavy dependencies like react-leaflet and react-signature-canvas
@@ -13,6 +14,9 @@ function App() {
   const [notification, setNotification] = useState<string | null>(null);
 
   useEffect(() => {
+    void syncCallbackOutcomes();
+    const callbackSync = (event: Event) => setNotification((event as CustomEvent<string>).detail);
+    window.addEventListener('callback_sync', callbackSync);
     let timeoutId: number;
     const evtSource = new EventSource('http://localhost:8000/api/events');
     evtSource.addEventListener('job_assigned', (e) => {
@@ -21,6 +25,7 @@ function App() {
       timeoutId = window.setTimeout(() => setNotification(null), 5000); // Auto-hide after 5s
     });
     return () => {
+      window.removeEventListener('callback_sync', callbackSync);
       clearTimeout(timeoutId);
       evtSource.close();
     };

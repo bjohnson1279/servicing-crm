@@ -1,0 +1,44 @@
+scalar CallbackJSON
+
+type CallbackCase {
+  id: UUID!
+  tenant_id: UUID!
+  customer_id: UUID!
+  property_id: UUID!
+  source_job_id: UUID
+  contract_id: UUID
+  property_address: String
+  customer_name: String
+  pest_code: String!
+  description: String!
+  state: String!
+  coverage: String!
+  coverage_reason: String
+  billing_disposition: String
+  reported_at: DateTime!
+  response_due_at: DateTime!
+  resolved_at: DateTime
+  resolution_summary: String
+  version: Int!
+  events: CallbackJSON!
+  visits: CallbackJSON!
+  attachments: CallbackJSON!
+  quote: CallbackJSON
+  source_visit: CallbackJSON
+}
+type CallbackPage { items: [CallbackCase!]! }
+extend type Query {
+  callbacks(state: String, customer_id: UUID, job_id: UUID, limit: Int, offset: Int): CallbackPage!
+  callback(id: UUID!): CallbackCase!
+  callbackOptions: CallbackJSON!
+  callbackSettings: CallbackJSON!
+  warrantyPolicies: CallbackJSON!
+  callbackReport(from: DateTime): CallbackJSON!
+}
+extend type Mutation {
+  createCallback(input: CallbackJSON!): CallbackCase!
+  updateCallback(action: String!, input: CallbackJSON!): CallbackCase!
+  createWarrantyPolicy(input: CallbackJSON!): CallbackJSON!
+  assignWarrantyPolicy(input: CallbackJSON!): CallbackJSON!
+  setCallbacksEnabled(enabled: Boolean!): CallbackJSON!
+}

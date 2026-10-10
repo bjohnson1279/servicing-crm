@@ -1,0 +1,92 @@
+// Scalar mappings; PostgreSQL migration 022 owns FK constraints and transactional commands.
+model WarrantyPolicyVersion {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  name String @db.VarChar(120)
+  version Int
+  reportingWindowDays Int @map("reporting_window_days")
+  coveredPests Json @map("covered_pests")
+  exclusions String @default("")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([tenantId,name,version])
+  @@unique([tenantId,id])
+  @@map("warranty_policy_versions")
+}
+model ServiceCallback {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  customerId String @map("customer_id") @db.Uuid
+  propertyId String @map("property_id") @db.Uuid
+  sourceJobId String? @map("source_job_id") @db.Uuid
+  contractId String? @map("contract_id") @db.Uuid
+  pestCode String @map("pest_code") @db.VarChar(80)
+  description String
+  preferredAvailability String @default("") @map("preferred_availability")
+  state String @default("submitted") @db.VarChar(30)
+  coverage String @default("manual_review") @db.VarChar(20)
+  coverageReason String @default("Warranty terms require staff review") @map("coverage_reason")
+  policySnapshot Json? @map("policy_snapshot")
+  billingDisposition String? @map("billing_disposition") @db.VarChar(20)
+  quoteId String? @unique @map("quote_id") @db.Uuid
+  assignedCsrId String? @map("assigned_csr_id") @db.Uuid
+  reportedAt DateTime @default(now()) @map("reported_at") @db.Timestamptz(6)
+  responseDueAt DateTime @default(dbgenerated("now() + interval '1 day'")) @map("response_due_at") @db.Timestamptz(6)
+  firstResponseAt DateTime? @map("first_response_at") @db.Timestamptz(6)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
+  resolutionCode String? @map("resolution_code") @db.VarChar(80)
+  resolutionSummary String? @map("resolution_summary")
+  version Int @default(1)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  intakeKey String @map("intake_key") @db.Uuid
+  @@unique([tenantId,intakeKey])
+  @@unique([tenantId,id])
+  @@index([tenantId,state,createdAt],map:"callbacks_queue")
+  @@index([tenantId,propertyId,sourceJobId],map:"callbacks_property")
+  @@index([tenantId,assignedCsrId,responseDueAt],map:"callbacks_assignee")
+  @@map("service_callbacks")
+}
+model CallbackVisit {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  callbackId String @map("callback_id") @db.Uuid
+  jobId String @unique @map("job_id") @db.Uuid
+  sequence Int
+  requestKey String @map("request_key") @db.Uuid
+  findings String?
+  resolutionCode String? @map("resolution_code") @db.VarChar(80)
+  summary String?
+  followUp Boolean? @map("follow_up")
+  outcomeKey String? @map("outcome_key") @db.Uuid
+  outcomeAt DateTime? @map("outcome_at") @db.Timestamptz(6)
+  laborRateSnapshot Decimal? @map("labor_rate_snapshot") @db.Decimal(10,2)
+  materialCost Decimal? @map("material_cost") @db.Decimal(10,2)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@unique([callbackId,sequence])
+  @@unique([callbackId,requestKey])
+  @@map("callback_visits")
+}
+model CallbackEvent {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  callbackId String @map("callback_id") @db.Uuid
+  actorId String @map("actor_id") @db.Uuid
+  action String @db.VarChar(40)
+  details Json @default("{}")
+  customerMessage String? @map("customer_message")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@index([callbackId,createdAt],map:"callback_events_case")
+  @@map("callback_events")
+}
+model CallbackAttachment {
+  id String @id @default(uuid()) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+  callbackId String @map("callback_id") @db.Uuid
+  actorId String @map("actor_id") @db.Uuid
+  name String @db.VarChar(160)
+  mediaType String @map("media_type") @db.VarChar(30)
+  data Bytes
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  @@index([callbackId],map:"callback_attachments_case")
+  @@map("callback_attachments")
+}

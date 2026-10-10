@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { TimeTracker } from './TimeTracker';
+import CallbackWorkspace from './callbacks/CallbackWorkspace';
+import { queueCallbackOutcome } from '../callbackOfflineQueue';
+import { CallbackDrafts } from './CallbackDrafts';
 
 type JobStatus = 'Available' | 'En Route' | 'On Site' | 'Completed';
 
@@ -17,6 +20,8 @@ export const JobDetail: React.FC = () => {
   return (
     <div>
       <h2>Job Detail - {id}</h2>
+      <details><summary>Callback context and outcome</summary><CallbackWorkspace mode="technician" jobId={id} queueOutcome={queueCallbackOutcome} /></details>
+      <CallbackDrafts jobId={id || ''} />
       <p>Current Status: <strong>{status}</strong></p>
       
       {status !== 'Completed' && (
