@@ -45,6 +45,15 @@ jobs:
             exit 1
           fi
 
+          # 3b. Reject Unauthorized / Errant Package Manager Lockfiles
+          ERRANT_LOCKFILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD | grep -E '(^|/)(pnpm-lock\.yaml|yarn\.lock)$' || true)
+          if [ -n "$ERRANT_LOCKFILES" ]; then
+            echo "❌ ERROR: PR introduces unauthorized package manager lockfile (pnpm-lock.yaml / yarn.lock). This repository standardizes strictly on npm (package-lock.json)."
+            echo "$ERRANT_LOCKFILES"
+            exit 1
+          fi
+
+
           # 4. Reject Destructive Line Deletions in Critical Entrypoints & Schemas
           DELETED_LINES=$(git diff --stat origin/${{ github.base_ref }}...HEAD | grep -E 'schema\.prisma|src/index\.ts|public/index\.php|docker/postgres/init/|db/schema\.rb|routes/|routes\.php' | awk '{print $5}' | grep '-' || true)
           for count in $DELETED_LINES; do

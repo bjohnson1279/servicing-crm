@@ -90,3 +90,8 @@
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
 
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
+
+## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
+**Learning:** Running `pnpm` in an npm-standardized workspace (`apps/tech-portal`) produces an errant `pnpm-lock.yaml` file containing thousands of unnecessary lines. Additionally, generating competing pull requests for the same optimization (e.g. PR #40 vs PR #42 for `useMemo` in `PropertyPhotos.tsx`) creates merge conflicts and clutters the review queue with stale, superseded branches.
+**Action:** Always use `npm` (`npm ci`, `npm test`) exclusively in directories configured with `package-lock.json`. Never generate or commit `pnpm-lock.yaml` or `yarn.lock`. Before opening a new PR, check for existing open PRs on the target component; if creating an updated revision, explicitly reference and close the superseded PR to maintain a clean single active workstream.
+

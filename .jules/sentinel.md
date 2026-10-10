@@ -88,3 +88,8 @@
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
 
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
+
+## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
+**Learning:** Security auditing tasks must not introduce competing duplicate PRs or errant package manager lockfiles (`pnpm-lock.yaml`, `yarn.lock`). Introducing alternative lockfiles creates merge conflicts with main and can introduce unvetted transitive dependency trees.
+**Action:** Always maintain strict package manager consistency with `package-lock.json` and standard `npm` commands. When revising a security patch or fixing review comments, update the existing branch rather than creating a duplicate PR.
+
