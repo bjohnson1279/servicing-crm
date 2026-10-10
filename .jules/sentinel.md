@@ -13,6 +13,34 @@
 **Learning:** API contracts and implementations in this multi-tenant architecture must never accept `tenantId` from client payloads. The tenant context must be securely inferred on the server-side from the authenticated user's session or token (e.g., JWT). Also, when modifying shared API contracts, we do not need to update frontend queries or backend resolvers since the `apps/` and `backends/` directories are currently empty scaffolding without implementation code.
 **Prevention:** Remove `tenantId` from client-facing input types and mutations. Ensure authentication middleware correctly extracts and injects the `tenantId` into the request context for downstream resolvers to use.
 
+## 2026-09-29 - Non-Destructive Security Patching & CI Protection
+**Learning:** Security patches must never weaken CI workflow files (`.github/workflows/**`) by appending `|| true` or `continue-on-error: true` to suppress test/build failures. Furthermore, when adding defensive type assertions or input validators in TypeScript, omitting explicit types can introduce `TS7006: Parameter implicitly has an 'any' type`.
+**Action:** Never modify CI workflow definitions to bypass test failures; resolve the underlying issue in source code or test fixtures. Always provide explicit types on newly introduced parameters and helper functions. Ensure zero scratch scripts (`fix_*.php`, `test_*.js`) are committed.
+
+## 2026-09-30 - [IDOR in GraphQL Schema Fixed & Monorepo Guard]
+**Vulnerability:** The API contract `schema.graphql` previously accepted `salesRepId` in the `createCanvassPin` mutation and `commissions` query. Allowing this parameter creates an IDOR risk, enabling sales representatives to retrieve commissions or submit pins on behalf of other reps.
+**Learning:** Similar to the previously fixed `tenantId` IDOR, API definitions must never trust user-supplied identifiers (such as `salesRepId`) when the backend can definitively resolve them from the authenticated session context. Furthermore, when attempting to resolve CI build issues, bots must NEVER fabricate `.gitmodules` entries pointing to speculative remote URLs that do not exist or force `submodules: true` in CI checkouts without verifying remote repository accessibility.
+**Prevention:** Remove `salesRepId` from GraphQL input arguments and mutations. Infer user context exclusively from JWT tokens or session context. Verify repository cleanliness and do not alter submodule configurations without existing public remotes.
+
+## 2026-10-01 - [Information Disclosure via Raw Error Logging]
+**Vulnerability:** Frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) and offline handlers (`offlineQueue.ts`) were logging raw error objects and payloads directly to the browser console (e.g., `console.error('Failed to sync item', item, e);`).
+**Learning:** Logging raw error objects in the frontend can inadvertently leak sensitive stack traces, PII, or internal application state to the client-side console, which is a common vector for information disclosure vulnerabilities.
+**Prevention:** Always sanitize error messages logged to the console on the frontend. Use generic, descriptive string messages (e.g., `console.error('Failed to sync item');`) and never pass raw `Error` instances, payloads, or unhandled exceptions directly to logging functions accessible to end users.
+
+## 2026-10-02 - [Information Disclosure via Raw Success Logging]
+**Vulnerability:** The frontend component `SignatureCapture.tsx` logged the raw base64 `dataUrl` of the customer's signature to the browser console upon successful capture (e.g., `console.log('Saved Signature:', dataUrl);`).
+**Learning:** Logging sensitive data, even on successful operations, to the client-side console can expose PII (like signatures) to installed extensions or potential XSS vectors. This is a continuation of the information disclosure pattern seen previously with error logging.
+**Prevention:** Avoid logging sensitive payloads, PII, or raw user inputs to the frontend console, whether in error handlers or success paths. Use safe, generic confirmation messages (e.g., `console.log('Signature saved successfully');`).
+\n\n## Important Process Rules\n- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.\n- **Only write your journal to your matching file (`.jules/sentinel.md`).** Do not edit or create journal files for other personas.\n
+
+## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
+**Learning:** Security auditing tasks must not introduce competing duplicate PRs or errant package manager lockfiles (`pnpm-lock.yaml`, `yarn.lock`). Introducing alternative lockfiles creates merge conflicts with main and can introduce unvetted transitive dependency trees.
+**Action:** Always maintain strict package manager consistency with `package-lock.json` and standard `npm` commands. When revising a security patch or fixing review comments, update the existing branch rather than creating a duplicate PR.
+
+## 2026-10-10 - [Insecure File Upload Handling / DoS Risk]
+**Vulnerability:** Frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) lacked file size and type validation before processing uploads. This allowed potentially massive (e.g. 50MB+) or malicious non-image files to be read into client memory via `FileReader` as Base64 strings and transmitted to the server.
+**Learning:** Accepting file uploads without strict client-side (and server-side) constraints is a classic Denial of Service (DoS) and memory exhaustion vector, especially in constrained frontend environments (like mobile browsers running PWAs) which can easily crash when reading massive files into the main thread.
+**Prevention:** Always implement explicit file size limits (e.g. `file.size > 5 * 1024 * 1024`) and mime-type checks (e.g. `file.type.startsWith('image/')`) synchronously before invoking `FileReader` or submitting the `FormData` payload.
 
 ## Prevention Directives for Automated Refactoring
 - **Never Overwrite Complete Files**: Always use range-scoped replacement chunks for edits to `schema.prisma`, `index.ts`, `public/index.php`, `db/schema.rb`, or DDL SQL scripts.
@@ -38,10 +66,10 @@
 ## Assertiveness, Decisive PR Execution & Comparative Recommendations
 - **Proactive & Decisive PR Submission**: Do NOT repeatedly pause to ask permission to open a pull request (e.g., avoid "Would you like me to open a PR for this?", "Can I submit the PR?", "Should I go ahead and create the PR?"). When an optimization, fix, or feature satisfies requirements, passes local test runners/linters, and preserves architectural invariants, proceed decisively to create and submit the Pull Request with a clear, structured summary and rationale.
 - **Explicit Recommendations on Options**: When presenting multiple implementation strategies or architecture options (e.g., Option A vs. Option B), NEVER leave the choice open-ended or passive. Always make an explicit, reasoned recommendation (prefixed with `(Recommended)`) based on **overall technical effectiveness**:
-  1. *Algorithmic & Complexity Gains*: Time and space complexity impact (O(N*M) -> O(N+M), reduction of nested scans).
-  2. *Resource Overhead*: Heap allocations, memory pressure, and GC pause reduction.
-  3. *Domain & Architecture Invariants*: Strict backward compatibility, contract stability, and prevention of regression risks.
-  4. *Security & Reliability*: Input validation, cryptographic safety, and concurrency safety.
+1. *Algorithmic & Complexity Gains*: Time and space complexity impact (O(N*M) -> O(N+M), reduction of nested scans).
+2. *Resource Overhead*: Heap allocations, memory pressure, and GC pause reduction.
+3. *Domain & Architecture Invariants*: Strict backward compatibility, contract stability, and prevention of regression risks.
+4. *Security & Reliability*: Input validation, cryptographic safety, and concurrency safety.
 - **Lead with Recommended Path**: State clearly why the recommended solution delivers the highest net value and immediately execute or propose it as the primary course of action rather than asking open-ended questions.
 
 ## Scope Verification, Minimal Churn & CI Protection Directives
@@ -50,26 +78,6 @@
 - **Zero Scratch File Commits**: Never stage or commit ad-hoc verification, patch, or debug scripts (`test.cjs`, `fix_*.cjs`, `fix_*.php`, `patch_*.py`, `patch_*.sh`, `scratch_*`). Execute checks via the project's native test commands (`npm test`, `pytest`, `phpunit`, etc.) and delete temporary scripts before creating git commits.
 - **Never Weaken CI Workflows**: Do not modify `.github/workflows/**` to bypass failures (e.g. adding `|| true`, setting `continue-on-error: true`, or commenting out assertions). Always resolve the defect in the source code or test fixture.
 - **Explicit Parameter & Variable Types**: In TypeScript files, avoid implicit `any` by always providing explicit types on functions, parameters, and arrow callbacks (e.g. `(id: string) => ...`). Verify zero type errors with `tsc --noEmit` before committing.
-
-## 2026-09-29 - Non-Destructive Security Patching & CI Protection
-**Learning:** Security patches must never weaken CI workflow files (`.github/workflows/**`) by appending `|| true` or `continue-on-error: true` to suppress test/build failures. Furthermore, when adding defensive type assertions or input validators in TypeScript, omitting explicit types can introduce `TS7006: Parameter implicitly has an 'any' type`.
-**Action:** Never modify CI workflow definitions to bypass test failures; resolve the underlying issue in source code or test fixtures. Always provide explicit types on newly introduced parameters and helper functions. Ensure zero scratch scripts (`fix_*.php`, `test_*.js`) are committed.
-
-## 2026-09-30 - [IDOR in GraphQL Schema Fixed & Monorepo Guard]
-**Vulnerability:** The API contract `schema.graphql` previously accepted `salesRepId` in the `createCanvassPin` mutation and `commissions` query. Allowing this parameter creates an IDOR risk, enabling sales representatives to retrieve commissions or submit pins on behalf of other reps.
-**Learning:** Similar to the previously fixed `tenantId` IDOR, API definitions must never trust user-supplied identifiers (such as `salesRepId`) when the backend can definitively resolve them from the authenticated session context. Furthermore, when attempting to resolve CI build issues, bots must NEVER fabricate `.gitmodules` entries pointing to speculative remote URLs that do not exist or force `submodules: true` in CI checkouts without verifying remote repository accessibility.
-**Prevention:** Remove `salesRepId` from GraphQL input arguments and mutations. Infer user context exclusively from JWT tokens or session context. Verify repository cleanliness and do not alter submodule configurations without existing public remotes.
-
-## 2026-10-01 - [Information Disclosure via Raw Error Logging]
-**Vulnerability:** Frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) and offline handlers (`offlineQueue.ts`) were logging raw error objects and payloads directly to the browser console (e.g., `console.error('Failed to sync item', item, e);`).
-**Learning:** Logging raw error objects in the frontend can inadvertently leak sensitive stack traces, PII, or internal application state to the client-side console, which is a common vector for information disclosure vulnerabilities.
-**Prevention:** Always sanitize error messages logged to the console on the frontend. Use generic, descriptive string messages (e.g., `console.error('Failed to sync item');`) and never pass raw `Error` instances, payloads, or unhandled exceptions directly to logging functions accessible to end users.
-
-## 2026-10-02 - [Information Disclosure via Raw Success Logging]
-**Vulnerability:** The frontend component `SignatureCapture.tsx` logged the raw base64 `dataUrl` of the customer's signature to the browser console upon successful capture (e.g., `console.log('Saved Signature:', dataUrl);`).
-**Learning:** Logging sensitive data, even on successful operations, to the client-side console can expose PII (like signatures) to installed extensions or potential XSS vectors. This is a continuation of the information disclosure pattern seen previously with error logging.
-**Prevention:** Avoid logging sensitive payloads, PII, or raw user inputs to the frontend console, whether in error handlers or success paths. Use safe, generic confirmation messages (e.g., `console.log('Signature saved successfully');`).
-
 
 ## Important Process Rules
 - **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
@@ -88,8 +96,3 @@
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
 
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
-
-## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
-**Learning:** Security auditing tasks must not introduce competing duplicate PRs or errant package manager lockfiles (`pnpm-lock.yaml`, `yarn.lock`). Introducing alternative lockfiles creates merge conflicts with main and can introduce unvetted transitive dependency trees.
-**Action:** Always maintain strict package manager consistency with `package-lock.json` and standard `npm` commands. When revising a security patch or fixing review comments, update the existing branch rather than creating a duplicate PR.
-

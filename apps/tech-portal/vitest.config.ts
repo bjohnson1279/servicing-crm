@@ -6,7 +6,6 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     globals: true,
     environment: 'jsdom',
-    // Vitest v5 uses top‑level `threads` option instead of `poolOptions`
-    threads: { singleThread: true },
+    pool: 'threads',
   },
 });

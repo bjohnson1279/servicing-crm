@@ -148,6 +148,14 @@ export const ChemicalLog: React.FC = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        setResultMessage({ type: 'error', text: 'Invalid file type. Only images are allowed.' });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        setResultMessage({ type: 'error', text: 'File size must be under 5MB.' });
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setPhoto(reader.result as string);
