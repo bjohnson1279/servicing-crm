@@ -81,3 +81,7 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
+
+## 2026-10-09 - Prevent Component Recalculations for React Mapped Elements
+**Learning:** In React components like `PropertyPhotos`, dynamically mapping over arrays of data (e.g. `photos.map`) to create elements inline inside the JSX `return` block causes the entire list to be re-evaluated and re-created during every parent state update (such as typing into a caption input field).
+**Action:** Extract expensive list mappings into a `useMemo` block at the top level of the component (e.g., `const photoNodes = useMemo(() => photos.map(...), [photos])`) and render the memoized variable in the JSX. This caches the generated nodes and bypasses unnecessary recalculations during unrelated sibling state changes.
