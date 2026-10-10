@@ -90,3 +90,7 @@
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
 
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
+
+## 2026-10-08 - Explicit Form Labeling & Role Grouping
+**Learning:** React elements without properly associated `<label>` attributes (using `htmlFor` matching the input's `id`) severely harm screen reader accessibility. Additionally, related inputs like a group of pest checkboxes must be semantically grouped. Simply wrapping them in a `<label>` or `<div>` without a `role` is insufficient. Screen readers require `role="group"` on the container and an `aria-labelledby` referencing an ID on the heading/description text to correctly announce the group's context when tabbing through.
+**Action:** Always verify that every form `<input>`, `<select>`, and `<textarea>` has a corresponding `id` correctly bound to a `<label htmlFor="...">`. For nested or multiple-choice checkbox arrays, wrap the container in `role="group"` with an explicit `aria-labelledby` targeting the group's textual heading.

@@ -268,10 +268,11 @@ export const ChemicalLog: React.FC = () => {
       <form onSubmit={handleSubmit} style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
         {/* Inventory Item Picker */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '14px', marginBottom: '6px', color: '#334155' }}>
+          <label htmlFor="inventory-item" style={{ display: 'block', fontWeight: 600, fontSize: '14px', marginBottom: '6px', color: '#334155' }}>
             Select Chemical from Inventory (Auto-deduct Stock)
           </label>
           <select
+            id="inventory-item"
             value={selectedItemId}
             onChange={handleItemSelect}
             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', background: '#f8fafc' }}
@@ -288,10 +289,11 @@ export const ChemicalLog: React.FC = () => {
         {/* Chemical Name & EPA Reg */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+            <label htmlFor="chemical-name" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
               Chemical Brand / Trade Name *
             </label>
             <input
+              id="chemical-name"
               type="text"
               required
               placeholder="e.g. Bifenthrin Pro"
@@ -301,10 +303,11 @@ export const ChemicalLog: React.FC = () => {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+            <label htmlFor="epa-reg" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
               EPA Registration #
             </label>
             <input
+              id="epa-reg"
               type="text"
               placeholder="e.g. 279-3206"
               value={epaRegistrationNo}
@@ -317,10 +320,11 @@ export const ChemicalLog: React.FC = () => {
         {/* Quantity and Unit */}
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+            <label htmlFor="quantity-applied" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
               Quantity Applied *
             </label>
             <input
+              id="quantity-applied"
               type="number"
               step="0.01"
               min="0.01"
@@ -331,10 +335,11 @@ export const ChemicalLog: React.FC = () => {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+            <label htmlFor="unit" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
               Unit *
             </label>
             <select
+              id="unit"
               value={unit}
               onChange={(e) => setUnit(e.target.value)}
               style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
@@ -350,10 +355,11 @@ export const ChemicalLog: React.FC = () => {
 
         {/* Application Method */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+          <label htmlFor="application-method" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
             Application Method
           </label>
           <select
+            id="application-method"
             value={applicationMethod}
             onChange={(e) => setApplicationMethod(e.target.value)}
             style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px' }}
@@ -366,10 +372,10 @@ export const ChemicalLog: React.FC = () => {
 
         {/* Target Pests Checkboxes */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '8px', color: '#334155' }}>
+          <div id="target-pests-label" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '8px', color: '#334155' }}>
             Target Pests Addressed
-          </label>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+          </div>
+          <div role="group" aria-labelledby="target-pests-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
             {COMMON_PESTS.map((pest) => {
               const checked = selectedPests.includes(pest);
               return (
@@ -403,10 +409,11 @@ export const ChemicalLog: React.FC = () => {
         {/* Weather Conditions */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+            <label htmlFor="temp" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
               Temperature
             </label>
             <input
+              id="temp"
               type="text"
               value={temp}
               onChange={(e) => setTemp(e.target.value)}
@@ -414,10 +421,11 @@ export const ChemicalLog: React.FC = () => {
             />
           </div>
           <div>
-            <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+            <label htmlFor="wind-speed" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
               Wind Speed (EPA drift guard)
             </label>
             <input
+              id="wind-speed"
               type="text"
               value={windSpeed}
               onChange={(e) => setWindSpeed(e.target.value)}
@@ -428,10 +436,11 @@ export const ChemicalLog: React.FC = () => {
 
         {/* Application Notes */}
         <div style={{ marginBottom: '16px' }}>
-          <label style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
+          <label htmlFor="notes" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
             Application Notes & Site Observations
           </label>
           <textarea
+            id="notes"
             rows={2}
             placeholder="e.g. Treated foundation perimeter 3ft up and 3ft out. No standing water observed."
             value={notes}
@@ -567,6 +576,7 @@ export const ChemicalLog: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
+            aria-busy={isSubmitting}
             style={{
               flex: 1,
               padding: '12px',
