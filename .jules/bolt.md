@@ -95,3 +95,7 @@
 **Learning:** Running `pnpm` in an npm-standardized workspace (`apps/tech-portal`) produces an errant `pnpm-lock.yaml` file containing thousands of unnecessary lines. Additionally, generating competing pull requests for the same optimization (e.g. PR #40 vs PR #42 for `useMemo` in `PropertyPhotos.tsx`) creates merge conflicts and clutters the review queue with stale, superseded branches.
 **Action:** Always use `npm` (`npm ci`, `npm test`) exclusively in directories configured with `package-lock.json`. Never generate or commit `pnpm-lock.yaml` or `yarn.lock`. Before opening a new PR, check for existing open PRs on the target component; if creating an updated revision, explicitly reference and close the superseded PR to maintain a clean single active workstream.
 
+
+## 2026-10-11 - Callbacks & Warranty Feature Missing Foreign Key Indexes
+**Learning:** The `022_callbacks_warranty.sql` migration introduced tables for the new callbacks and warranty feature (`warranty_policy_versions`, `callback_visits`, `callback_events`, `callback_attachments`). While these tables included foreign keys back to their parent records, they missed explicitly adding a `CREATE INDEX` on the `tenant_id` column. In a multi-tenant PostgreSQL architecture, failing to index `tenant_id` causes severe performance bottlenecks (full table scans).
+**Action:** Created `shared/database/023_callbacks_tenant_indexes.sql` to explicitly index `tenant_id` on the `warranty_policy_versions`, `callback_visits`, `callback_events`, and `callback_attachments` tables.
