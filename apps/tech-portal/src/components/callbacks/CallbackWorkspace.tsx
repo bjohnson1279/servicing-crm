@@ -10,8 +10,8 @@ interface Options {
 type Fields = Record<string, string>;
 const label = (value: string) => value.replace(/_/g, ' ');
 const closed = ['resolved', 'declined', 'cancelled'];
-const controls = 'border rounded p-2 w-full bg-white text-gray-900';
-const button = 'border rounded px-3 py-2 bg-blue-700 text-white disabled:opacity-50';
+const controls = 'border rounded p-2 w-full bg-white text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 hover:border-gray-400 transition-colors';
+const button = 'border rounded px-3 py-2 bg-blue-700 text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-blue-800 transition-colors';
 
 export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcome }: {
   mode: 'staff' | 'customer' | 'technician'; customerId?: string; jobId?: string;
@@ -65,7 +65,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
   function field(name: string, title: string, required = false, type = 'text') {
     return (
       <div className="block space-y-1" key={name}>
-        <label htmlFor={name}>{title}</label>
+        <label htmlFor={name}>{title}{required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}</label>
         <input id={name} className={controls} type={type} min={type === 'number' ? 0 : undefined} step={type === 'number' ? 'any' : undefined} value={fields[name] || ''} required={required}
           onChange={e => setFields(prev => ({ ...prev, [name]: e.target.value }))} />
       </div>
@@ -74,7 +74,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
   function choose(name: string, title: string, choices: { value: string; text: string }[], required = false) {
     return (
       <div className="block space-y-1">
-        <label htmlFor={name}>{title}</label>
+        <label htmlFor={name}>{title}{required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}</label>
         <select id={name} className={controls} required={required} value={fields[name] || ''}
           onChange={e => setFields(prev => ({ ...prev, [name]: e.target.value, ...(name === 'property_id' ? { source_job_id: '' } : {}) }))}>
           <option value="">Choose…</option>{choices.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
@@ -138,7 +138,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           {choose('source_job_id','Related completed visit (optional)',options.jobs.filter(j => j.property_id === fields.property_id).map(j => ({ value:j.id,text:new Date(j.completed_at).toLocaleString() })))}
           {field('pest_code','Pest or service issue',true)}
           <div className="block space-y-1">
-            <label htmlFor="description">What are you seeing?</label>
+            <label htmlFor="description">What are you seeing?<span className="text-red-500 ml-1" aria-hidden="true">*</span></label>
             <textarea id="description" className={controls} required maxLength={10000} value={fields.description || ''} onChange={e => setFields(prev => ({ ...prev,description:e.target.value }))} />
           </div>
           {field('preferred_availability','Preferred availability (optional)')}
