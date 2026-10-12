@@ -102,3 +102,7 @@
 ## 2026-10-15 - Explicit Form Labeling using htmlFor
 **Learning:** In the `CallbackWorkspace.tsx` component, form elements such as inputs, textareas, and selects were being wrapped implicitly inside `<label>` tags (e.g., `<label>Text <input/></label>`). While valid HTML, this implicit wrapping provides poor compatibility with some older screen readers and assistive technologies, and it violates the codebase's UX standards that dictate `<label htmlFor="...">` and `<input id="...">` pairings.
 **Action:** Always ensure that form labels are explicitly linked to their corresponding inputs using the `htmlFor` attribute on the `<label>` and the `id` attribute on the `<input>` or `<select>`. For dynamically rendered form helper functions like `field()` and `choose()`, use a `<div>` to structurally wrap the `<label>` and `<input>`, rather than nesting the input implicitly inside the label.
+
+## 2026-10-16 - Visual Required Indicators for Form Fields
+**Learning:** While using the HTML5 `required` attribute ensures screen readers correctly announce a field as required and provides native form validation, sighted users often struggle to identify required fields if they lack a clear visual indicator. This can lead to frustration and form submission errors.
+**Action:** Always complement the `required` attribute with a consistent visual indicator, such as a red asterisk (`*`), appended to the `<label>`. To prevent assistive technologies from redundantly reading the visual indicator (e.g., "star" or "asterisk"), wrap it in a `<span>` with `aria-hidden="true"`.
