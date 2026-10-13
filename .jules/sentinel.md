@@ -96,3 +96,8 @@
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
 
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
+
+## 2026-10-14 - Prevent DOM-based XSS with textContent
+**Vulnerability:** A component (`counter.ts`) directly assigned a variable using `.innerHTML = \`Count is ${counter}\``. While it currently expected a number, using `.innerHTML` when inserting text makes the application vulnerable to Cross-Site Scripting (XSS) if the variable's source or type ever changes to include user-controlled strings.
+**Learning:** Overusing `.innerHTML` when only plain text rendering is required establishes a dangerous pattern that can easily lead to DOM-based XSS when components are refactored or updated to accept dynamic inputs.
+**Prevention:** Always default to `.textContent` instead of `.innerHTML` when safely inserting dynamic content into the DOM, unless parsing HTML is an explicit and safe requirement.
