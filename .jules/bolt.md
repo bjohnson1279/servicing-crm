@@ -26,12 +26,6 @@
 **Learning:** Loading property and media images eagerly consumes technician mobile bandwidth and degrades initial First Contentful Paint (FCP). Adding native `loading="lazy"` defers off-screen asset requests. However, unconstrained lazy images cause Cumulative Layout Shift (CLS) when scrolled into viewport. Furthermore, omitting task learnings from `.jules/bolt.md` causes repetitive re-discovery of known patterns.
 **Action:** Always add `loading="lazy"` to repeated image grids and media lists. Pair with fixed dimension classes or aspect ratio containers (e.g. Tailwind `aspect-video`, `h-32 object-cover`) to eliminate CLS. Always append newly implemented optimization patterns to `.jules/bolt.md` before opening the Pull Request.
 
-
-## Important Process Rules
-- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
-- **Only write your journal to your matching file (`.jules/bolt.md`).** Do not edit or create journal files for other personas.
-
-
 ## 2026-10-05 - Multi-Commit Retention & Foreign Key Indexes Part 3
 **Learning:** Even late-stage domain expansion (like Feature #17-20 in 020_platform_hardening.sql) might introduce foreign keys that are missing corresponding indexes. These indexes are essential for avoiding table scans during ON DELETE CASCADE and JOIN operations.
 **Action:** Created `shared/database/021_missing_fk_indexes_pt3.sql` to cleanly add the missing foreign key indexes (`api_usage_metrics(tenant_id)`, `audit_logs(actor_id)`, etc.) safely without polluting previous migrations.
@@ -39,6 +33,30 @@
 ## 2026-10-08 - Route-based Code Splitting to Reduce Initial Bundle Size
 **Learning:** The tech-portal Vite React application was importing heavy dependencies like `react-leaflet` and `react-signature-canvas` statically in the main entry point (App.tsx), bloating the initial main chunk and negatively impacting Time To Interactive (TTI).
 **Action:** Replaced static route imports with `React.lazy()` and `<Suspense>` boundaries in `App.tsx`. This splits individual routes into separate chunks that are loaded on demand.
+
+## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
+**Learning:** Running `pnpm` in an npm-standardized workspace (`apps/tech-portal`) produces an errant `pnpm-lock.yaml` file containing thousands of unnecessary lines. Additionally, generating competing pull requests for the same optimization (e.g. PR #40 vs PR #42 for `useMemo` in `PropertyPhotos.tsx`) creates merge conflicts and clutters the review queue with stale, superseded branches.
+**Action:** Always use `npm` (`npm ci`, `npm test`) exclusively in directories configured with `package-lock.json`. Never generate or commit `pnpm-lock.yaml` or `yarn.lock`. Before opening a new PR, check for existing open PRs on the target component; if creating an updated revision, explicitly reference and close the superseded PR to maintain a clean single active workstream.
+
+## 2026-10-12 - Vitest Configuration and Thread Pool Harmonization on Windows
+**Learning:** Configuring `pool: 'threads'` in `vitest.config.ts` without `setupFiles` or file parallelism limits triggers worker process deadlocks and unhandled IPC timeouts (`[vitest-pool-runner]: Timeout waiting for worker to respond`) on Windows hosts. Additionally, frontend components relying on `localStorage` and `sessionStorage` fail during shallow rendering if in-memory storage mocks are absent from the test setup harness.
+**Action:** Always configure `pool: 'forks'`, `fileParallelism: false`, and `setupFiles: ['./setup.ts']` in Vitest configurations for React/Vite frontends. Provide robust in-memory `window.localStorage` and `window.sessionStorage` mocks in `setup.ts` to guarantee clean, deterministic test runs across all development environments and CI pipelines.
+
+## 2026-10-11 - Callbacks & Warranty Feature Missing Foreign Key Indexes
+**Learning:** The `022_callbacks_warranty.sql` migration introduced tables for the new callbacks and warranty feature (`warranty_policy_versions`, `callback_visits`, `callback_events`, `callback_attachments`). While these tables included foreign keys back to their parent records, they missed explicitly adding a `CREATE INDEX` on the `tenant_id` column. In a multi-tenant PostgreSQL architecture, failing to index `tenant_id` causes severe performance bottlenecks (full table scans).
+**Action:** Created `shared/database/023_callbacks_tenant_indexes.sql` to explicitly index `tenant_id` on the `warranty_policy_versions`, `callback_visits`, `callback_events`, and `callback_attachments` tables.
+
+## 2026-10-12 - Missing Foreign Key Indexes on New Tables
+**Learning:** While `023_callbacks_tenant_indexes.sql` addressed the catastrophic multi-tenant full table scans by indexing `tenant_id` on the new callbacks tables, several other foreign keys introduced in `022_callbacks_warranty.sql` (like `customer_id`, `actor_id`, and `callback_id`) were left unindexed. In PostgreSQL, foreign keys are not automatically indexed, leading to silent but massive join bottlenecks as data scales.
+**Action:** Always explicitly write `CREATE INDEX` statements for EVERY foreign key column introduced in a new table migration. Do not manually wrap the SQL script in `BEGIN;` and `COMMIT;` statements, as the migration runner typically manages the transaction lifecycle to preserve database atomicity (e.g., recording the migration success in `schema_migrations`).
+
+## 2026-10-13 - Missing Foreign Key Indexes from ALTER TABLE ADD COLUMN
+**Learning:** Migration 022 (`022_callbacks_warranty.sql`) introduced several new foreign key columns (`warranty_policy_id` on `service_contracts` and `jobs`, `source_job_id` on `jobs`) via `ALTER TABLE ADD COLUMN` statements, but failed to explicitly index them. Just like new tables, schema expansions with foreign keys require explicit `CREATE INDEX` statements in PostgreSQL to prevent severe full table scan bottlenecks on multi-tenant join queries.
+**Action:** Added `shared/database/025_warranty_fk_indexes.sql` to explicitly index `warranty_policy_id` and `source_job_id`. Always ensure that any `ALTER TABLE ADD COLUMN ... REFERENCES` statement is accompanied by a corresponding `CREATE INDEX`.
+
+## Important Process Rules
+- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
+- **Only write your journal to your matching file (`.jules/bolt.md`).** Do not edit or create journal files for other personas.
 
 ## Prevention Directives for Automated Refactoring
 - **Never Overwrite Complete Files**: Always use range-scoped replacement chunks for edits to `schema.prisma`, `index.ts`, `public/index.php`, `db/schema.rb`, or DDL SQL scripts.
@@ -86,16 +104,5 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
-
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
-
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
-
-## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
-**Learning:** Running `pnpm` in an npm-standardized workspace (`apps/tech-portal`) produces an errant `pnpm-lock.yaml` file containing thousands of unnecessary lines. Additionally, generating competing pull requests for the same optimization (e.g. PR #40 vs PR #42 for `useMemo` in `PropertyPhotos.tsx`) creates merge conflicts and clutters the review queue with stale, superseded branches.
-**Action:** Always use `npm` (`npm ci`, `npm test`) exclusively in directories configured with `package-lock.json`. Never generate or commit `pnpm-lock.yaml` or `yarn.lock`. Before opening a new PR, check for existing open PRs on the target component; if creating an updated revision, explicitly reference and close the superseded PR to maintain a clean single active workstream.
-
-## 2026-10-12 - Vitest Configuration and Thread Pool Harmonization on Windows
-**Learning:** Configuring `pool: 'threads'` in `vitest.config.ts` without `setupFiles` or file parallelism limits triggers worker process deadlocks and unhandled IPC timeouts (`[vitest-pool-runner]: Timeout waiting for worker to respond`) on Windows hosts. Additionally, frontend components relying on `localStorage` and `sessionStorage` fail during shallow rendering if in-memory storage mocks are absent from the test setup harness.
-**Action:** Always configure `pool: 'forks'`, `fileParallelism: false`, and `setupFiles: ['./setup.ts']` in Vitest configurations for React/Vite frontends. Provide robust in-memory `window.localStorage` and `window.sessionStorage` mocks in `setup.ts` to guarantee clean, deterministic test runs across all development environments and CI pipelines.
-

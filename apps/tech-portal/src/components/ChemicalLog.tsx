@@ -298,7 +298,7 @@ export const ChemicalLog: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
             <label htmlFor="chemical-name" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
-              Chemical Brand / Trade Name *
+              Chemical Brand / Trade Name <span aria-hidden="true" style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>
             </label>
             <input
               id="chemical-name"
@@ -329,7 +329,7 @@ export const ChemicalLog: React.FC = () => {
         <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '12px', marginBottom: '16px' }}>
           <div>
             <label htmlFor="quantity-applied" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
-              Quantity Applied *
+              Quantity Applied <span aria-hidden="true" style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>
             </label>
             <input
               id="quantity-applied"
@@ -344,7 +344,7 @@ export const ChemicalLog: React.FC = () => {
           </div>
           <div>
             <label htmlFor="unit" style={{ display: 'block', fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: '#334155' }}>
-              Unit *
+              Unit <span aria-hidden="true" style={{ color: '#ef4444', marginLeft: '4px' }}>*</span>
             </label>
             <select
               id="unit"

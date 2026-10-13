@@ -10,8 +10,8 @@ interface Options {
 type Fields = Record<string, string>;
 const label = (value: string) => value.replace(/_/g, ' ');
 const closed = ['resolved', 'declined', 'cancelled'];
-const controls = 'border rounded p-2 w-full bg-white text-gray-900';
-const button = 'border rounded px-3 py-2 bg-blue-700 text-white disabled:opacity-50';
+const controls = 'border rounded p-2 w-full bg-white text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 hover:border-gray-400 transition-colors';
+const button = 'border rounded px-3 py-2 bg-blue-700 text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-blue-800 transition-colors';
 
 export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcome }: {
   mode: 'staff' | 'customer' | 'technician'; customerId?: string; jobId?: string;
@@ -63,16 +63,24 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
   },[filter,offset,customerId,jobId]);
 
   function field(name: string, title: string, required = false, type = 'text') {
-    return <label className="block space-y-1" key={name}>{title}
-      <input className={controls} type={type} min={type === 'number' ? 0 : undefined} step={type === 'number' ? 'any' : undefined} value={fields[name] || ''} required={required}
-        onChange={e => setFields(prev => ({ ...prev, [name]: e.target.value }))} />
-    </label>;
+    return (
+      <div className="block space-y-1" key={name}>
+        <label htmlFor={name}>{title}{required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}</label>
+        <input id={name} className={controls} type={type} min={type === 'number' ? 0 : undefined} step={type === 'number' ? 'any' : undefined} value={fields[name] || ''} required={required}
+          onChange={e => setFields(prev => ({ ...prev, [name]: e.target.value }))} />
+      </div>
+    );
   }
   function choose(name: string, title: string, choices: { value: string; text: string }[], required = false) {
-    return <label className="block space-y-1">{title}<select className={controls} required={required} value={fields[name] || ''}
-      onChange={e => setFields(prev => ({ ...prev, [name]: e.target.value, ...(name === 'property_id' ? { source_job_id: '' } : {}) }))}>
-      <option value="">Choose…</option>{choices.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
-    </select></label>;
+    return (
+      <div className="block space-y-1">
+        <label htmlFor={name}>{title}{required && <span className="text-red-500 ml-1" aria-hidden="true">*</span>}</label>
+        <select id={name} className={controls} required={required} value={fields[name] || ''}
+          onChange={e => setFields(prev => ({ ...prev, [name]: e.target.value, ...(name === 'property_id' ? { source_job_id: '' } : {}) }))}>
+          <option value="">Choose…</option>{choices.map(o => <option key={o.value} value={o.value}>{o.text}</option>)}
+        </select>
+      </div>
+    );
   }
   async function act(path: string, body: Record<string, unknown>) {
     setBusy(true); setError(''); setNotice('');
@@ -129,15 +137,21 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           {choose('property_id','Service property',options.properties.filter(p => !customerId || p.customer_id === customerId).map(p => ({ value:p.id,text: mode === 'staff' ? `${p.customer_name} — ${p.address}` : p.address })),true)}
           {choose('source_job_id','Related completed visit (optional)',options.jobs.filter(j => j.property_id === fields.property_id).map(j => ({ value:j.id,text:new Date(j.completed_at).toLocaleString() })))}
           {field('pest_code','Pest or service issue',true)}
-          <label className="block">What are you seeing?<textarea className={controls} required maxLength={10000} value={fields.description || ''} onChange={e => setFields(prev => ({ ...prev,description:e.target.value }))} /></label>
+          <div className="block space-y-1">
+            <label htmlFor="description">What are you seeing?<span className="text-red-500 ml-1" aria-hidden="true">*</span></label>
+            <textarea id="description" className={controls} required maxLength={10000} value={fields.description || ''} onChange={e => setFields(prev => ({ ...prev,description:e.target.value }))} />
+          </div>
           {field('preferred_availability','Preferred availability (optional)')}
           <p>Our team will review coverage before confirming service or charges.</p>
           <button className={button} disabled={busy}>Submit request</button>
         </form>
       </details>}
-      <label className="block">Filter by status<select className={controls} value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
-        <option value="">All statuses</option>{['submitted','triage','awaiting_customer','approved','scheduled','in_service','awaiting_review','resolved','declined','cancelled'].map(s => <option key={s} value={s}>{label(s)}</option>)}
-      </select></label>
+      <div className="block space-y-1">
+        <label htmlFor="status-filter">Filter by status</label>
+        <select id="status-filter" className={controls} value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
+          <option value="">All statuses</option>{['submitted','triage','awaiting_customer','approved','scheduled','in_service','awaiting_review','resolved','declined','cancelled'].map(s => <option key={s} value={s}>{label(s)}</option>)}
+        </select>
+      </div>
       {!items.length && <p>No service requests match this view.</p>}
       <div className="grid gap-3 md:grid-cols-2">
         {items.map(item => <button className="border rounded p-4 text-left bg-white" key={item.id} aria-pressed={selected === item.id}
@@ -158,7 +172,12 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
         {current.source_visit && <details><summary>Previous treatment applications</summary><ul>{current.source_visit.applications.map(a => <li key={a.id}>{a.chemical_name}: {a.quantity_used} {a.unit} · {new Date(a.applied_at).toLocaleString()}</li>)}</ul>{!current.source_visit.applications.length && <p>No applications recorded.</p>}</details>}</>}
       <h3 className="font-semibold">Photos</h3>
       {current.attachments.map(a => <button className="underline mr-3" key={a.id} onClick={() => void viewPhoto(a.id)}>{a.name}</button>)}
-      {!closed.includes(current.state) && <label className="block">Add photo (JPEG or PNG, up to 1 MB)<input type="file" accept="image/jpeg,image/png" disabled={busy} onChange={e => { if (e.target.files?.[0]) void upload(e.target.files[0]); }} /></label>}
+      {!closed.includes(current.state) && (
+        <div className="block space-y-1">
+          <label htmlFor="add-photo">Add photo (JPEG or PNG, up to 1 MB)</label>
+          <input id="add-photo" type="file" accept="image/jpeg,image/png" disabled={busy} onChange={e => { if (e.target.files?.[0]) void upload(e.target.files[0]); }} />
+        </div>
+      )}
       <h3 className="font-semibold">Return visits</h3>
       {!current.visits.length && <p>No return visit scheduled yet.</p>}
       {current.visits.map(v => <div className="border rounded p-3" key={v.id}><p>Visit {v.sequence} · {label(v.job_status)} · {new Date(v.scheduled_start).toLocaleString()}</p>

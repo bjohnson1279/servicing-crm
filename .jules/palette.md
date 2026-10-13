@@ -22,12 +22,6 @@
 **Learning:** The 'Save' button in `SignatureCapture` was originally enabled even when the canvas was blank, and it lacked visual feedback for its disabled state.
 **Action:** Adding a `hasSignature` state tracked via `onEnd`, along with `disabled={!hasSignature}`, a helpful `title` tooltip, and dynamic inline styles (`opacity`, `cursor`) improves the user experience by preventing invalid submissions and clearly communicating the button's state.
 
-
-## Important Process Rules
-- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
-- **Only write your journal to your matching file (`.jules/palette.md`).** Do not edit or create journal files for other personas.
-
-
 ## 2026-10-05 - Accessible Toast Notifications Over Blocking Alerts
 **Learning:** Using native browser `alert()` for asynchronous, background events (like server-sent "job assigned" updates) blocks the main thread, halts user interaction, and provides a poor experience—especially for users with assistive technology, as it interrupts their current task abruptly.
 **Action:** Replace `alert()` usage with non-blocking, accessible toast notifications utilizing `role="status"` and `aria-live="polite"`. Ensure these notifications have a clearly labeled dismiss button (`aria-label`) and an auto-hide timeout (e.g., 5 seconds) to maintain a smooth, accessible user experience without hijacking the interface.
@@ -35,6 +29,38 @@
 ## 2026-10-06 - Dynamic Action Loading States & Inactive Tailwind Classes
 **Learning:** Using a single generic boolean (e.g. `const [loading, setLoading] = useState(false)`) for components with multiple asynchronous actions (like "Clock In" vs "Clock Out") causes poor UX, as users lack specific feedback on which action is processing. Additionally, using Tailwind utility classes in a frontend where Tailwind is not configured (`apps/tech-portal`) results in unstyled components and inaccessible buttons lacking focus rings.
 **Action:** Use specific loading state trackers (e.g. `const [actionLoading, setActionLoading] = useState<'in' | 'out' | null>(null)`) and dynamically update button text/`aria-busy` attributes during async operations. When working in frontends without Tailwind, always write semantic class names and append the required styling (including `focus-visible` outlines) to the existing `style.css` stylesheet.
+
+## 2026-10-07 - Non-Blocking Notifications Over Alerts
+**Learning:** Using the native `alert()` in React components blocks the main thread, halting user interaction and breaking the seamless flow of the application, especially on mobile PWAs where users expect a fluid experience. This is also inaccessible to screen readers that cannot gracefully parse or bypass blocking alerts in context.
+**Action:** Replace `alert()` usage with accessible, non-blocking state-driven notifications (like the existing `resultMessage` state tied to an `aria-live="assertive"` element). This provides a better UX by rendering the error directly in the UI without freezing the app.
+
+- **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
+
+- **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
+
+## 2026-10-08 - Explicit Form Labeling & Role Grouping
+**Learning:** React elements without properly associated `<label>` attributes (using `htmlFor` matching the input's `id`) severely harm screen reader accessibility. Additionally, related inputs like a group of pest checkboxes must be semantically grouped. Simply wrapping them in a `<label>` or `<div>` without a `role` is insufficient. Screen readers require `role="group"` on the container and an `aria-labelledby` referencing an ID on the heading/description text to correctly announce the group's context when tabbing through.
+**Action:** Always verify that every form `<input>`, `<select>`, and `<textarea>` has a corresponding `id` correctly bound to a `<label htmlFor="...">`. For nested or multiple-choice checkbox arrays, wrap the container in `role="group"` with an explicit `aria-labelledby` targeting the group's textual heading.
+
+## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
+**Learning:** Running `pnpm` or `yarn` in repositories standardized on `package-lock.json` introduces conflicting lockfiles (`pnpm-lock.yaml`) and risks breaking CI builds. Furthermore, opening duplicate PRs against the same component causes merge conflicts and wastes review bandwidth.
+**Action:** Always execute `npm` commands directly (`npm ci`, `npm test`, `npm run build`) in `apps/tech-portal`. Never commit alternative lockfiles. Verify whether an active PR exists for the task before generating new branches, and rebase or close superseded branches promptly.
+
+## 2026-10-12 - Router Context Isolation in Unit Tests
+**Learning:** Testing React components that consume routing hooks (`useParams`, `useNavigate`, `useLocation`) or navigational elements (`Link`) outside of a Router context triggers runtime exceptions (`TypeError: Cannot read properties of null (reading 'useContext')` / `useNavigate() may be used only in the context of a <Router> component`). Furthermore, mock implementations in test suites must provide explicit TypeScript parameter annotations (`(props: any) => ...`) to avoid implicit `any` compiler failures.
+**Action:** Always wrap components under test with `<MemoryRouter>` in test fixtures. Mock heavy third-party UI libraries (such as `react-signature-canvas` or `react-leaflet`) with typed, shallow functional components that pass props through safely.
+
+## 2026-10-15 - Explicit Form Labeling using htmlFor
+**Learning:** In the `CallbackWorkspace.tsx` component, form elements such as inputs, textareas, and selects were being wrapped implicitly inside `<label>` tags (e.g., `<label>Text <input/></label>`). While valid HTML, this implicit wrapping provides poor compatibility with some older screen readers and assistive technologies, and it violates the codebase's UX standards that dictate `<label htmlFor="...">` and `<input id="...">` pairings.
+**Action:** Always ensure that form labels are explicitly linked to their corresponding inputs using the `htmlFor` attribute on the `<label>` and the `id` attribute on the `<input>` or `<select>`. For dynamically rendered form helper functions like `field()` and `choose()`, use a `<div>` to structurally wrap the `<label>` and `<input>`, rather than nesting the input implicitly inside the label.
+
+## 2026-10-16 - Visual Required Indicators for Form Fields
+**Learning:** While using the HTML5 `required` attribute ensures screen readers correctly announce a field as required and provides native form validation, sighted users often struggle to identify required fields if they lack a clear visual indicator. This can lead to frustration and form submission errors.
+**Action:** Always complement the `required` attribute with a consistent visual indicator, such as a red asterisk (`*`), appended to the `<label>`. To prevent assistive technologies from redundantly reading the visual indicator (e.g., "star" or "asterisk"), wrap it in a `<span>` with `aria-hidden="true"`.
+
+## Important Process Rules
+- **Do NOT perform whole-file code formatting.** Only apply necessary changes specifically related to the task. Formatting existing, untouched code creates massive PR diffs that are hard to review.
+- **Only write your journal to your matching file (`.jules/palette.md`).** Do not edit or create journal files for other personas.
 
 ## Prevention Directives for Automated Refactoring
 - **Never Overwrite Complete Files**: Always use range-scoped replacement chunks for edits to `schema.prisma`, `index.ts`, `public/index.php`, `db/schema.rb`, or DDL SQL scripts.
@@ -82,24 +108,3 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
-
-## 2026-10-07 - Non-Blocking Notifications Over Alerts
-**Learning:** Using the native `alert()` in React components blocks the main thread, halting user interaction and breaking the seamless flow of the application, especially on mobile PWAs where users expect a fluid experience. This is also inaccessible to screen readers that cannot gracefully parse or bypass blocking alerts in context.
-**Action:** Replace `alert()` usage with accessible, non-blocking state-driven notifications (like the existing `resultMessage` state tied to an `aria-live="assertive"` element). This provides a better UX by rendering the error directly in the UI without freezing the app.
-
-- **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
-
-- **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
-
-## 2026-10-08 - Explicit Form Labeling & Role Grouping
-**Learning:** React elements without properly associated `<label>` attributes (using `htmlFor` matching the input's `id`) severely harm screen reader accessibility. Additionally, related inputs like a group of pest checkboxes must be semantically grouped. Simply wrapping them in a `<label>` or `<div>` without a `role` is insufficient. Screen readers require `role="group"` on the container and an `aria-labelledby` referencing an ID on the heading/description text to correctly announce the group's context when tabbing through.
-**Action:** Always verify that every form `<input>`, `<select>`, and `<textarea>` has a corresponding `id` correctly bound to a `<label htmlFor="...">`. For nested or multiple-choice checkbox arrays, wrap the container in `role="group"` with an explicit `aria-labelledby` targeting the group's textual heading.
-
-## 2026-10-10 - Package Manager Consistency & Anti-Duplicate PR Protocol
-**Learning:** Running `pnpm` or `yarn` in repositories standardized on `package-lock.json` introduces conflicting lockfiles (`pnpm-lock.yaml`) and risks breaking CI builds. Furthermore, opening duplicate PRs against the same component causes merge conflicts and wastes review bandwidth.
-**Action:** Always execute `npm` commands directly (`npm ci`, `npm test`, `npm run build`) in `apps/tech-portal`. Never commit alternative lockfiles. Verify whether an active PR exists for the task before generating new branches, and rebase or close superseded branches promptly.
-
-## 2026-10-12 - Router Context Isolation in Unit Tests
-**Learning:** Testing React components that consume routing hooks (`useParams`, `useNavigate`, `useLocation`) or navigational elements (`Link`) outside of a Router context triggers runtime exceptions (`TypeError: Cannot read properties of null (reading 'useContext')` / `useNavigate() may be used only in the context of a <Router> component`). Furthermore, mock implementations in test suites must provide explicit TypeScript parameter annotations (`(props: any) => ...`) to avoid implicit `any` compiler failures.
-**Action:** Always wrap components under test with `<MemoryRouter>` in test fixtures. Mock heavy third-party UI libraries (such as `react-signature-canvas` or `react-leaflet`) with typed, shallow functional components that pass props through safely.
-

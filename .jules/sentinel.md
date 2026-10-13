@@ -46,6 +46,11 @@
 **Learning:** Accepting file uploads in frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) without client-side size and MIME type guards allows malicious non-image payloads and oversized files to trigger browser memory exhaustion. Additionally, when security bots introduce client-side validation, touching unrelated test files without verifying test environment mocks causes CI test regressions.
 **Action:** Always implement synchronous pre-upload checks (`file.size <= 5 * 1024 * 1024` and `file.type.startsWith('image/')`) in frontend components. Ensure any accompanying test mocks strictly isolate the security boundary without breaking companion suites.
 
+## 2026-10-14 - Prevent DOM-based XSS with textContent
+**Vulnerability:** A component (`counter.ts`) directly assigned a variable using `.innerHTML = \`Count is ${counter}\``. While it currently expected a number, using `.innerHTML` when inserting text makes the application vulnerable to Cross-Site Scripting (XSS) if the variable's source or type ever changes to include user-controlled strings.
+**Learning:** Overusing `.innerHTML` when only plain text rendering is required establishes a dangerous pattern that can easily lead to DOM-based XSS when components are refactored or updated to accept dynamic inputs.
+**Prevention:** Always default to `.textContent` instead of `.innerHTML` when safely inserting dynamic content into the DOM, unless parsing HTML is an explicit and safe requirement.
+
 ## Prevention Directives for Automated Refactoring
 - **Never Overwrite Complete Files**: Always use range-scoped replacement chunks for edits to `schema.prisma`, `index.ts`, `public/index.php`, `db/schema.rb`, or DDL SQL scripts.
 - **Do Not Remove Core Declarations**: Do not delete existing route registrations or database DDL tables.
@@ -96,7 +101,5 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
-
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
-
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
