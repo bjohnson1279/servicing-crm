@@ -6,6 +6,8 @@ export default defineConfig({
     include: ['src/**/*.test.{ts,tsx}'],
     globals: true,
     environment: 'jsdom',
-    pool: 'threads',
+    setupFiles: ['./setup.ts'],
+    pool: 'forks',
+    fileParallelism: false,
   },
 });

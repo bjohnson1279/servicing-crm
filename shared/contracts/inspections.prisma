@@ -1,0 +1,60 @@
+// Scalar inspection mappings. Migration 024 and inspection_api own constraints and writes.
+model Inspection {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ jobId String @unique @map("job_id") @db.Uuid
+ customerId String @map("customer_id") @db.Uuid
+ propertyId String @map("property_id") @db.Uuid
+ state String @default("scheduled") @db.VarChar(24)
+ revision Int @default(1)
+ version Int @default(1)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+ @@unique([tenantId,id])
+ @@index([tenantId,state,createdAt,id],map:"inspections_queue")
+ @@map("inspections")
+}
+model InspectionRevision {
+ inspectionId String @map("inspection_id") @db.Uuid
+ revision Int
+ findings Json @default("{\"summary\":\"\",\"zones\":[]}")
+ authorId String? @map("author_id") @db.Uuid
+ submittedAt DateTime? @map("submitted_at") @db.Timestamptz(6)
+ submittedBy String? @map("submitted_by") @db.Uuid
+ reviewedAt DateTime? @map("reviewed_at") @db.Timestamptz(6)
+ reviewedBy String? @map("reviewed_by") @db.Uuid
+ reviewReason String? @map("review_reason")
+ @@id([inspectionId,revision])
+ @@map("inspection_revisions")
+}
+model InspectionAttachment {
+ id String @id @default(uuid()) @db.Uuid
+ inspectionId String @map("inspection_id") @db.Uuid
+ revision Int
+ actorId String @map("actor_id") @db.Uuid
+ name String @db.VarChar(160)
+ mediaType String @map("media_type") @db.VarChar(24)
+ data Bytes
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@map("inspection_attachments")
+}
+model InspectionEvent {
+ id String @id @default(uuid()) @db.Uuid
+ inspectionId String @map("inspection_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ action String @db.VarChar(32)
+ revision Int
+ reason String?
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@map("inspection_events")
+}
+model InspectionRequest {
+ tenantId String @map("tenant_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ action String
+ requestKey String @map("request_key") @db.Uuid
+ inspectionId String @map("inspection_id") @db.Uuid
+ payload Json
+ @@id([tenantId,actorId,action,requestKey])
+ @@map("inspection_requests")
+}

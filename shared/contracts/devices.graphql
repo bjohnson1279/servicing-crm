@@ -1,0 +1,8 @@
+extend type Query {
+ devices(property_id: UUID, job_id: UUID, lifecycle: String, limit: Int, offset: Int): JSON!
+ device(id: UUID!, job_id: UUID): JSON!
+ deviceLookup(label: String!, job_id: UUID): JSON!
+ deviceSettings: JSON!
+ deviceOptions: JSON!
+}
+extend type Mutation { deviceCommand(action: String!, input: JSON!): JSON! }

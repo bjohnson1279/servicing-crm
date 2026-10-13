@@ -42,6 +42,10 @@
 **Learning:** Accepting file uploads without strict client-side (and server-side) constraints is a classic Denial of Service (DoS) and memory exhaustion vector, especially in constrained frontend environments (like mobile browsers running PWAs) which can easily crash when reading massive files into the main thread.
 **Prevention:** Always implement explicit file size limits (e.g. `file.size > 5 * 1024 * 1024`) and mime-type checks (e.g. `file.type.startsWith('image/')`) synchronously before invoking `FileReader` or submitting the `FormData` payload.
 
+## 2026-10-12 - Client-Side File Validation & Strict Scope Quarantine
+**Learning:** Accepting file uploads in frontend components (`PropertyPhotos.tsx`, `ChemicalLog.tsx`) without client-side size and MIME type guards allows malicious non-image payloads and oversized files to trigger browser memory exhaustion. Additionally, when security bots introduce client-side validation, touching unrelated test files without verifying test environment mocks causes CI test regressions.
+**Action:** Always implement synchronous pre-upload checks (`file.size <= 5 * 1024 * 1024` and `file.type.startsWith('image/')`) in frontend components. Ensure any accompanying test mocks strictly isolate the security boundary without breaking companion suites.
+
 ## Prevention Directives for Automated Refactoring
 - **Never Overwrite Complete Files**: Always use range-scoped replacement chunks for edits to `schema.prisma`, `index.ts`, `public/index.php`, `db/schema.rb`, or DDL SQL scripts.
 - **Do Not Remove Core Declarations**: Do not delete existing route registrations or database DDL tables.

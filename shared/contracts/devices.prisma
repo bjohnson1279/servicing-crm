@@ -1,0 +1,59 @@
+// Device scalar mappings; migration 025 owns relationships and lifecycle constraints.
+model PropertyDevice {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ propertyId String @map("property_id") @db.Uuid
+ customerId String @map("customer_id") @db.Uuid
+ label String @db.VarChar(80)
+ deviceType String @map("device_type") @db.VarChar(24)
+ manufacturerSerial String? @map("manufacturer_serial") @db.VarChar(160)
+ equipmentItemId String? @map("equipment_item_id") @db.Uuid
+ lifecycle String @default("planned") @db.VarChar(16)
+ locationVersion Int @default(1) @map("location_version")
+ version Int @default(1)
+ installedAt DateTime? @map("installed_at") @db.Timestamptz(6)
+ retiredAt DateTime? @map("retired_at") @db.Timestamptz(6)
+ historicalInstallation Boolean @default(false) @map("historical_installation")
+ replacesDeviceId String? @unique @map("replaces_device_id") @db.Uuid
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+ @@unique([tenantId,label])
+ @@unique([tenantId,id])
+ @@index([tenantId,propertyId,lifecycle,id],map:"devices_property_register")
+ @@map("property_devices")
+}
+model DeviceLocation {
+ deviceId String @map("device_id") @db.Uuid
+ version Int
+ zone String @db.VarChar(120)
+ description String
+ latitude Decimal? @db.Decimal(10,7)
+ longitude Decimal? @db.Decimal(10,7)
+ accuracyMeters Decimal? @map("accuracy_meters") @db.Decimal(10,2)
+ actorId String @map("actor_id") @db.Uuid
+ reason String
+ effectiveAt DateTime @default(now()) @map("effective_at") @db.Timestamptz(6)
+ @@id([deviceId,version])
+ @@map("device_locations")
+}
+model DeviceEvent {
+ id String @id @default(uuid()) @db.Uuid
+ deviceId String @map("device_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ action String @db.VarChar(24)
+ reason String
+ jobId String? @map("job_id") @db.Uuid
+ details Json
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@map("device_events")
+}
+model DeviceRequest {
+ tenantId String @map("tenant_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ action String
+ requestKey String @map("request_key") @db.Uuid
+ deviceId String @map("device_id") @db.Uuid
+ payload Json
+ @@id([tenantId,actorId,action,requestKey])
+ @@map("device_requests")
+}

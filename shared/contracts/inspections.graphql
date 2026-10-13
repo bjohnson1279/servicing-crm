@@ -1,0 +1,8 @@
+extend type Query {
+ inspections(job_id: UUID, state: String, limit: Int, offset: Int): JSON!
+ inspection(id: UUID!): JSON!
+ inspectionSettings: JSON!
+ inspectionOptions: JSON!
+ inspectionAttachment(id: UUID!, attachment_id: UUID!): JSON!
+}
+extend type Mutation { inspectionCommand(action: String!, input: JSON!): JSON! }

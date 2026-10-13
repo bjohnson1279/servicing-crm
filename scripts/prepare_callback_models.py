@@ -21,7 +21,9 @@ for backend in ('express-api', 'graphql-api'):
     if 'model WarrantyPolicyVersion' not in source:
         source += '\n' + (root / 'shared/contracts/callbacks.prisma').read_text(encoding='utf-8')
     else:
-        source = source[:source.index('// Scalar mappings;')] + (root / 'shared/contracts/callbacks.prisma').read_text(encoding='utf-8')
+        inspection_start = source.find('// Scalar inspection mappings.')
+        inspection_tail = source[inspection_start:] if inspection_start >= 0 else ''
+        source = source[:source.index('// Scalar mappings;')] + (root / 'shared/contracts/callbacks.prisma').read_text(encoding='utf-8') + '\n' + inspection_tail
     path.write_text(source, encoding='utf-8')
 
 path = root / 'backends/graphql-api/src/typeDefs.ts'

@@ -99,3 +99,7 @@
 **Learning:** Running `pnpm` or `yarn` in repositories standardized on `package-lock.json` introduces conflicting lockfiles (`pnpm-lock.yaml`) and risks breaking CI builds. Furthermore, opening duplicate PRs against the same component causes merge conflicts and wastes review bandwidth.
 **Action:** Always execute `npm` commands directly (`npm ci`, `npm test`, `npm run build`) in `apps/tech-portal`. Never commit alternative lockfiles. Verify whether an active PR exists for the task before generating new branches, and rebase or close superseded branches promptly.
 
+## 2026-10-12 - Router Context Isolation in Unit Tests
+**Learning:** Testing React components that consume routing hooks (`useParams`, `useNavigate`, `useLocation`) or navigational elements (`Link`) outside of a Router context triggers runtime exceptions (`TypeError: Cannot read properties of null (reading 'useContext')` / `useNavigate() may be used only in the context of a <Router> component`). Furthermore, mock implementations in test suites must provide explicit TypeScript parameter annotations (`(props: any) => ...`) to avoid implicit `any` compiler failures.
+**Action:** Always wrap components under test with `<MemoryRouter>` in test fixtures. Mock heavy third-party UI libraries (such as `react-signature-canvas` or `react-leaflet`) with typed, shallow functional components that pass props through safely.
+
