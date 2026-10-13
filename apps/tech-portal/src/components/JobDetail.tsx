@@ -6,6 +6,7 @@ import { queueCallbackOutcome } from '../callbackOfflineQueue';
 import { CallbackDrafts } from './CallbackDrafts';
 import InspectionWorkspace from './inspections/InspectionWorkspace';
 import DeviceWorkspace from './devices/DeviceWorkspace';
+import CatalogWorkspace from './catalog/CatalogWorkspace';
 
 type JobStatus = 'Available' | 'En Route' | 'On Site' | 'Completed';
 
@@ -24,6 +25,7 @@ export const JobDetail: React.FC = () => {
       <h2>Job Detail - {id}</h2>
       <details><summary>Inspection findings</summary><InspectionWorkspace mode="technician" jobId={id} /></details>
       <details><summary>Property devices</summary><DeviceWorkspace mode="technician" jobId={id} /></details>
+      <details><summary>Reviewed product references</summary><CatalogWorkspace mode="technician" jobId={id} /></details>
       <details><summary>Callback context and outcome</summary><CallbackWorkspace mode="technician" jobId={id} queueOutcome={queueCallbackOutcome} /></details>
       <CallbackDrafts jobId={id || ''} />
       <p>Current Status: <strong>{status}</strong></p>

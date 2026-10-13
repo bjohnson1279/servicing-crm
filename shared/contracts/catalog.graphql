@@ -1,0 +1,8 @@
+extend type Query {
+ catalogProducts(job_id: UUID, status: String, limit: Int, offset: Int): JSON!
+ catalogProduct(id: UUID!, job_id: UUID): JSON!
+ catalogDocument(id: UUID!, document_id: UUID!, job_id: UUID): JSON!
+ catalogSettings: JSON!
+ catalogOptions: JSON!
+}
+extend type Mutation { catalogCommand(action: String!, input: JSON!): JSON! }

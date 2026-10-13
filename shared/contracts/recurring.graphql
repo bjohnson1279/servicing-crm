@@ -1,0 +1,2 @@
+extend type Query { recurringExceptions(state: String, reason: String, contract_id: UUID, property_id: UUID, from: Date, through: Date, limit: Int, offset: Int): JSON! recurringException(id: UUID!): JSON! recurringSettings: JSON! }
+extend type Mutation { recurringCommand(action: String!, input: JSON!): JSON! }

@@ -83,6 +83,7 @@ export const ChemicalLog: React.FC = () => {
   const handleItemSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const itemId = e.target.value;
     setSelectedItemId(itemId);
+    setEpaRegistrationNo('');
     if (!itemId) {
       setChemicalName('');
       setEpaRegistrationNo('');
@@ -91,14 +92,8 @@ export const ChemicalLog: React.FC = () => {
     const item = inventoryItems.find((i) => i.id === itemId);
     if (item) {
       setChemicalName(item.name);
-      // Auto-extract or suggest EPA number based on known product SKU / naming
-      if (item.sku.includes('BIF')) {
-        setEpaRegistrationNo('EPA Reg. No. 279-3206');
-      } else if (item.sku.includes('TER')) {
-        setEpaRegistrationNo('EPA Reg. No. 7969-210');
-      } else if (!epaRegistrationNo) {
-        setEpaRegistrationNo('EPA Reg. No. 432-1363');
-      }
+      // Inventory names/SKUs do not establish product registration identity.
+      setEpaRegistrationNo('');
     }
   };
 
@@ -316,12 +311,14 @@ export const ChemicalLog: React.FC = () => {
             </label>
             <input
               id="epa-reg"
+              aria-describedby="epa-source-help"
               type="text"
-              placeholder="e.g. 279-3206"
+              placeholder="Enter from the product label, or leave unknown"
               value={epaRegistrationNo}
               onChange={(e) => setEpaRegistrationNo(e.target.value)}
               style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px', boxSizing: 'border-box' }}
             />
+            <p id="epa-source-help">Enter from the product label. Leave blank if unknown; inventory selection does not verify this number.</p>
           </div>
         </div>
 

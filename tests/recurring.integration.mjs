@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import {readFile,readdir} from 'node:fs/promises';
+import {PGlite} from '../.callback-test-runtime/node_modules/@electric-sql/pglite/dist/index.js';
+
+import {testRecurringAdapters} from './recurring-adapters.mjs';
+const db=new PGlite(),root=new URL('../shared/database/',import.meta.url);
+for(const name of (await readdir(root)).filter(n=>n.endsWith('.sql')).sort())if(name!=='003_seed_data.sql')await db.exec((await readFile(new URL(name,root),'utf8')).replace(/CREATE EXTENSION IF NOT EXISTS "uuid-ossp";/g,'').replace(/uuid_generate_v4\(\)/g,'gen_random_uuid()'));
+const id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
+const tenant=id(1),other=id(2),manager=id(3),techUser=id(4),techUser2=id(5),customerUser=id(6),customer=id(7),property=id(8),tech=id(9),tech2=id(10),job=id(11),outside=id(12);
+await db.query("INSERT INTO tenants(id,name) VALUES($1,'One'),($2,'Two')",[tenant,other]);
+for(const [user,role,t] of [[manager,'MANAGER',tenant],[techUser,'TECHNICIAN',tenant],[techUser2,'TECHNICIAN',tenant],[customerUser,'CUSTOMER',tenant],[outside,'MANAGER',other]])await db.query("INSERT INTO users(id,tenant_id,email,password_hash,role) VALUES($1,$2,$3,'x',$4)",[user,t,user+'@test',role]);
+await db.query("INSERT INTO customers(id,user_id,name) VALUES($1,$2,'Client')",[customer,customerUser]);
+await db.query("INSERT INTO properties(id,customer_id,address) VALUES($1,$2,'Place'),($3,$2,'Another place')",[property,customer,id(13)]);
+await db.query('INSERT INTO technicians(id,user_id) VALUES($1,$2),($3,$4)',[tech,techUser,tech2,techUser2]);
+await db.query("INSERT INTO jobs(id,tenant_id,customer_id,property_id,technician_id,status) VALUES($1,$2,$3,$4,$5,'scheduled')",[job,tenant,customer,property,tech]);
+await db.query("INSERT INTO inventory_items(id,tenant_id,name,sku) VALUES($1,$2,'Station','ST'),($3,$4,'Other equipment','OTHER')",[id(14),tenant,id(15),other]);
+
+let checks=0;
+const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
+async function api(action,body={},actor=manager,t=tenant){return(await db.query('SELECT recurring_api($1,$2::uuid,$3::uuid,$4::jsonb) AS value',[action,t,actor,JSON.stringify(body)])).rows[0].value;}
+async function denied(action,body,code,actor=manager,t=tenant){await assert.rejects(api(action,body,actor,t),e=>e.code===code);checks++;}
+async function date(anchor,cadence,n){return(await db.query('SELECT recurring_date($1::date,$2,$3)::text AS d',[anchor,cadence,n])).rows[0].d;}
+eq(await date('2024-01-31','MONTHLY',1),'2024-02-29');eq(await date('2024-01-31','MONTHLY',2),'2024-03-31');
+eq(await date('2024-02-29','ANNUALLY',1),'2025-02-28');eq(await date('2024-02-29','ANNUALLY',4),'2028-02-29');
+eq(await date('2025-01-31','BI_MONTHLY',1),'2025-03-31');eq(await date('2025-01-31','QUARTERLY',1),'2025-04-30');
+eq(await date('2025-08-31','SEMI_ANNUALLY',1),'2026-02-28');
+await denied('list',{},'P0503');await denied('settings',{},'P0403',techUser);await denied('settings',{},'P0403',customerUser);
+await denied('settings',{enabled:true},'P0400');await denied('settings',{timezone:'Bad/Zone'},'P0400');await denied('settings',{horizon:0},'P0400');
+eq((await api('settings',{enabled:true,timezone:'America/Denver'})).timezone,'America/Denver');
+const dispatcher=id(20);await db.query("INSERT INTO users(id,tenant_id,email,password_hash,role) VALUES($1,$2,'dispatch@test','x','DISPATCHER')",[dispatcher,tenant]);
+await denied('settings',{enabled:false},'P0403',dispatcher);await denied('assess',{request_key:crypto.randomUUID()},'P0403',dispatcher);
+await denied('assess',{},'P0400');
+const today=(await db.query("SELECT (now() AT TIME ZONE 'America/Denver')::date::text d")).rows[0].d;
+const due=(await db.query("SELECT ((now() AT TIME ZONE 'America/Denver')::date-1)::text d")).rows[0].d;
+const contract=id(21);await db.query("INSERT INTO service_contracts(id,tenant_id,customer_id,property_id,cadence,start_date,end_date) VALUES($1,$2,$3,$4,'MONTHLY',$5,$5)",[contract,tenant,customer,property,due]);
+const before=(await db.query('SELECT count(*)::int n FROM jobs')).rows[0].n;
+const request={request_key:crypto.randomUUID()};const assessed=await api('assess',request);
+eq(assessed.mode,'shadow');eq(assessed.processed_contracts,1);eq(await api('assess',request),assessed);
+await denied('assess',{...request,after:id(22)},'P0409');
+eq((await db.query('SELECT count(*)::int n FROM jobs')).rows[0].n,before);
+let queue=await api('list');eq(queue.items.length,2);eq(queue.items.map(e=>e.reason).sort(),['missing_job','overdue_service']);
+const exception=queue.items[0];eq((await api('get',{id:exception.id})).events.length,1);
+await api('assess',{request_key:crypto.randomUUID()});eq((await api('get',{id:exception.id})).events.length,1);
+eq((await api('list',{},dispatcher)).items.length,2);eq((await api('list',{limit:1})).has_more,true);
+await denied('list',{limit:0},'P0400');await denied('skip',{},'P0400');
+await api('settings',{enabled:true,timezone:'UTC'},outside,other);eq((await api('list',{},outside,other)).items.length,0);
+await denied('get',{id:exception.id},'P0404',outside,other);await denied('list',{},'P0401',outside,tenant);
+const visit=id(22);await db.query("INSERT INTO jobs(id,tenant_id,customer_id,property_id,contract_id,status,scheduled_start) VALUES($1,$2,$3,$4,$5,'cancelled',($6::date+time '10:00') AT TIME ZONE 'America/Denver')",[visit,tenant,customer,property,contract,due]);
+await api('assess',{request_key:crypto.randomUUID()});queue=await api('list');eq(queue.items.map(e=>e.reason).sort(),['cancelled_visit','overdue_service']);
+await db.query("UPDATE jobs SET status='completed' WHERE id=$1",[visit]);await api('assess',{request_key:crypto.randomUUID()});eq((await api('list')).items.length,0);
+await db.query("UPDATE jobs SET status='scheduled' WHERE id=$1",[visit]);await api('assess',{request_key:crypto.randomUUID()});eq((await api('list')).items.map(e=>e.reason).sort(),['overdue_service','unassigned_visit']);
+await db.query("INSERT INTO jobs(id,tenant_id,customer_id,property_id,contract_id,status,scheduled_start) SELECT $1,tenant_id,customer_id,property_id,contract_id,'scheduled',scheduled_start FROM jobs WHERE id=$2",[id(23),visit]);
+await api('assess',{request_key:crypto.randomUUID()});eq((await api('list')).items.map(e=>e.reason),['ambiguous_match']);
+await db.query("UPDATE service_contracts SET cadence='QUARTERLY' WHERE id=$1",[contract]);await api('assess',{request_key:crypto.randomUUID()});
+eq((await db.query('SELECT count(*)::int n FROM recurring_schedule_revisions')).rows[0].n,2);
+eq((await api('list')).items.length,1);
+await assert.rejects(db.query("UPDATE recurring_schedule_revisions SET snapshot='{}'"),e=>e.code==='P0409');checks++;
+await assert.rejects(db.query("DELETE FROM recurring_exception_events"),e=>e.code==='P0409');checks++;
+await db.query("UPDATE service_contracts SET end_date=start_date-1 WHERE id=$1",[contract]);await api('assess',{request_key:crypto.randomUUID()});eq((await api('list',{reason:'invalid_schedule'})).items.length,1);
+await db.query("UPDATE users SET role='TECHNICIAN' WHERE id=$1",[manager]);await denied('assess',request,'P0403');await db.query("UPDATE users SET role='MANAGER' WHERE id=$1",[manager]);
+
+await assert.rejects(db.query("UPDATE recurring_occurrences SET nominal_date=nominal_date+1"),e=>e.code==='P0409');checks++;
+eq((await api('settings_read',{enabled:false})).enabled,true);
+eq((await api('list',{property_id:id(99)})).items.length,0);
+await db.query("UPDATE service_contracts SET end_date=start_date WHERE id=$1",[contract]);
+const broken=id(24);await db.query("INSERT INTO service_contracts(id,tenant_id,customer_id,property_id,cadence,start_date,end_date) VALUES($1,$2,$3,$4,'ANNUALLY',$5,$5)",[broken,tenant,customer,property,due]);
+await db.exec("CREATE FUNCTION test_recurring_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.contract_id='00000000-0000-0000-0000-000000000024' THEN RAISE EXCEPTION 'sensitive failure';END IF;RETURN NEW;END $$;CREATE TRIGGER test_recurring_failure BEFORE INSERT ON recurring_occurrences FOR EACH ROW EXECUTE FUNCTION test_recurring_failure();");
+await api('assess',{request_key:crypto.randomUUID()});const failed=await api('list',{reason:'assessment_failure'});eq(failed.items.length,1);eq(JSON.stringify(failed).includes('sensitive failure'),false);
+await db.exec('DROP TRIGGER test_recurring_failure ON recurring_occurrences;DROP FUNCTION test_recurring_failure();');
+await api('assess',{request_key:crypto.randomUUID()});eq((await api('list',{reason:'assessment_failure'})).items.length,0);
+console.log(checks+' recurring database checks passed');
+await testRecurringAdapters(db,{tenant,manager,techUser,customerUser,exception:exception.id});
+await db.close();

@@ -1,0 +1,67 @@
+// Catalog scalar mappings. Migration 026 owns relationship and verification constraints.
+model CatalogProduct {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ code String @db.VarChar(80)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@unique([tenantId,code])
+ @@unique([tenantId,id])
+ @@map("catalog_products")
+}
+model CatalogVersion {
+ productId String @map("product_id") @db.Uuid
+ revision Int
+ status String @default("draft") @db.VarChar(16)
+ version Int @default(1)
+ data Json
+ submittedAt DateTime? @map("submitted_at") @db.Timestamptz(6)
+ verifiedAt DateTime? @map("verified_at") @db.Timestamptz(6)
+ verifiedBy String? @map("verified_by") @db.Uuid
+ reviewDueAt DateTime? @map("review_due_at") @db.Timestamptz(6)
+ reviewChecks Json? @map("review_checks")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+ @@id([productId,revision])
+ @@map("catalog_versions")
+}
+model CatalogDocument {
+ id String @id @default(uuid()) @db.Uuid
+ productId String @map("product_id") @db.Uuid
+ revision Int
+ documentType String @map("document_type") @db.VarChar(16)
+ name String @db.VarChar(160)
+ sourceKind String @map("source_kind") @db.VarChar(16)
+ sourceAuthority String @map("source_authority") @db.VarChar(160)
+ sourceUrl String? @map("source_url")
+ sourceDate DateTime? @map("source_date") @db.Date
+ unknownDateReason String? @map("unknown_date_reason")
+ retrievedAt DateTime @map("retrieved_at") @db.Timestamptz(6)
+ data Bytes?
+ sha256 String? @db.VarChar(64)
+ uploadedBy String @map("uploaded_by") @db.Uuid
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@index([productId,revision,id],map:"catalog_document_version")
+ @@map("catalog_documents")
+}
+model CatalogEvent {
+ id String @id @default(uuid()) @db.Uuid
+ productId String @map("product_id") @db.Uuid
+ revision Int
+ actorId String @map("actor_id") @db.Uuid
+ action String @db.VarChar(24)
+ reason String
+ details Json
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@index([productId,createdAt,id],map:"catalog_event_history")
+ @@map("catalog_events")
+}
+model CatalogRequest {
+ tenantId String @map("tenant_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ action String
+ requestKey String @map("request_key") @db.Uuid
+ productId String @map("product_id") @db.Uuid
+ payloadHash String @map("payload_hash") @db.VarChar(64)
+ @@id([tenantId,actorId,action,requestKey])
+ @@map("catalog_requests")
+}
