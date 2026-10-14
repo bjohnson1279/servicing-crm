@@ -1,0 +1,77 @@
+// Scalar mappings; migration 029 owns tenant relationships and history guards.
+model CommercialAccount {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ code String @db.VarChar(80)
+ name String @db.VarChar(160)
+ ownerId String @map("owner_id") @db.Uuid
+ state String @default("active")
+ version Int @default(1)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+ @@unique([tenantId,code])
+ @@unique([tenantId,id])
+ @@map("commercial_accounts")
+}
+model CommercialSite {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ code String @db.VarChar(80)
+ name String @db.VarChar(160)
+ propertyId String @map("property_id") @db.Uuid
+ customerId String @map("customer_id") @db.Uuid
+ timezone String
+ state String @default("active")
+ version Int @default(1)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+ @@unique([accountId,code])
+ @@unique([tenantId,id])
+ @@index([tenantId,accountId,state,id],map:"commercial_site_roster")
+ @@map("commercial_sites")
+}
+model CommercialContact {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ siteId String? @map("site_id") @db.Uuid
+ customerId String? @map("customer_id") @db.Uuid
+ sourceEmailId String? @map("source_email_id") @db.Uuid
+ sourcePhoneId String? @map("source_phone_id") @db.Uuid
+ responsibility String
+ name String @db.VarChar(160)
+ email String? @db.VarChar(255)
+ phone String? @db.VarChar(40)
+ isPrimary Boolean @default(false) @map("is_primary")
+ state String @default("active")
+ version Int @default(1)
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+ @@index([tenantId,accountId,siteId,state,id],map:"commercial_contact_scope")
+ @@map("commercial_contacts")
+}
+model CommercialEvent {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ accountId String @map("account_id") @db.Uuid
+ siteId String? @map("site_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ action String
+ reason String
+ details Json
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@index([tenantId,accountId,createdAt,id],map:"commercial_event_history")
+ @@map("commercial_events")
+}
+model CommercialRequest {
+ tenantId String @map("tenant_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ requestKey String @map("request_key") @db.Uuid
+ action String
+ payload Json
+ result Json
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@id([tenantId,actorId,requestKey])
+ @@map("commercial_requests")
+}
