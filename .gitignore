@@ -28,3 +28,6 @@ servicing-crm.code-workspace
 patch.diff
 *.timestamp-*.mjs
 tests/reports/feature-parity-inventory.json
+
+.local-db-backup.dump
+docs/backend-feature-coverage-audit.md

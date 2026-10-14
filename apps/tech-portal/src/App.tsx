@@ -18,7 +18,7 @@ function App() {
     const callbackSync = (event: Event) => setNotification((event as CustomEvent<string>).detail);
     window.addEventListener('callback_sync', callbackSync);
     let timeoutId: number;
-    const evtSource = new EventSource('http://localhost:8000/api/events');
+    const evtSource = new EventSource('/api/events');
     evtSource.addEventListener('job_assigned', (e) => {
       setNotification('New job assigned!');
       window.clearTimeout(timeoutId);

@@ -95,6 +95,7 @@ services:
     profiles:
       - default
       - express
+      - apps
       - all
     depends_on:
       postgres:
@@ -107,13 +108,14 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=8000
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - ENABLE_BACKGROUND_JOBS=${EXPRESS_BACKGROUND_JOBS:-true}
     deploy: *default-backend-deploy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 5
-      start_period: 15s
+      start_period: 90s
 
   laravel-api:
     build:
@@ -121,8 +123,7 @@ services:
     ports:
       - "${LARAVEL_API_PORT:-3181}:8000"
     volumes:
-      - ./backends/laravel-api:/var/www/html
-      - /var/www/html/vendor
+      - laravel-storage:/var/www/html/storage
     restart: unless-stopped
     logging: *default-logging
     networks:
@@ -138,6 +139,8 @@ services:
       redis:
         condition: service_healthy
     environment:
+      - APP_KEY=${LARAVEL_APP_KEY:?Set LARAVEL_APP_KEY in .env}
+      - DB_CONNECTION=pgsql
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_DATABASE=${POSTGRES_DB}
@@ -147,14 +150,15 @@ services:
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - APP_DEBUG=false
       - APP_ENV=${APP_ENV:-development}
     deploy: *default-backend-deploy
     healthcheck:
       test: ["CMD-SHELL", "php -r \"file_get_contents('http://127.0.0.1:8000/api/v1/health') !== false ? exit(0) : exit(1);\""]
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 5
-      start_period: 15s
+      start_period: 90s
 
   graphql-api:
     build:
@@ -163,6 +167,7 @@ services:
       - "${GRAPHQL_API_PORT:-3183}:8000"
     volumes:
       - ./backends/graphql-api/uploads:/app/uploads
+      - graphql-private-uploads:/app/private-uploads
     restart: unless-stopped
     logging: *default-logging
     networks:
@@ -183,13 +188,14 @@ services:
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=8000
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - ENABLE_BACKGROUND_JOBS=${GRAPHQL_BACKGROUND_JOBS:-false}
     deploy: *default-backend-deploy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 5
-      start_period: 15s
+      start_period: 90s
 
   fastapi-api:
     build:
@@ -197,7 +203,7 @@ services:
     ports:
       - "${FASTAPI_API_PORT:-3184}:8000"
     volumes:
-      - ./backends/fastapi-api:/app
+      - ./backends/fastapi-api/uploads:/app/uploads
     restart: unless-stopped
     logging: *default-logging
     networks:
@@ -216,22 +222,25 @@ services:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
+      - ENABLE_BACKGROUND_JOBS=${FASTAPI_BACKGROUND_JOBS:-false}
       - FASTAPI_ENV=${FASTAPI_ENV:-development}
     deploy: *default-backend-deploy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request, sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').getcode() == 200 else 1)"]
       interval: 10s
-      timeout: 5s
+      timeout: 15s
       retries: 5
-      start_period: 15s
+      start_period: 90s
 
   # === Frontend Portals ===
 
   admin-portal:
+    environment:
+      - VITE_API_PROXY_TARGET=http://express-api:8000
     build:
       context: ./apps/admin-portal
     ports:
-      - "${ADMIN_PORTAL_PORT:-3100}:3000"
+      - "${ADMIN_PORTAL_PORT:-3102}:3000"
     volumes:
       - ./apps/admin-portal:/app
       - /app/node_modules
@@ -250,11 +259,13 @@ services:
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
       interval: 15s
-      timeout: 5s
+      timeout: 15s
       retries: 3
-      start_period: 20s
+      start_period: 90s
 
   customer-portal:
+    environment:
+      - VITE_API_PROXY_TARGET=http://express-api:8000
     build:
       context: ./apps/customer-portal
     ports:
@@ -282,6 +293,8 @@ services:
       start_period: 20s
 
   tech-portal:
+    environment:
+      - VITE_API_PROXY_TARGET=http://express-api:8000
     build:
       context: ./apps/tech-portal
     ports:
@@ -317,3 +330,5 @@ networks:
 volumes:
   pgdata:
   redisdata:
+  laravel-storage:
+  graphql-private-uploads:

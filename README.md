@@ -13,7 +13,7 @@ The platform provides complete feature parity across **four interchangeable back
                                │                     Frontend Apps                      │
                                ├──────────────────┬──────────────────┬──────────────────┤
                                │   Admin Portal   │ Customer Portal  │  Technician PWA  │
-                               │   (Port 3100)    │   (Port 3101)    │   (Port 3002)    │
+                               │   (Port 3102)    │   (Port 3101)    │   (Port 3002)    │
                                └────────┬─────────┴────────┬─────────┴────────┬─────────┘
                                         │                  │                  │
          ┌──────────────────────────────┴──────────────────┴──────────────────┴──────────────────────────────┐
@@ -37,7 +37,7 @@ The platform provides complete feature parity across **four interchangeable back
 
 | Service | Technology | Port (Host) | Description |
 |---|---|:---:|---|
-| **Admin Portal** | React 18, Vite, Tailwind CSS, Leaflet | `3100` (`3000`) | Back-office hub for dispatch, customer 360, billing, sales canvass map, and HR. |
+| **Admin Portal** | React 18, Vite, Tailwind CSS, Leaflet | `3102` (`3000`) | Back-office hub for dispatch, customer 360, billing, sales canvass map, and HR. |
 | **Customer Portal** | React 18, Vite, Tailwind CSS | `3101` (`3001`) | Customer self-service dashboard for invoices, payment method management, and agreement signing. |
 | **Technician Portal** | React 18, Vite, PWA, Service Worker | `3002` | Mobile-first offline-capable PWA with route turn-by-turn, chemical logs, and camera uploads. |
 | **Express API** | Node.js, Fastify/Express, Prisma ORM | `3182` (`8000`) | Canonical TypeScript REST reference backend. |
@@ -101,19 +101,22 @@ All four backends are strictly organized into **7 domain modules** (vertical sli
 
 ## Local Setup Instructions
 
+See [Docker runtime configuration and verification](docs/docker-runtime.md) for port, key, proxy and worker settings.
+
+
 ### 1. Boot the Stack via Docker Compose
 ```bash
 docker-compose up -d --build
 ```
 
 ### 2. Run Database Migrations
-Apply the complete sequential migration suite against the PostgreSQL container:
+For a fresh, empty database only, apply the sequential SQL suite below. Existing databases require a backup and inspection of missing migrations; see [Docker runtime](docs/docker-runtime.md). Do not rerun the full suite against existing data.
 
 **Windows (PowerShell):**
 ```powershell
 Get-ChildItem -Path shared\database -Filter "*.sql" | Sort-Object Name | ForEach-Object {
     Write-Host "Applying $($_.Name)..."
-    Get-Content $_.FullName | docker-compose exec -T postgres psql -U crm_user -d crm_db
+    Get-Content $_.FullName | docker compose exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
 }
 ```
 
@@ -121,7 +124,7 @@ Get-ChildItem -Path shared\database -Filter "*.sql" | Sort-Object Name | ForEach
 ```bash
 for file in $(ls shared/database/*.sql | sort); do
     echo "Applying $file..."
-    docker-compose exec -T postgres psql -U crm_user -d crm_db < "$file"
+    docker compose exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < "$file"
 done
 ```
 
@@ -146,7 +149,7 @@ done
 
 ## Accessing the Applications
 
-- **Admin Portal**: Open [http://localhost:3100](http://localhost:3100) (or `3000` standalone)
+- **Admin Portal**: Open [http://localhost:3102](http://localhost:3102) (or `5173` standalone)
 - **Customer Portal**: Open [http://localhost:3101](http://localhost:3101) (or `3001` standalone)
 - **Technician PWA**: Open [http://localhost:3002](http://localhost:3002)
 - **GraphQL Playground**: Open [http://localhost:3183/graphql](http://localhost:3183/graphql)
@@ -211,4 +214,3 @@ python scripts/docker_orchestrate.py test-health
 # Tear down all running containers
 python scripts/docker_orchestrate.py down
 ```
-

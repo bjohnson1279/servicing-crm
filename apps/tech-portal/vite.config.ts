@@ -31,6 +31,13 @@ export default defineConfig({
     })
   ],
   server: {
+    watch: { usePolling: true, interval: 1000 },
+    allowedHosts: ['tech-portal'],
+    proxy: {
+      '/api': { target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3182', changeOrigin: true },
+      '/uploads': { target: process.env.VITE_API_PROXY_TARGET || 'http://localhost:3182', changeOrigin: true },
+    },
+
     host: true,
     port: 3002
   }

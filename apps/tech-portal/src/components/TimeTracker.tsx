@@ -14,7 +14,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
     setActionLoading('in');
     setError(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/jobs/${jobId}/clock-in`, {
+      const res = await fetch(`/api/jobs/${jobId}/clock-in`, {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to clock in');
@@ -30,7 +30,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
     setActionLoading('out');
     setError(null);
     try {
-      const res = await fetch(`http://localhost:8000/api/jobs/${jobId}/clock-out`, {
+      const res = await fetch(`/api/jobs/${jobId}/clock-out`, {
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to clock out');
