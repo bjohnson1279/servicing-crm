@@ -86,8 +86,7 @@ services:
     ports:
       - "${EXPRESS_API_PORT:-3182}:8000"
     volumes:
-      - ./backends/express-api:/app
-      - /app/node_modules
+      - ./backends/express-api/uploads:/app/uploads
     restart: unless-stopped
     logging: *default-logging
     networks:
@@ -107,6 +106,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=8000
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
     deploy: *default-backend-deploy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -146,6 +146,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - APP_ENV=${APP_ENV:-development}
     deploy: *default-backend-deploy
     healthcheck:
@@ -161,8 +162,7 @@ services:
     ports:
       - "${GRAPHQL_API_PORT:-3183}:8000"
     volumes:
-      - ./backends/graphql-api:/app
-      - /app/node_modules
+      - ./backends/graphql-api/uploads:/app/uploads
     restart: unless-stopped
     logging: *default-logging
     networks:
@@ -182,6 +182,7 @@ services:
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=8000
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
     deploy: *default-backend-deploy
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:8000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
@@ -214,6 +215,7 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - JWT_SECRET=${JWT_SECRET:?Set JWT_SECRET in .env}
       - FASTAPI_ENV=${FASTAPI_ENV:-development}
     deploy: *default-backend-deploy
     healthcheck:

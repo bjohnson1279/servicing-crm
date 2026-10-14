@@ -27,3 +27,4 @@ servicing-crm.code-workspace
 *.patch
 patch.diff
 *.timestamp-*.mjs
+tests/reports/feature-parity-inventory.json
