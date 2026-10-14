@@ -1,0 +1,57 @@
+// Scalar read mappings. Migration 028 owns evidence constraints and commands.
+model JobCostPolicy {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ effectiveFrom DateTime @map("effective_from") @db.Date
+ revision Int @default(1)
+ hourlyRate Decimal @map("hourly_rate") @db.Decimal(12,2)
+ currency String
+ reason String
+ actorId String @map("actor_id") @db.Uuid
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@unique([tenantId,effectiveFrom,revision])
+ @@map("job_cost_policies")
+}
+model JobCostEntry {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ jobId String @map("job_id") @db.Uuid
+ contractId String? @map("contract_id") @db.Uuid
+ category String
+ revision Int
+ supersedesId String? @unique @map("supersedes_id") @db.Uuid
+ status String
+ amount Decimal? @db.Decimal(14,2)
+ currency String
+ serviceDate DateTime @map("service_date") @db.Date
+ source String
+ sourceReference String @map("source_reference")
+ sourceSnapshot Json @map("source_snapshot")
+ policyId String? @map("policy_id") @db.Uuid
+ reason String
+ actorId String @map("actor_id") @db.Uuid
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@unique([jobId,category,revision])
+ @@index([tenantId,jobId,category,revision(sort: Desc)],map:"job_cost_report")
+ @@index([tenantId,contractId,serviceDate],map:"job_cost_contract")
+ @@map("job_cost_entries")
+}
+model JobCostRequest {
+ tenantId String @map("tenant_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ requestKey String @map("request_key") @db.Uuid
+ action String
+ payload Json
+ result Json
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@id([tenantId,actorId,requestKey])
+ @@map("job_cost_requests")
+}
+model JobCostSettingsEvent {
+ id String @id @default(uuid()) @db.Uuid
+ tenantId String @map("tenant_id") @db.Uuid
+ actorId String @map("actor_id") @db.Uuid
+ settings Json
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+ @@map("job_cost_settings_events")
+}

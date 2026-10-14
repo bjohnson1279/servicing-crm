@@ -1,0 +1,82 @@
+import assert from 'node:assert/strict';
+import {readFile,readdir} from 'node:fs/promises';
+import {PGlite} from '../.callback-test-runtime/node_modules/@electric-sql/pglite/dist/index.js';
+
+import {testProfitabilityAdapters} from './profitability-adapters.mjs';
+const db=new PGlite(),root=new URL('../shared/database/',import.meta.url);
+for(const name of (await readdir(root)).filter(n=>n.endsWith('.sql')).sort())if(name!=='003_seed_data.sql')await db.exec((await readFile(new URL(name,root),'utf8')).replace(/CREATE EXTENSION IF NOT EXISTS "uuid-ossp";/g,'').replace(/uuid_generate_v4\(\)/g,'gen_random_uuid()'));
+const id=n=>`00000000-0000-0000-0000-${String(n).padStart(12,'0')}`;
+const tenant=id(1),other=id(2),manager=id(3),techUser=id(4),techUser2=id(5),customerUser=id(6),customer=id(7),property=id(8),tech=id(9),tech2=id(10),job=id(11),outside=id(12);
+await db.query("INSERT INTO tenants(id,name) VALUES($1,'One'),($2,'Two')",[tenant,other]);
+for(const [user,role,t] of [[manager,'MANAGER',tenant],[techUser,'TECHNICIAN',tenant],[techUser2,'TECHNICIAN',tenant],[customerUser,'CUSTOMER',tenant],[outside,'MANAGER',other]])await db.query("INSERT INTO users(id,tenant_id,email,password_hash,role) VALUES($1,$2,$3,'x',$4)",[user,t,user+'@test',role]);
+await db.query("INSERT INTO customers(id,user_id,name) VALUES($1,$2,'Client')",[customer,customerUser]);
+await db.query("INSERT INTO properties(id,customer_id,address) VALUES($1,$2,'Place'),($3,$2,'Another place')",[property,customer,id(13)]);
+await db.query('INSERT INTO technicians(id,user_id) VALUES($1,$2),($3,$4)',[tech,techUser,tech2,techUser2]);
+await db.query("INSERT INTO jobs(id,tenant_id,customer_id,property_id,technician_id,status) VALUES($1,$2,$3,$4,$5,'scheduled')",[job,tenant,customer,property,tech]);
+await db.query("INSERT INTO inventory_items(id,tenant_id,name,sku) VALUES($1,$2,'Station','ST'),($3,$4,'Other equipment','OTHER')",[id(14),tenant,id(15),other]);
+
+
+let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
+async function api(action,body={},actor=manager,t=tenant){return(await db.query('SELECT profitability_api($1,$2::uuid,$3::uuid,$4::jsonb) value',[action,t,actor,JSON.stringify(body)])).rows[0].value;}
+async function denied(action,body,code,actor=manager,t=tenant){await assert.rejects(api(action,body,actor,t),e=>e.code===code);checks++;}
+const key=()=>crypto.randomUUID();
+await denied('list',{},'P0503');await denied('settings',{},'P0403',techUser);await denied('settings',{},'P0403',customerUser);
+const dispatcher=id(20);await db.query("INSERT INTO users(id,tenant_id,email,password_hash,role) VALUES($1,$2,'dispatch@test','x','DISPATCHER')",[dispatcher,tenant]);await denied('settings',{},'P0403',dispatcher);
+await denied('settings',{enabled:true},'P0400');await denied('settings',{currency:'usd',timezone:'UTC'},'P0400');await denied('settings',{currency:'USD',timezone:'Bad/Zone'},'P0400');
+await api('settings',{currency:'USD',timezone:'America/Denver'});
+const policyInput={effective_from:'2020-01-01',hourly_rate:'31.50',reason:'Reviewed loaded labor cost',request_key:key()};
+const policy=await api('policy',policyInput);eq(policy.hourly_rate,'31.50');eq(await api('policy',policyInput),policy);
+await denied('policy',{...policyInput,hourly_rate:'32.00'},'P0409');await denied('policy',{...policyInput,request_key:key(),hourly_rate:32},'P0400');
+await api('settings',{enabled:true});eq((await api('settings_read',{enabled:false})).enabled,true);
+await denied('settings',{currency:'EUR'},'P0409');
+await db.query('UPDATE jobs SET on_site_time_minutes=61,drive_time_minutes=15 WHERE id=$1',[job]);
+let view=await api('get',{id:job});eq(view.cost_complete,false);eq(view.known_cost,'0.00');eq(view.estimated_cost,'0.00');eq(view.margin,null);eq(view.revenue_state,'not_reconciled');
+eq(view.categories.every(c=>c.status==='missing'),true);
+let revision=0;
+const input={id:job,category:'labor',revision,status:'estimated',source:'recorded_time',service_date:'2025-06-01',source_reference:'Job recorded minutes',reason:'Provisional organization rate',request_key:key()};
+view=await api('record',input);eq(view.estimated_cost,'32.03');eq(view.history[0].policy_id,policy.id);eq(await api('record',input),view);
+await denied('record',{...input,request_key:key()},'P0409');await denied('record',{...input,request_key:key(),revision:1,status:'actual'},'P0400');
+await api('policy',{...policyInput,request_key:key(),hourly_rate:'60.00'});eq((await api('get',{id:job})).estimated_cost,'32.03');
+await db.query('UPDATE jobs SET on_site_time_minutes=62 WHERE id=$1',[job]);view=await api('get',{id:job});eq(view.categories.find(c=>c.category==='labor').stale,true);eq(view.estimated_cost,'0.00');
+view=await api('record',{...input,request_key:key(),revision:1});eq(view.estimated_cost,'62.00');eq(view.history.length,2);
+const manual={id:job,category:'labor',revision:2,status:'actual',source:'manual',service_date:'2025-06-01',amount:'45.10',source_reference:'Payroll evidence #1',reason:'Reconciled labor total',request_key:key()};
+view=await api('record',manual);eq(view.known_cost,'45.10');eq(view.estimated_cost,'0.00');
+for(const category of ['travel','materials','subcontractor','other'])view=await api('record',{...manual,category,revision:0,status:'zero',amount:'0',source_reference:'Manager reviewed no cost in category',request_key:key()});
+eq(view.cost_complete,true);eq(view.known_cost,'45.10');eq(view.margin,null);eq(view.history.length,7);
+eq((await api('list',{complete:true})).items.length,1);eq((await api('list',{complete:false})).items.length,0);
+await denied('record',{...manual,revision:3,amount:'-1',request_key:key()},'P0400');await denied('record',{...manual,revision:3,amount:'1.123',request_key:key()},'P0400');
+await denied('record',{...manual,revision:3,status:'zero',amount:'2',request_key:key()},'P0400');
+await denied('record',{...manual,revision:3,status:'unknown',request_key:key()},'P0400');
+view=await api('record',{...manual,category:'materials',revision:1,status:'unknown',amount:null,request_key:key()});eq(view.cost_complete,false);eq(view.categories.find(c=>c.category==='materials').amount,null);
+await denied('record',{...input,category:'travel',revision:1,service_date:'2019-01-01',request_key:key()},'P0409');
+await db.query('UPDATE jobs SET drive_time_minutes=-1 WHERE id=$1',[job]);await denied('record',{...input,category:'travel',revision:1,request_key:key()},'P0409');await db.query('UPDATE jobs SET drive_time_minutes=15 WHERE id=$1',[job]);
+await api('settings',{currency:'USD',timezone:'UTC'},outside,other);await api('policy',{...policyInput,request_key:key()},outside,other);await api('settings',{enabled:true},outside,other);
+eq((await api('list',{},outside,other)).items.length,0);await denied('get',{id:job},'P0404',outside,other);await denied('get',{id:job},'P0401',outside,tenant);
+await denied('list',{limit:0},'P0400');eq((await api('list',{from:'2025-01-01',through:'2025-12-31'})).items.length,1);eq((await api('list',{from:'2030-01-01'})).items.length,0);
+await assert.rejects(db.exec("UPDATE job_cost_entries SET amount=0"),e=>e.code==='P0409');checks++;
+await assert.rejects(db.exec("DELETE FROM job_cost_policies"),e=>e.code==='P0409');checks++;
+await assert.rejects(db.exec("UPDATE job_cost_requests SET result='{}'"),e=>e.code==='P0409');checks++;
+await db.query("UPDATE users SET role='TECHNICIAN' WHERE id=$1",[manager]);await denied('record',manual,'P0403');await db.query("UPDATE users SET role='MANAGER' WHERE id=$1",[manager]);
+const contract=id(21);await db.query("INSERT INTO service_contracts(id,tenant_id,customer_id,property_id,cadence,start_date) VALUES($1,$2,$3,$4,'MONTHLY','2025-01-01')",[contract,other,customer,property]);
+await db.query('UPDATE jobs SET contract_id=$1 WHERE id=$2',[contract,job]);await denied('get',{id:job},'P0404');eq((await api('list')).items.length,0);await db.query('UPDATE jobs SET contract_id=NULL WHERE id=$1',[job]);
+eq((await db.query('SELECT count(*)::int n FROM invoices')).rows[0].n,0);eq((await db.query('SELECT quantity FROM inventory_items WHERE id=$1',[id(14)])).rows[0].quantity,0);
+
+await denied('record',{...manual,revision:3,request_key:key(),service_date:'tomorrow'},'P0400');
+await denied('policy',{...policyInput,request_key:key(),effective_from:'yesterday'},'P0400');
+const callback=id(30),visitId=id(31);
+await db.query("INSERT INTO service_callbacks(id,tenant_id,customer_id,property_id,source_job_id,pest_code,description,intake_key) VALUES($1,$2,$3,$4,$5,'ants','Follow-up', $6)",[callback,tenant,customer,property,job,key()]);
+await db.query("INSERT INTO callback_visits(id,tenant_id,callback_id,job_id,sequence,request_key,labor_rate_snapshot,material_cost) VALUES($1,$2,$3,$4,1,$5,40,20)",[visitId,tenant,callback,job,key()]);
+const callbackView=await api('get',{id:job});eq(callbackView.sources.callback.material_cost,'20.00');eq(callbackView.sources.callback.currency_verified,false);eq(callbackView.known_cost,'45.10');
+await api('record',{...manual,category:'materials',revision:2,status:'actual',amount:'20.00',source_reference:'Reviewed callback material receipt',request_key:key()});
+eq((await api('get',{id:job})).known_cost,'65.10');eq((await api('list')).items.length,1);
+await db.query("INSERT INTO chemical_application_logs(job_id,technician_id,chemical_name,quantity_used,unit,inventory_item_id) VALUES($1,$2,'Product',2,'oz',$3)",[job,tech,id(15)]);
+await denied('get',{id:job},'P0404');eq((await api('list')).items.length,0);
+await db.query('DELETE FROM chemical_application_logs WHERE job_id=$1',[job]);
+await denied('record',{...manual,revision:3,request_key:key(),service_date:'2099-01-01'},'P0400');
+eq((await db.query('SELECT count(*)::int n FROM job_cost_entries WHERE job_id=$1 AND category=\'materials\'',[job])).rows[0].n,3);
+
+await api('settings',{enabled:false});await denied('record',manual,'P0503');await api('settings',{enabled:true});
+eq((await db.query("SELECT count(*)::int n FROM job_cost_settings_events WHERE tenant_id=$1",[tenant])).rows[0].n>=3,true);
+console.log(checks+' job cost database checks passed');
+await testProfitabilityAdapters(db,{tenant,manager,techUser,customerUser,job});
+await db.close();

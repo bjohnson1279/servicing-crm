@@ -68,6 +68,14 @@ await db.exec("CREATE FUNCTION test_recurring_failure() RETURNS trigger LANGUAGE
 await api('assess',{request_key:crypto.randomUUID()});const failed=await api('list',{reason:'assessment_failure'});eq(failed.items.length,1);eq(JSON.stringify(failed).includes('sensitive failure'),false);
 await db.exec('DROP TRIGGER test_recurring_failure ON recurring_occurrences;DROP FUNCTION test_recurring_failure();');
 await api('assess',{request_key:crypto.randomUUID()});eq((await api('list',{reason:'assessment_failure'})).items.length,0);
+
+// Appointment UTC day differs, but the tenant-local day still matches the occurrence.
+await db.query("DELETE FROM jobs WHERE id=$1",[id(23)]);
+await db.query("UPDATE jobs SET scheduled_start=($1::date+time '23:30') AT TIME ZONE 'America/Denver',status='completed' WHERE id=$2",[due,visit]);
+await api('assess',{request_key:crypto.randomUUID()});eq((await api('list',{contract_id:contract})).items.length,0);
+const once=id(25);await db.query("INSERT INTO service_contracts(id,tenant_id,customer_id,property_id,cadence,start_date) VALUES($1,$2,$3,$4,'ONE_TIME',$5)",[once,tenant,customer,property,due]);
+await api('assess',{request_key:crypto.randomUUID()});eq((await db.query('SELECT count(*)::int n FROM recurring_occurrences WHERE contract_id=$1',[once])).rows[0].n,0);
+eq((await db.query('SELECT count(*)::int n FROM recurring_occurrences WHERE contract_id=$1 AND nominal_date>$2::date',[contract,due])).rows[0].n,0);
 console.log(checks+' recurring database checks passed');
 await testRecurringAdapters(db,{tenant,manager,techUser,customerUser,exception:exception.id});
 await db.close();

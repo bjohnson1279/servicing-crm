@@ -59,13 +59,19 @@ BEGIN
  END IF;
 END $$;
 
+CREATE FUNCTION recurring_context(t uuid,c uuid) RETURNS jsonb LANGUAGE sql STABLE AS $$
+ SELECT COALESCE((SELECT jsonb_build_object('customer_name',cu.name,'property_address',p.address,'cadence',sc.cadence)
+ FROM service_contracts sc JOIN customers cu ON cu.id=sc.customer_id JOIN users u ON u.id=cu.user_id AND u.tenant_id=t
+ JOIN properties p ON p.id=sc.property_id AND p.customer_id=cu.id WHERE sc.id=c AND sc.tenant_id=t),'{}'::jsonb)
+$$;
+
 CREATE FUNCTION recurring_api(action text,tenant uuid,actor uuid,body jsonb DEFAULT '{}') RETURNS jsonb LANGUAGE plpgsql AS $$
 DECLARE role_name text;t tenants;c service_contracts;rev recurring_schedule_revisions;o recurring_occurrences;
  run recurring_assessments;signature text;snapshot jsonb;local_today date;low_date date;high_date date;nominal date;n integer;step integer;
  matches jsonb;j jobs;count_matches integer;details jsonb;invalid boolean;processed integer:=0;cursor_id uuid;
  page_limit integer;page_offset integer;items jsonb;answer jsonb;old_exception recurring_exceptions;
 BEGIN
- IF jsonb_typeof(body) IS DISTINCT FROM 'object' THEN RAISE EXCEPTION USING ERRCODE='P0400',MESSAGE='Object required'; END IF;
+ IF jsonb_typeof(body) IS DISTINCT FROM 'object' OR octet_length(body::text)>100000 THEN RAISE EXCEPTION USING ERRCODE='P0400',MESSAGE='Object required'; END IF;
  SELECT role::text INTO role_name FROM users WHERE id=actor AND tenant_id=tenant FOR SHARE;
  IF NOT FOUND THEN RAISE EXCEPTION USING ERRCODE='P0401',MESSAGE='Invalid identity'; END IF;
  IF role_name NOT IN ('SUPER_ADMIN','MANAGER','DISPATCHER','CUSTOMER_SERVICE_REP','CSR') THEN RAISE EXCEPTION USING ERRCODE='P0403',MESSAGE='Staff required'; END IF;
@@ -101,7 +107,7 @@ BEGIN
    PERFORM recurring_record(tenant,c.id,NULL,'invalid_schedule',invalid,details,run.id);
    IF invalid THEN CONTINUE; END IF;
    snapshot:=jsonb_build_object('cadence',c.cadence,'start_date',c.start_date,'end_date',c.end_date,'customer_id',c.customer_id,'property_id',c.property_id,'timezone',t.recurring_timezone);
-   signature:=md5(snapshot::text);
+   signature:=encode(sha256(convert_to(snapshot::text,'UTF8')),'hex');
    INSERT INTO recurring_schedule_revisions(tenant_id,contract_id,fingerprint,snapshot) VALUES(tenant,c.id,signature,snapshot) ON CONFLICT(contract_id,fingerprint) DO NOTHING;
    SELECT * INTO rev FROM recurring_schedule_revisions WHERE contract_id=c.id AND fingerprint=signature;
    -- Retire obsolete preview alerts while retaining evidence. No fulfillment is inferred.
@@ -142,14 +148,14 @@ BEGIN
   UPDATE recurring_assessments SET result=answer WHERE id=run.id;RETURN answer;
  END IF;
  IF action='get' THEN
-  SELECT to_jsonb(e)||jsonb_build_object('occurrence',to_jsonb(occ),'events',COALESCE((SELECT jsonb_agg(to_jsonb(ev) ORDER BY ev.created_at,ev.id) FROM recurring_exception_events ev WHERE ev.exception_id=e.id),'[]')) INTO answer
+  SELECT to_jsonb(e)||jsonb_build_object('context',recurring_context(tenant,e.contract_id),'occurrence',to_jsonb(occ),'events',COALESCE((SELECT jsonb_agg(to_jsonb(ev) ORDER BY ev.created_at,ev.id) FROM recurring_exception_events ev WHERE ev.exception_id=e.id),'[]')) INTO answer
    FROM recurring_exceptions e LEFT JOIN recurring_occurrences occ ON occ.id=e.occurrence_id WHERE e.tenant_id=tenant AND e.id=(body->>'id')::uuid;
   IF answer IS NULL THEN RAISE EXCEPTION USING ERRCODE='P0404',MESSAGE='Exception not found'; END IF;RETURN answer;
  END IF;
  IF action='list' THEN
   page_limit:=COALESCE((body->>'limit')::integer,25);page_offset:=COALESCE((body->>'offset')::integer,0);
   IF page_limit NOT BETWEEN 1 AND 100 OR page_offset NOT BETWEEN 0 AND 100000 THEN RAISE EXCEPTION USING ERRCODE='P0400',MESSAGE='Invalid pagination'; END IF;
-  SELECT COALESCE(jsonb_agg(row),'[]') INTO items FROM (SELECT to_jsonb(e)||jsonb_build_object('occurrence',to_jsonb(occ)) AS row FROM recurring_exceptions e LEFT JOIN recurring_occurrences occ ON occ.id=e.occurrence_id
+  SELECT COALESCE(jsonb_agg(row),'[]') INTO items FROM (SELECT to_jsonb(e)||jsonb_build_object('context',recurring_context(tenant,e.contract_id),'occurrence',to_jsonb(occ)) AS row FROM recurring_exceptions e LEFT JOIN recurring_occurrences occ ON occ.id=e.occurrence_id
    WHERE e.tenant_id=tenant AND e.state=COALESCE(body->>'state','open') AND (body->>'reason' IS NULL OR e.reason=body->>'reason') AND (body->>'contract_id' IS NULL OR e.contract_id=(body->>'contract_id')::uuid)
    AND (body->>'property_id' IS NULL OR EXISTS(SELECT 1 FROM recurring_schedule_revisions sr WHERE sr.id=occ.revision_id AND sr.snapshot->>'property_id'=body->>'property_id'))
    AND (body->>'from' IS NULL OR occ.nominal_date>=(body->>'from')::date) AND (body->>'through' IS NULL OR occ.nominal_date<=(body->>'through')::date)
