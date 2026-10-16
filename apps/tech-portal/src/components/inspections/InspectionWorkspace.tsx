@@ -58,9 +58,9 @@ export default function InspectionWorkspace({mode,jobId}:{mode:'staff'|'technici
   {settings&&!settings.enabled&&<div><p>Inspections are not enabled for your organization.</p>{['MANAGER','SUPER_ADMIN'].includes(settings.role)&&<button disabled={busy} onClick={async()=>{setBusy(true);try{await inspectionApi('/settings',{enabled:true});await load();}catch(e){fail(e);}finally{setBusy(false);}}}>Enable inspections</button>}</div>}
   {settings?.enabled&&<>
    {mode==='staff'&&<div className="flex gap-3 flex-wrap">
-    <label>Scheduled job <select value={job} disabled={busy} onChange={e=>setJob(e.target.value)}><option value="">Select a job</option>{options.map(j=><option key={j.id} value={j.id}>{j.customer.name} — {j.property.address} ({j.id.slice(0,8)})</option>)}</select></label>
+    <div><label htmlFor="scheduled-job-3009">Scheduled job</label> <select id="scheduled-job-3009" value={job} disabled={busy} onChange={e=>setJob(e.target.value)}><option value="">Select a job</option>{options.map(j=><option key={j.id} value={j.id}>{j.customer.name} — {j.property.address} ({j.id.slice(0,8)})</option>)}</select></div>
     <button disabled={busy||!job} onClick={()=>execute('/',{job_id:job,request_key:crypto.randomUUID()})}>Create inspection</button>
-    <label>Filter <select value={filter} disabled={busy||dirty} onChange={e=>{setOffset(0);setFilter(e.target.value);}}><option value="">All inspections</option>{['scheduled','in_progress','submitted','reviewed','cancelled'].map(s=><option key={s}>{s}</option>)}</select></label>
+    <div><label htmlFor="filter-7044">Filter</label> <select id="filter-7044" value={filter} disabled={busy||dirty} onChange={e=>{setOffset(0);setFilter(e.target.value);}}><option value="">All inspections</option>{['scheduled','in_progress','submitted','reviewed','cancelled'].map(s=><option key={s}>{s}</option>)}</select></div>
    </div>}
    <button disabled={busy||dirty} onClick={async()=>{setBusy(true);try{await load();if(selected)choose(await inspectionApi<Inspection>('/'+selected.id));}catch(e){fail(e);}finally{setBusy(false);}}}>Refresh</button>
    {items.length===0?<p>{mode==='technician'?'No inspection is assigned to this job.':'No inspections match this view. Select a scheduled job to create one.'}</p>:<ul>{items.map(i=><li key={i.id}><button disabled={busy||dirty} onClick={()=>open(i)}>{i.customer_name} — {i.property_address} · {i.state.replace(/_/g,' ')}</button></li>)}</ul>}
@@ -73,8 +73,8 @@ export default function InspectionWorkspace({mode,jobId}:{mode:'staff'|'technici
      {findings.zones.map((z,index)=><fieldset key={index} className="border rounded p-3"><legend>Zone {index+1}</legend>
       <label>Zone name <input value={z.name} maxLength={120} onChange={e=>edit(index,'name',e.target.value)} /></label>
       <label>Pests (comma separated) <input value={z.pests.join(', ')} onChange={e=>edit(index,'pests',e.target.value.split(',').map(x=>x.trim()))} /></label>
-      <label>Evidence <select value={z.evidence} onChange={e=>edit(index,'evidence',e.target.value)}>{['unknown','observed','reported','none'].map(x=><option key={x}>{x}</option>)}</select></label>
-      <label>Severity <select value={z.severity} onChange={e=>edit(index,'severity',e.target.value)}>{['unknown','low','moderate','high'].map(x=><option key={x}>{x}</option>)}</select></label>
+      <div><label htmlFor="evidence-9644">Evidence</label> <select id="evidence-9644" value={z.evidence} onChange={e=>edit(index,'evidence',e.target.value)}>{['unknown','observed','reported','none'].map(x=><option key={x}>{x}</option>)}</select></div>
+      <div><label htmlFor="severity-7645">Severity</label> <select id="severity-7645" value={z.severity} onChange={e=>edit(index,'severity',e.target.value)}>{['unknown','low','moderate','high'].map(x=><option key={x}>{x}</option>)}</select></div>
       <label><input type="checkbox" checked={z.inaccessible} onChange={e=>edit(index,'inaccessible',e.target.checked)} />Inaccessible area</label>
       <label>Observations, conditions, concerns or access reason <textarea value={z.notes} maxLength={4000} onChange={e=>edit(index,'notes',e.target.value)} /></label>
       <button onClick={()=>{setFindings(f=>({...f,zones:f.zones.filter((_,n)=>n!==index)}));setDirty(true);}}>Remove zone {index+1}</button>

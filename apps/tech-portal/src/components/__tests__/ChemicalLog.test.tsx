@@ -22,6 +22,6 @@ describe('ChemicalLog Component', () => {
     );
 
     expect(screen.getByText(/Chemical Application Log/i)).toBeInTheDocument();
-    expect(screen.getByText(/Submit Chemical Log/i)).toBeInTheDocument();
+    expect(screen.getByText(/Save & Log Application/i)).toBeInTheDocument();
   });
 });
