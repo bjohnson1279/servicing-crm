@@ -108,3 +108,7 @@
 - **Strictly Append-Only Journaling**: When adding learnings to `.jules/*.md`, append strictly at the end of the file. Do not rewrite, deduplicate, or remove lines beginning with `## YYYY-MM-DD`.
 - **Surgical Scope Quarantine**: Modify only the files directly involved in the issue and their corresponding test fixtures. Do not delete, rename, or perform drive-by cleanups of unrelated root-level scripts or legacy files.
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
+
+## 2026-10-17 - Explicit Form Labeling using htmlFor in DeviceWorkspace
+**Learning:** In the `DeviceWorkspace.tsx` component, form elements such as inputs, textareas, and selects were being wrapped implicitly inside `<label>` tags (e.g., `<label>Text <input/></label>`). While valid HTML, this implicit wrapping provides poor compatibility with some older screen readers and assistive technologies, and it violates the codebase's UX standards that dictate `<label htmlFor="...">` and `<input id="...">` pairings.
+**Action:** Always ensure that form labels are explicitly linked to their corresponding inputs using the `htmlFor` attribute on the `<label>` and the `id` attribute on the `<input>` or `<select>`. For statically rendered forms, use a `<div>` to structurally wrap the `<label>` and `<input>`, rather than nesting the input implicitly inside the label.
