@@ -112,3 +112,7 @@
 ## 2026-10-17 - Explicit Form Labeling using htmlFor in DeviceWorkspace
 **Learning:** In the `DeviceWorkspace.tsx` component, form elements such as inputs, textareas, and selects were being wrapped implicitly inside `<label>` tags (e.g., `<label>Text <input/></label>`). While valid HTML, this implicit wrapping provides poor compatibility with some older screen readers and assistive technologies, and it violates the codebase's UX standards that dictate `<label htmlFor="...">` and `<input id="...">` pairings.
 **Action:** Always ensure that form labels are explicitly linked to their corresponding inputs using the `htmlFor` attribute on the `<label>` and the `id` attribute on the `<input>` or `<select>`. For statically rendered forms, use a `<div>` to structurally wrap the `<label>` and `<input>`, rather than nesting the input implicitly inside the label.
+
+## 2026-10-22 - Explicit Label Linking with Checkboxes
+**Learning:** When explicitly linking form checkboxes to their labels with `id` and `htmlFor` within styled grids (like pest selection in ChemicalLog), structurally separating the outer styled `<label>` into a generic `<div>` removes the clickable padding, degrading UX.
+**Action:** Keep the explicit linking, but structure the layout to ensure the entire padded area remains clickable without violating semantic rules or adding arbitrary div wrappers that steal click events.

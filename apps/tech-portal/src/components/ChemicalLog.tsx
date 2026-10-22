@@ -383,29 +383,42 @@ export const ChemicalLog: React.FC = () => {
           <div role="group" aria-labelledby="target-pests-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
             {COMMON_PESTS.map((pest) => {
               const checked = selectedPests.includes(pest);
+              const pestId = `pest-${pest.replace(/\s+/g, '-').toLowerCase()}`;
               return (
-                <label
+                <div
                   key={pest}
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '13px',
-                    padding: '6px 8px',
+                    alignItems: 'stretch',
                     borderRadius: '6px',
                     border: `1px solid ${checked ? '#3b82f6' : '#e2e8f0'}`,
                     background: checked ? '#eff6ff' : '#f8fafc',
-                    cursor: 'pointer',
-                    userSelect: 'none',
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => togglePest(pest)}
-                  />
-                  <span>{pest}</span>
-                </label>
+                  <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '8px' }}>
+                    <input
+                      id={pestId}
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => togglePest(pest)}
+                      style={{ cursor: 'pointer', margin: 0 }}
+                    />
+                  </div>
+                  <label
+                    htmlFor={pestId}
+                    style={{
+                      cursor: 'pointer',
+                      flexGrow: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '13px',
+                      padding: '6px 8px 6px 6px',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {pest}
+                  </label>
+                </div>
               );
             })}
           </div>
