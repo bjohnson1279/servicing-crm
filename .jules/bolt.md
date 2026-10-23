@@ -116,3 +116,6 @@
 ## 2026-10-22 - Identifying missing foreign key indexes in early tables
 **Learning:** Found more missing foreign key indexes (`customer_id` and `campaign_id` in `automated_followups` from `011_marketing_retention.sql`, and `item_id` in `purchase_orders` from `012_inventory_management.sql`). While many later migrations have been corrected, earlier ones also suffer from missing indexes which can severely impact join performance.
 **Action:** Added `shared/database/037_missing_fk_indexes_pt4.sql` to explicitly index `customer_id`, `campaign_id`, and `item_id`. Continual vigilance for unindexed foreign keys is necessary.
+## 2026-10-25 - Finding Remaining Unindexed Foreign Keys
+**Learning:** Some migrations (like 022, 024, 025, 026, 027, 028, 029) introduced new tables and foreign keys (such as `warranty_policy_versions`, `inspection_requests`, `recurring_occurrences`, etc.) that were not indexed. Even `tenant_id` was missed in several tables (`job_cost_policies`, `commercial_accounts`).
+**Action:** Added `shared/database/038_missing_fk_indexes_pt5.sql` to index these missing foreign keys and `tenant_id` columns, completing the indexing for late-stage migrations.
