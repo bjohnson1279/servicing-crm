@@ -116,3 +116,6 @@
 ## 2026-10-22 - Explicit Label Linking with Checkboxes
 **Learning:** When explicitly linking form checkboxes to their labels with `id` and `htmlFor` within styled grids (like pest selection in ChemicalLog), structurally separating the outer styled `<label>` into a generic `<div>` removes the clickable padding, degrading UX.
 **Action:** Keep the explicit linking, but structure the layout to ensure the entire padded area remains clickable without violating semantic rules or adding arbitrary div wrappers that steal click events.
+## 2026-10-23 - Convert implicit form labels to explicit labels
+**Learning:** Implicitly wrapped form elements (like `<label>Label text <input/></label>`) can cause accessibility issues with some screen readers. They also lack the strong explicit linkage that `htmlFor` and `id` provide.
+**Action:** Convert implicit label-wrapped form controls into explicitly linked sibling elements: `<label htmlFor="field-id">Label text</label> <input id="field-id"/>`. Wrap the pair in a parent `<div>` structure instead of a `<label>` tag to maintain block-level formatting without degrading UX or violating semantic rules.
