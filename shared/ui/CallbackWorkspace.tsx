@@ -104,7 +104,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       const image = await callbackApi<{ media_type: string; data: string }>(`/${current!.id}/attachments/${id}`);
       const bytes = Uint8Array.from(atob(image.data.replace(/\s/g, '')), char => char.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bytes], { type: image.media_type }));
-      window.open(url, '_blank', 'noopener'); setTimeout(() => URL.revokeObjectURL(url), 60000);
+      window.open(url, '_blank', 'noopener,noreferrer'); setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (e) { setError((e as Error).message); }
   }
 

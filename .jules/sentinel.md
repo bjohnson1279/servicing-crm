@@ -103,3 +103,8 @@
 - **Coupled Test Fixture Awareness for Security Invariants**: When changing fail-open fallback behavior (such as hardening decryption to fail closed), always update upstream test mocks that rely on plaintext credentials or mock values.
 - **Strict Lowercase Directory Casing**: Always write learning notes to lowercase `.jules/<bot>.md`. Never create, commit, or reference uppercase `.Jules/`.
 - **Clean Markdown Formatting**: Always append journal entries using actual newline characters, never literal string escape sequences `\n`.
+
+## 2026-10-14 - Prevent HTTP Referer Leakage on New Tabs
+**Vulnerability:** A component (`CallbackWorkspace.tsx`) used `window.open(url, '_blank', 'noopener')`. While `noopener` correctly prevents the newly opened tab from accessing `window.opener`, omitting `noreferrer` means the browser may still leak the originating URL (and potentially sensitive parameters in the path/query) via the `Referer` HTTP header to the destination.
+**Learning:** Even when opening internal object URLs (`blob:`), it is a rigorous defense-in-depth practice to always combine `noopener` and `noreferrer` for any `_blank` target to establish a secure habit and avoid accidental information leakage if the URL source changes to an external domain.
+**Prevention:** Always use `window.open(url, '_blank', 'noopener,noreferrer');` (or `<a target="_blank" rel="noopener noreferrer">`) when opening new tabs.
