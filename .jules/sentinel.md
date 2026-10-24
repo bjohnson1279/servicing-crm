@@ -108,3 +108,8 @@
 **Vulnerability:** A component (`CallbackWorkspace.tsx`) used `window.open(url, '_blank', 'noopener')`. While `noopener` correctly prevents the newly opened tab from accessing `window.opener`, omitting `noreferrer` means the browser may still leak the originating URL (and potentially sensitive parameters in the path/query) via the `Referer` HTTP header to the destination.
 **Learning:** Even when opening internal object URLs (`blob:`), it is a rigorous defense-in-depth practice to always combine `noopener` and `noreferrer` for any `_blank` target to establish a secure habit and avoid accidental information leakage if the URL source changes to an external domain.
 **Prevention:** Always use `window.open(url, '_blank', 'noopener,noreferrer');` (or `<a target="_blank" rel="noopener noreferrer">`) when opening new tabs.
+
+## 2026-10-24 - Prevent Reflected XSS in User-Provided URLs
+**Vulnerability:** The catalog component (`CatalogWorkspace.tsx`) rendered user-provided URLs (`source_url`) directly into anchor tags (`<a href={d.source_url}>`) without checking their protocol. If an attacker inputs `javascript:alert(1)`, clicking the link executes arbitrary JavaScript (DOM-based XSS).
+**Learning:** HTML5 validation (e.g. `type="url"`) can be bypassed programmatically or via API. Relying on `type="url"` does not prevent dangerous protocols like `javascript:` or `data:` from being persisted and rendered into interactive DOM elements.
+**Prevention:** Always sanitize URLs before rendering them into `href` or `src` attributes by enforcing a strict allowlist of secure protocols (e.g., verifying `.startsWith('http://') || .startsWith('https://')` and falling back to `about:blank` if invalid).
