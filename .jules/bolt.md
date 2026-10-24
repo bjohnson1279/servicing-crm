@@ -119,3 +119,6 @@
 ## 2026-10-25 - Finding Remaining Unindexed Foreign Keys
 **Learning:** Some migrations (like 022, 024, 025, 026, 027, 028, 029) introduced new tables and foreign keys (such as `warranty_policy_versions`, `inspection_requests`, `recurring_occurrences`, etc.) that were not indexed. Even `tenant_id` was missed in several tables (`job_cost_policies`, `commercial_accounts`).
 **Action:** Added `shared/database/038_missing_fk_indexes_pt5.sql` to index these missing foreign keys and `tenant_id` columns, completing the indexing for late-stage migrations.
+## 2024-10-24 - Unnecessary React.useMemo usage for small lists
+**Learning:** Found an anti-pattern where developers were using `React.useMemo` to map over simple lists in React components (like mapping DOM elements in `PropertyPhotos.tsx`). Memory guidelines indicate this is a micro-optimization with O(1) overhead that risks introducing stale closures, rather than providing actual performance benefits. (Note: Complex nodes like Leaflet Markers should still use it, per memory).
+**Action:** Avoid wrapping simple `.map()` functions for small lists of DOM elements in `useMemo`.
