@@ -113,3 +113,10 @@
 ## 2026-10-18 - Further Missing FK Indexes Found in Live Chat and Recurring Exceptions
 **Learning:** Found more missing foreign key indexes (`sender_id` in `chat_messages` from `016_live_chat.sql` and `contract_id` and `occurrence_id` in `recurring_exceptions` from `027_recurring_service_exceptions.sql`). While tenant ID and ID uniqueness constraint is common, missing explicit foreign keys indexes can create full table scan issues during joins.
 **Action:** Added `shared/database/036_missing_fk_indexes.sql` to explicitly index `sender_id`, `contract_id`, and `occurrence_id`. Always look out for missing foreign keys indexes for performance.
+## 2026-10-18 - Missing Crucial Foreign Key Indexes
+**Learning:** Even when multiple  migrations are applied, new schema extensions (like , , ) might still miss indexes on crucial multi-tenant columns like  and .
+**Action:** Always verify that foreign keys, especially those related to tenancy (, , ), are explicitly indexed in new migrations to avoid full table scans during joins.
+
+## 2026-10-18 - Missing Crucial Foreign Key Indexes
+**Learning:** Even when multiple CREATE INDEX migrations are applied, new schema extensions (like catalog_products, commercial_accounts, recurring_occurrences) might still miss indexes on crucial multi-tenant columns like tenant_id and property_id.
+**Action:** Always verify that foreign keys, especially those related to tenancy (tenant_id, customer_id, property_id), are explicitly indexed in new migrations to avoid full table scans during joins.
