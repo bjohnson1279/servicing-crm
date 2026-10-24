@@ -47,7 +47,7 @@ export const SignatureCapture: React.FC = () => {
         <button onClick={clearSignature}>Clear</button>
         <button
           onClick={saveSignature}
-          disabled={!hasSignature}
+          disabled={!hasSignature} aria-disabled={!hasSignature}
           title={!hasSignature ? "Please draw a signature before saving" : "Save signature"}
           style={{
             marginLeft: '10px',

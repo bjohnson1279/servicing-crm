@@ -580,7 +580,7 @@ export const ChemicalLog: React.FC = () => {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting} aria-disabled={isSubmitting}
             aria-busy={isSubmitting}
             style={{
               flex: 1,

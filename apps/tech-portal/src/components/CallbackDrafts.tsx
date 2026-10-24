@@ -12,7 +12,7 @@ export function CallbackDrafts({ jobId }: { jobId: string }) {
   },[jobId]);
   return <section aria-label="Saved callback outcomes"><div role="alert">{error}</div>{drafts.map(d => <div key={d.key} className="border rounded p-3">
     <p>Saved outcome: {d.status === 'pending' ? 'Pending sync' : 'Needs review'}</p><p>{d.body.findings}</p><p>{d.body.summary}</p><p>{d.error}</p>
-    {d.status === 'needs_review' && <button disabled={!navigator.onLine} onClick={async () => {
+    {d.status === 'needs_review' && <button disabled={!navigator.onLine} aria-disabled={!navigator.onLine} onClick={async () => {
       try {
         const current = await callbackApi<CallbackCase>(`/${d.id}`);
         if (!['scheduled','in_service'].includes(current.state)) { setError('This case has moved on. Review the case with your dispatcher before changing the saved outcome.'); return; }

@@ -122,7 +122,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
     {loading && <p>Loading service requests…</p>}
     {!loading && settings && <>
       {!navigator.onLine && <p role="status">Offline: showing the last loaded case data. Outcomes remain pending until synced.</p>}
-      {manager && mode === 'staff' && <button disabled={busy} className={button}
+      {manager && mode === 'staff' && <button disabled={busy} aria-disabled={busy} className={button}
         onClick={() => void act('/settings', { enabled: !settings.enabled })}>{settings.enabled ? 'Pause new requests' : 'Enable new requests'}</button>}
       {!settings.enabled && <p>New service requests are currently paused. Existing cases remain available.</p>}
       {mode === 'staff' && report && <div className="border rounded p-4 space-y-2" aria-label="Callback metrics">
@@ -143,7 +143,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           </div>
           {field('preferred_availability','Preferred availability (optional)')}
           <p>Our team will review coverage before confirming service or charges.</p>
-          <button className={button} disabled={busy}>Submit request</button>
+          <button className={button} disabled={busy} aria-disabled={busy}>Submit request</button>
         </form>
       </details>}
       <div className="block space-y-1">
@@ -162,7 +162,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           {items.filter(i => i.property_id === item.property_id).length > 1 && <p>Multiple requests for this property in this view</p>}
         </button>)}
       </div>
-      <div className="flex gap-3"><button className={button} disabled={offset === 0 || busy} onClick={() => setOffset(Math.max(0,offset-25))}>Previous</button><button className={button} disabled={items.length < 25 || busy} onClick={() => setOffset(offset+25)}>Next</button><button className={button} disabled={busy} onClick={() => { void refresh().catch(e => setError(e.message)); }}>Refresh</button></div>
+      <div className="flex gap-3"><button className={button} disabled={offset === 0 || busy} aria-disabled={offset === 0 || busy} onClick={() => setOffset(Math.max(0,offset-25))}>Previous</button><button className={button} disabled={items.length < 25 || busy} aria-disabled={items.length < 25 || busy} onClick={() => setOffset(offset+25)}>Next</button><button className={button} disabled={busy} aria-disabled={busy} onClick={() => { void refresh().catch(e => setError(e.message)); }}>Refresh</button></div>
     </>}
     {current && <article className="border rounded p-5 space-y-4 bg-white">
       <h2 className="text-xl font-semibold">{current.pest_code} — {current.property_address}</h2>
@@ -175,7 +175,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       {!closed.includes(current.state) && (
         <div className="block space-y-1">
           <label htmlFor="add-photo">Add photo (JPEG or PNG, up to 1 MB)</label>
-          <input id="add-photo" type="file" accept="image/jpeg,image/png" disabled={busy} onChange={e => { if (e.target.files?.[0]) void upload(e.target.files[0]); }} />
+          <input id="add-photo" type="file" accept="image/jpeg,image/png" disabled={busy} aria-disabled={busy} onChange={e => { if (e.target.files?.[0]) void upload(e.target.files[0]); }} />
         </div>
       )}
       <h3 className="font-semibold">Return visits</h3>
@@ -184,37 +184,37 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
         {mode === 'staff' && ['draft','scheduled'].includes(v.job_status) && <>
           {choose(`tech_${v.id}`,'Assign return visit technician',(options.technicians || []).map(t => ({value:t.id,text:t.name})))}
           {field(`date_${v.id}`,'Reschedule visit (optional)',false,'datetime-local')}
-          <button className={button} disabled={busy || !fields[`tech_${v.id}`]} onClick={() => void command('visit-update',{job_id:v.job_id,operation:'schedule',technician_id:fields[`tech_${v.id}`],scheduled_start:fields[`date_${v.id}`] ? new Date(fields[`date_${v.id}`]).toISOString() : null})}>Update assignment and schedule</button>
+          <button className={button} disabled={busy || !fields[`tech_${v.id}`]} aria-disabled={busy || !fields[`tech_${v.id}`]} onClick={() => void command('visit-update',{job_id:v.job_id,operation:'schedule',technician_id:fields[`tech_${v.id}`],scheduled_start:fields[`date_${v.id}`] ? new Date(fields[`date_${v.id}`]).toISOString() : null})}>Update assignment and schedule</button>
           {field(`cancel_${v.id}`,'Reason to cancel this visit')}
-          <button className={button} disabled={busy || !fields[`cancel_${v.id}`]} onClick={() => void command('visit-update',{job_id:v.job_id,operation:'cancel',reason:fields[`cancel_${v.id}`]})}>Cancel visit; keep case open</button>
+          <button className={button} disabled={busy || !fields[`cancel_${v.id}`]} aria-disabled={busy || !fields[`cancel_${v.id}`]} onClick={() => void command('visit-update',{job_id:v.job_id,operation:'cancel',reason:fields[`cancel_${v.id}`]})}>Cancel visit; keep case open</button>
         </>}
-        {mode === 'technician' && v.job_id === jobId && v.job_status === 'scheduled' && <button className={button} disabled={busy || !navigator.onLine} onClick={() => void command('visit-update',{job_id:v.job_id,operation:'start'})}>Start return visit</button>}
+        {mode === 'technician' && v.job_id === jobId && v.job_status === 'scheduled' && <button className={button} disabled={busy || !navigator.onLine} aria-disabled={busy || !navigator.onLine} onClick={() => void command('visit-update',{job_id:v.job_id,operation:'start'})}>Start return visit</button>}
         {mode !== 'customer' && <><p>{v.summary}</p><p>Labor: {v.labor_minutes == null ? 'Not recorded' : `${v.labor_minutes} minutes`}. {v.cost_complete ? `Internal cost: $${Number(v.total_cost).toFixed(2)}` : 'Cost estimate incomplete; verify labor rate, time, and materials.'}</p></>}
         {mode === 'staff' && manager && <form className="flex gap-2 items-end" onSubmit={e => { e.preventDefault(); void command('visit-cost',{ job_id:v.job_id,material_cost:Number(fields[`cost_${v.id}`]) }); }}>
-          {field(`cost_${v.id}`,'Verified material cost ($)',true,'number')}<button className={button} disabled={busy}>Save cost</button>
+          {field(`cost_${v.id}`,'Verified material cost ($)',true,'number')}<button className={button} disabled={busy} aria-disabled={busy}>Save cost</button>
         </form>}
       </div>)}
       {mode === 'staff' && <div className="space-y-3">
         {['submitted','triage','awaiting_customer'].includes(current.state) && <>
           {choose('source_job_id','Confirm source visit',options.jobs.filter(j => j.property_id === current.property_id).map(j => ({ value:j.id,text:new Date(j.completed_at).toLocaleString() })))}
-          <button className={button} disabled={busy} onClick={() => void command('assess-coverage', { source_job_id: fields.source_job_id || current.source_job_id || null })}>Assess coverage</button>
+          <button className={button} disabled={busy} aria-disabled={busy} onClick={() => void command('assess-coverage', { source_job_id: fields.source_job_id || current.source_job_id || null })}>Assess coverage</button>
           {field('reason','Internal decision reason',true)}{field('customer_message','Explanation to customer',true)}
           {choose('billing_disposition','Return visit billing',[{value:'no_charge',text:'Covered — no charge'},{value:'goodwill',text:'Goodwill — manager approval'},{value:'quoted_paid',text:'Paid — customer quote acceptance required'}])}
           {fields.billing_disposition === 'quoted_paid' && choose('quote_id','Sent quote',(options.quotes || []).filter(q => q.property_id === current.property_id).map(q => ({value:q.id,text:`$${Number(q.total_amount).toFixed(2)} — ${q.id.slice(0,8)}`})),true)}
-          {fields.billing_disposition === 'quoted_paid' && <>{field('quote_amount','New return-service quote amount ($)',false,'number')}<button className={button} disabled={busy || Number(fields.quote_amount)<=0 || !fields.quote_amount} onClick={() => void command('quotes',{total_amount:Number(fields.quote_amount)})}>Send return-service quote</button></>}
-          <div className="flex gap-3 flex-wrap">{[['approve','Approve return service'],['decline','Decline request'],['request_information','Request information']].map(([decision,title]) => <button className={button} key={decision} disabled={busy || !fields.reason || !fields.customer_message} onClick={() => void command('decision',{ ...fields,decision })}>{title}</button>)}</div>
+          {fields.billing_disposition === 'quoted_paid' && <>{field('quote_amount','New return-service quote amount ($)',false,'number')}<button className={button} disabled={busy || Number(fields.quote_amount)<=0 || !fields.quote_amount} aria-disabled={busy || Number(fields.quote_amount)<=0 || !fields.quote_amount} onClick={() => void command('quotes',{total_amount:Number(fields.quote_amount)})}>Send return-service quote</button></>}
+          <div className="flex gap-3 flex-wrap">{[['approve','Approve return service'],['decline','Decline request'],['request_information','Request information']].map(([decision,title]) => <button className={button} key={decision} disabled={busy || !fields.reason || !fields.customer_message} aria-disabled={busy || !fields.reason || !fields.customer_message} onClick={() => void command('decision',{ ...fields,decision })}>{title}</button>)}</div>
         </>}
         {['approved','awaiting_review'].includes(current.state) && <>
           {field('scheduled_start','Return visit date and time',true,'datetime-local')}{choose('technician_id','Technician (optional; can assign in dispatch)',(options.technicians || []).map(t => ({value:t.id,text:t.name})))}
-          <button className={button} disabled={busy || !fields.scheduled_start} onClick={async () => { await command('visits',{ scheduled_start:new Date(fields.scheduled_start).toISOString(),technician_id:fields.technician_id || null,request_key:requestKey }); setRequestKey(crypto.randomUUID()); }}>Schedule return visit</button>
+          <button className={button} disabled={busy || !fields.scheduled_start} aria-disabled={busy || !fields.scheduled_start} onClick={async () => { await command('visits',{ scheduled_start:new Date(fields.scheduled_start).toISOString(),technician_id:fields.technician_id || null,request_key:requestKey }); setRequestKey(crypto.randomUUID()); }}>Schedule return visit</button>
         </>}
         {current.state === 'awaiting_review' && <>{field('resolution_code','Resolution category',true)}{field('summary','Resolution summary',true)}{field('customer_message','Resolution explanation to customer',true)}
-          <button className={button} disabled={busy || !fields.summary || !fields.resolution_code || !fields.customer_message} onClick={() => void command('resolution',fields)}>Resolve case</button></>}
-        {current.state === 'resolved' && <>{field('reason','Reason to reopen',true)}<button className={button} disabled={busy || !fields.reason} onClick={() => void command('reopen',fields)}>Reopen case</button></>}
-        {!closed.includes(current.state) && <>{field('cancel_reason','Cancellation reason')}<button className={button} disabled={busy || !fields.cancel_reason} onClick={() => void command('cancel',{ reason:fields.cancel_reason })}>Cancel request</button></>}
+          <button className={button} disabled={busy || !fields.summary || !fields.resolution_code || !fields.customer_message} aria-disabled={busy || !fields.summary || !fields.resolution_code || !fields.customer_message} onClick={() => void command('resolution',fields)}>Resolve case</button></>}
+        {current.state === 'resolved' && <>{field('reason','Reason to reopen',true)}<button className={button} disabled={busy || !fields.reason} aria-disabled={busy || !fields.reason} onClick={() => void command('reopen',fields)}>Reopen case</button></>}
+        {!closed.includes(current.state) && <>{field('cancel_reason','Cancellation reason')}<button className={button} disabled={busy || !fields.cancel_reason} aria-disabled={busy || !fields.cancel_reason} onClick={() => void command('cancel',{ reason:fields.cancel_reason })}>Cancel request</button></>}
       </div>}
-      {mode === 'customer' && current.state === 'awaiting_customer' && <>{field('message','Your reply',true)}<button className={button} disabled={busy || !fields.message} onClick={() => void command('reply',{ message:fields.message })}>Send reply</button></>}
-      {mode === 'customer' && current.state === 'approved' && current.quote?.status === 'sent' && <button className={button} disabled={busy} onClick={() => void command('accept-quote')}>Accept return-service quote (${Number(current.quote.total_amount).toFixed(2)})</button>}
+      {mode === 'customer' && current.state === 'awaiting_customer' && <>{field('message','Your reply',true)}<button className={button} disabled={busy || !fields.message} aria-disabled={busy || !fields.message} onClick={() => void command('reply',{ message:fields.message })}>Send reply</button></>}
+      {mode === 'customer' && current.state === 'approved' && current.quote?.status === 'sent' && <button className={button} disabled={busy} aria-disabled={busy} onClick={() => void command('accept-quote')}>Accept return-service quote (${Number(current.quote.total_amount).toFixed(2)})</button>}
       {mode === 'technician' && ['scheduled','in_service'].includes(current.state) && <form className="space-y-3" onSubmit={async e => {
         e.preventDefault();
         const visit = current.visits.find(v => v.job_id === jobId);
@@ -225,18 +225,18 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           try { await queueOutcome(current.id,payload); setNotice('Outcome saved on this device. Pending sync; the case is still open.'); }
           catch (e) { setError((e as Error).message); } finally { setBusy(false); }
         } else if (await act(`/${current.id}/outcome`,payload)) setRequestKey(crypto.randomUUID());
-      }}>{field('findings','Inspection findings',true)}{choose('resolution_code','Visit outcome',['treated','no_activity','access_failed','follow_up_required'].map(v => ({value:v,text:label(v)})),true)}{field('summary','Work performed and next steps',true)}<button className={button} disabled={busy}>Submit outcome for review</button></form>}
+      }}>{field('findings','Inspection findings',true)}{choose('resolution_code','Visit outcome',['treated','no_activity','access_failed','follow_up_required'].map(v => ({value:v,text:label(v)})),true)}{field('summary','Work performed and next steps',true)}<button className={button} disabled={busy} aria-disabled={busy}>Submit outcome for review</button></form>}
       <h3 className="font-semibold">Case timeline</h3>
       <ol className="space-y-2">{current.events.map(e => <li key={e.id}><time>{new Date(e.created_at).toLocaleString()}</time> · {label(e.action)}{e.customer_message && <p>{e.customer_message}</p>}</li>)}</ol>
     </article>}
     {mode === 'staff' && manager && settings && <details className="border rounded p-4"><summary>Warranty policy administration</summary>
-      <form className="space-y-3" onSubmit={e => { e.preventDefault(); void act('/settings',{timezone:fields.timezone}); }}>{field('timezone','Contract date time zone (for example America/Denver)',true)}<button className={button} disabled={busy}>Save time zone</button></form>
-      <form className="space-y-3" onSubmit={e => { e.preventDefault(); void act('/settings',{hourly_labor_rate:Number(fields.hourly_labor_rate)}); }}>{field('hourly_labor_rate','Hourly labor cost ($, applied to future visits)',true,'number')}<button className={button} disabled={busy}>Save labor rate</button></form>
+      <form className="space-y-3" onSubmit={e => { e.preventDefault(); void act('/settings',{timezone:fields.timezone}); }}>{field('timezone','Contract date time zone (for example America/Denver)',true)}<button className={button} disabled={busy} aria-disabled={busy}>Save time zone</button></form>
+      <form className="space-y-3" onSubmit={e => { e.preventDefault(); void act('/settings',{hourly_labor_rate:Number(fields.hourly_labor_rate)}); }}>{field('hourly_labor_rate','Hourly labor cost ($, applied to future visits)',true,'number')}<button className={button} disabled={busy} aria-disabled={busy}>Save labor rate</button></form>
       <form className="space-y-3 mt-3" onSubmit={async e => { e.preventDefault(); await act('/policies',{ name:fields.policy_name,version:Number(fields.policy_version),reporting_window_days:Number(fields.window_days),covered_pests:(fields.covered_pests || '').split(',').map(v => v.trim().toLowerCase()).filter(Boolean),exclusions:fields.exclusions || '' }); }}>
-        {field('policy_name','Policy name',true)}{field('policy_version','Version',true,'number')}{field('window_days','Reporting window in days from source visit completion',true,'number')}{field('covered_pests','Covered pests (comma separated)',true)}{field('exclusions','Exclusions (require manual review)')}<button className={button} disabled={busy}>Create immutable policy version</button>
+        {field('policy_name','Policy name',true)}{field('policy_version','Version',true,'number')}{field('window_days','Reporting window in days from source visit completion',true,'number')}{field('covered_pests','Covered pests (comma separated)',true)}{field('exclusions','Exclusions (require manual review)')}<button className={button} disabled={busy} aria-disabled={busy}>Create immutable policy version</button>
       </form>
       <form className="space-y-3 mt-4" onSubmit={async e => { e.preventDefault(); await act('/policies/assign',{ policy_id:fields.policy_id,kind:fields.target_kind,target_id:fields.target_id }); }}>
-        {choose('policy_id','Policy version',policies.map(p => ({value:p.id,text:`${p.name} v${p.version}`})),true)}{choose('target_kind','Assign to',[{value:'contract',text:'Contract'},{value:'job',text:'One-time service job'}],true)}{field('target_id','Contract or job ID',true)}<button className={button} disabled={busy}>Assign policy</button>
+        {choose('policy_id','Policy version',policies.map(p => ({value:p.id,text:`${p.name} v${p.version}`})),true)}{choose('target_kind','Assign to',[{value:'contract',text:'Contract'},{value:'job',text:'One-time service job'}],true)}{field('target_id','Contract or job ID',true)}<button className={button} disabled={busy} aria-disabled={busy}>Assign policy</button>
       </form>
     </details>}
   </section>;

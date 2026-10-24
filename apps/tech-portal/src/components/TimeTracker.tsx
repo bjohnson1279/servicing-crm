@@ -53,7 +53,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
       <div className="time-tracker-actions">
         <button
           onClick={clockIn}
-          disabled={actionLoading !== null}
+          disabled={actionLoading !== null} aria-disabled={actionLoading !== null}
           aria-busy={actionLoading === 'in'}
           className="btn-clock-in"
         >
@@ -61,7 +61,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
         </button>
         <button
           onClick={clockOut}
-          disabled={actionLoading !== null}
+          disabled={actionLoading !== null} aria-disabled={actionLoading !== null}
           aria-busy={actionLoading === 'out'}
           className="btn-clock-out"
         >
