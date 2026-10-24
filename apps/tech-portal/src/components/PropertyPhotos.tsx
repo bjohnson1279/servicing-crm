@@ -91,13 +91,14 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
       <form onSubmit={handleUpload} className="mb-4">
         <div className="mb-2">
           <label htmlFor="photo-upload" className="block text-sm font-medium mb-1">
-            Photo
+            Photo <span aria-hidden="true" className="text-red-500 ml-1">*</span>
           </label>
           <input
             id="photo-upload"
             type="file"
             accept="image/*"
             capture="environment"
+            required
             onChange={e => setFile(e.target.files?.[0] || null)}
             className="block w-full focus-visible:ring-2 focus-visible:outline-none"
           />

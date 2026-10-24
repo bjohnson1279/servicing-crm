@@ -119,3 +119,7 @@
 ## 2026-10-23 - Convert implicit form labels to explicit labels
 **Learning:** Implicitly wrapped form elements (like `<label>Label text <input/></label>`) can cause accessibility issues with some screen readers. They also lack the strong explicit linkage that `htmlFor` and `id` provide.
 **Action:** Convert implicit label-wrapped form controls into explicitly linked sibling elements: `<label htmlFor="field-id">Label text</label> <input id="field-id"/>`. Wrap the pair in a parent `<div>` structure instead of a `<label>` tag to maintain block-level formatting without degrading UX or violating semantic rules.
+
+## 2026-10-24 - Add Required Indicator to Forms
+**Learning:** Relying only on HTML5 validation without visual indicators degrades accessibility and user confidence. Sighted users need immediate visual feedback (like an asterisk) complementing the hidden `required` attribute, while screen readers require `aria-hidden="true"` on the visual indicator to prevent redundant readouts (e.g., "star").
+**Action:** When adding `required` to form inputs, always accompany it with an accessible visual cue (e.g., `<span aria-hidden="true" className="text-red-500">*</span>`).
