@@ -7,6 +7,7 @@ import { CallbackDrafts } from './CallbackDrafts';
 import InspectionWorkspace from './inspections/InspectionWorkspace';
 import DeviceWorkspace from './devices/DeviceWorkspace';
 import CatalogWorkspace from './catalog/CatalogWorkspace';
+import { LazyDetails } from './LazyDetails';
 
 type JobStatus = 'Available' | 'En Route' | 'On Site' | 'Completed';
 
@@ -23,10 +24,10 @@ export const JobDetail: React.FC = () => {
   return (
     <div>
       <h2>Job Detail - {id}</h2>
-      <details><summary>Inspection findings</summary><InspectionWorkspace mode="technician" jobId={id} /></details>
-      <details><summary>Property devices</summary><DeviceWorkspace mode="technician" jobId={id} /></details>
-      <details><summary>Reviewed product references</summary><CatalogWorkspace mode="technician" jobId={id} /></details>
-      <details><summary>Callback context and outcome</summary><CallbackWorkspace mode="technician" jobId={id} queueOutcome={queueCallbackOutcome} /></details>
+      <LazyDetails summary="Inspection findings"><InspectionWorkspace mode="technician" jobId={id} /></LazyDetails>
+      <LazyDetails summary="Property devices"><DeviceWorkspace mode="technician" jobId={id} /></LazyDetails>
+      <LazyDetails summary="Reviewed product references"><CatalogWorkspace mode="technician" jobId={id} /></LazyDetails>
+      <LazyDetails summary="Callback context and outcome"><CallbackWorkspace mode="technician" jobId={id} queueOutcome={queueCallbackOutcome} /></LazyDetails>
       <CallbackDrafts jobId={id || ''} />
       <p>Current Status: <strong>{status}</strong></p>
       
