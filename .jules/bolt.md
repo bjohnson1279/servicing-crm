@@ -122,3 +122,7 @@
 ## 2024-10-24 - Unnecessary React.useMemo usage for small lists
 **Learning:** Found an anti-pattern where developers were using `React.useMemo` to map over simple lists in React components (like mapping DOM elements in `PropertyPhotos.tsx`). Memory guidelines indicate this is a micro-optimization with O(1) overhead that risks introducing stale closures, rather than providing actual performance benefits. (Note: Complex nodes like Leaflet Markers should still use it, per memory).
 **Action:** Avoid wrapping simple `.map()` functions for small lists of DOM elements in `useMemo`.
+
+## 2024-05-18 - [React] Lazy evaluation of `<details>` children components
+**Learning:** Components rendered unconditionally inside standard HTML `<details>` elements are immediately mounted and fetch data upon parent initial render, even though they remain visually hidden until expanded.
+**Action:** Always wrap heavy child components of `<details>` in a lazy-evaluation wrapper component (e.g. tracking toggle state using `onToggle` event listener) to defer execution and network requests until manually expanded by the user.
