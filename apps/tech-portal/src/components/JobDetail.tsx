@@ -8,18 +8,19 @@ import InspectionWorkspace from './inspections/InspectionWorkspace';
 import DeviceWorkspace from './devices/DeviceWorkspace';
 import CatalogWorkspace from './catalog/CatalogWorkspace';
 import { LazyDetails } from './LazyDetails';
-
-type JobStatus = 'Available' | 'En Route' | 'On Site' | 'Completed';
+import { JobStatus } from '../domain/JobStatus';
 
 export const JobDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [status, setStatus] = useState<JobStatus>('Available');
+  const [jobStatus, setJobStatus] = useState<JobStatus>(JobStatus.AVAILABLE);
 
   const advanceStatus = () => {
-    if (status === 'Available') setStatus('En Route');
-    else if (status === 'En Route') setStatus('On Site');
-    else if (status === 'On Site') setStatus('Completed');
+    if (jobStatus.canAdvance()) {
+      setJobStatus(jobStatus.nextStatus());
+    }
   };
+
+  const nextStatusLabel = jobStatus.getNextStatusLabel();
 
   return (
     <div>
@@ -29,20 +30,20 @@ export const JobDetail: React.FC = () => {
       <LazyDetails summary="Reviewed product references"><CatalogWorkspace mode="technician" jobId={id} /></LazyDetails>
       <LazyDetails summary="Callback context and outcome"><CallbackWorkspace mode="technician" jobId={id} queueOutcome={queueCallbackOutcome} /></LazyDetails>
       <CallbackDrafts jobId={id || ''} />
-      <p>Current Status: <strong>{status}</strong></p>
+      <p>Current Status: <strong>{jobStatus.toString()}</strong></p>
       
-      {status !== 'Completed' && (
+      {!jobStatus.isTerminal() && nextStatusLabel && (
         <button
           onClick={advanceStatus}
-          aria-label={`Mark job status as ${status === 'Available' ? 'En Route' : status === 'En Route' ? 'On Site' : 'Completed'}`}
+          aria-label={`Mark job status as ${nextStatusLabel}`}
           className="bg-blue-500 text-white px-4 py-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-blue-600 transition-colors"
         >
-          Mark as {status === 'Available' ? 'En Route' : status === 'En Route' ? 'On Site' : 'Completed'}
+          Mark as {nextStatusLabel}
         </button>
       )}
 
-      {status === 'En Route' || status === 'On Site' ? (
-        <TimeTracker jobId={id || ''} onStatusChange={(s) => setStatus(s as JobStatus)} />
+      {jobStatus.equals('En Route') || jobStatus.equals('On Site') ? (
+        <TimeTracker jobId={id || ''} onStatusChange={(s) => setJobStatus(new JobStatus(s))} />
       ) : null}
 
       <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
