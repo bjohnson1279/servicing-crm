@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { enqueueRequest } from '../offlineQueue';
+import { ChemicalQuantity } from '../domain/ChemicalQuantity';
 
 interface InventoryItem {
   id: string;
@@ -167,14 +168,26 @@ export const ChemicalLog: React.FC = () => {
       return;
     }
 
+    let quantityObj: ChemicalQuantity;
+    try {
+      quantityObj = new ChemicalQuantity(parseFloat(quantityUsed), unit);
+    } catch (err) {
+      setResultMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid chemical quantity or unit',
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const payload = {
       job_id: jobId || '00000000-0000-0000-0000-000000000001',
       technician_id: '00000000-0000-0000-0000-000000000002',
       chemical_name: chemicalName.trim(),
       epa_registration_no: epaRegistrationNo.trim() || undefined,
       inventory_item_id: selectedItemId || undefined,
-      quantity_used: parseFloat(quantityUsed) || 1,
-      unit,
+      quantity_used: quantityObj.getAmount(),
+      unit: quantityObj.getUnit(),
       target_pests: selectedPests,
       weather_conditions: { temp, windSpeed },
       notes: notes.trim() || undefined,
@@ -195,7 +208,7 @@ export const ChemicalLog: React.FC = () => {
         const data = await res.json();
         let message = `Chemical log recorded successfully!`;
         if (data.inventory_updated || data.inventoryUpdated) {
-          message += ` Auto-deducted ${quantityUsed} ${unit} from warehouse inventory.`;
+          message += ` Auto-deducted ${quantityObj.toString()} from warehouse inventory.`;
         }
         if (data.low_stock_warning || data.lowStockWarning) {
           message += ` ⚠️ Stock dropped below threshold! Purchase Order draft automatically created for reorder.`;
