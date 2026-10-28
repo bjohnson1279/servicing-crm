@@ -126,3 +126,7 @@
 ## 2024-05-18 - [React] Lazy evaluation of `<details>` children components
 **Learning:** Components rendered unconditionally inside standard HTML `<details>` elements are immediately mounted and fetch data upon parent initial render, even though they remain visually hidden until expanded.
 **Action:** Always wrap heavy child components of `<details>` in a lazy-evaluation wrapper component (e.g. tracking toggle state using `onToggle` event listener) to defer execution and network requests until manually expanded by the user.
+
+## 2026-10-26 - PostgreSQL Foreign Key Referential Integrity Performance
+**Learning:** While multi-tenant applications often use composite indexes starting with `tenant_id` (e.g., `(tenant_id, property_id)`), PostgreSQL requires the foreign key column to be the *first* column in an index to efficiently enforce referential integrity. When a parent row is deleted, PostgreSQL checks the child table to cascade or restrict the deletion. A composite index starting with `tenant_id` cannot be efficiently used for a pure `WHERE property_id = $1` query during these internal checks, leading to severe performance bottlenecks (full table scans).
+**Action:** Added `shared/database/039_missing_fk_indexes_pt6.sql` to explicitly create single-column indexes on secondary foreign key columns (`property_id`, `job_id`, `contract_id`, `account_id`) to prevent full table scans during referential integrity operations.
