@@ -123,3 +123,7 @@
 ## 2026-10-24 - Add Required Indicator to Forms
 **Learning:** Relying only on HTML5 validation without visual indicators degrades accessibility and user confidence. Sighted users need immediate visual feedback (like an asterisk) complementing the hidden `required` attribute, while screen readers require `aria-hidden="true"` on the visual indicator to prevent redundant readouts (e.g., "star").
 **Action:** When adding `required` to form inputs, always accompany it with an accessible visual cue (e.g., `<span aria-hidden="true" className="text-red-500">*</span>`).
+
+## 2026-10-28 - Confirmation Dialogs for Local State Deletions
+**Learning:** Instant-delete buttons (like 'Remove zone' in InspectionWorkspace) that instantly mutate local state can cause irreversible data loss for users filling out complex forms. Since the data hasn't been saved to the server yet, an accidental click forces the user to start over.
+**Action:** Always wrap destructive state modifications (especially those deleting entire form sections) inside a native `window.confirm` dialog (`if (window.confirm('Are you sure?')) { ... }`) to prevent accidental data loss.

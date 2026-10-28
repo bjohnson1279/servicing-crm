@@ -77,7 +77,7 @@ export default function InspectionWorkspace({mode,jobId}:{mode:'staff'|'technici
       <div><label htmlFor={`severity-7645-${index}`}>Severity</label> <select id={`severity-7645-${index}`} value={z.severity} onChange={e=>edit(index,'severity',e.target.value)}>{['unknown','low','moderate','high'].map(x=><option key={x}>{x}</option>)}</select></div>
       <div><label htmlFor={`zone-inaccessible-${index}`}><input id={`zone-inaccessible-${index}`} type="checkbox" checked={z.inaccessible} onChange={e=>edit(index,'inaccessible',e.target.checked)} /> Inaccessible area</label></div>
       <div><label htmlFor={`zone-notes-${index}`}>Observations, conditions, concerns or access reason</label> <textarea id={`zone-notes-${index}`} value={z.notes} maxLength={4000} onChange={e=>edit(index,'notes',e.target.value)} /></div>
-      <button onClick={()=>{setFindings(f=>({...f,zones:f.zones.filter((_,n)=>n!==index)}));setDirty(true);}}>Remove zone {index+1}</button>
+      <button onClick={()=>{if(window.confirm('Are you sure you want to remove this zone and its findings?')){setFindings(f=>({...f,zones:f.zones.filter((_,n)=>n!==index)}));setDirty(true);}}}>Remove zone {index+1}</button>
      </fieldset>)}
      <button disabled={busy||findings.zones.length>=50} onClick={()=>{setFindings(f=>({...f,zones:[...f.zones,newZone()]}));setDirty(true);}}>Add zone</button>
      <button onClick={()=>change('save',{findings:{...findings,zones:findings.zones.map(z=>({...z,pests:z.pests.filter(Boolean)}))}})}>Save draft</button>
