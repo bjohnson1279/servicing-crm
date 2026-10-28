@@ -113,3 +113,6 @@
 ## 2026-10-18 - Further Missing FK Indexes Found in Live Chat and Recurring Exceptions
 **Learning:** Found more missing foreign key indexes (`sender_id` in `chat_messages` from `016_live_chat.sql` and `contract_id` and `occurrence_id` in `recurring_exceptions` from `027_recurring_service_exceptions.sql`). While tenant ID and ID uniqueness constraint is common, missing explicit foreign keys indexes can create full table scan issues during joins.
 **Action:** Added `shared/database/036_missing_fk_indexes.sql` to explicitly index `sender_id`, `contract_id`, and `occurrence_id`. Always look out for missing foreign keys indexes for performance.
+## 2026-10-25 - Redundant indexes and small list map optimizations
+**Learning:** The `UNIQUE` constraint automatically creates an index in PostgreSQL, so columns like `job_id` in `inspections` with `UNIQUE REFERENCES` do not need an additional explicit index. In React, avoiding `useMemo` on `.map()` for small generic lists prevents `O(1)` overhead and stale closures while larger component tree nodes (like Leaflet markers) do benefit from memoization.
+**Action:** Always verify if a field has a `UNIQUE` constraint or is part of a `PRIMARY KEY` before adding a foreign key index. Reserve `useMemo` for computationally expensive or complex UI map operations rather than simple list mappings.
