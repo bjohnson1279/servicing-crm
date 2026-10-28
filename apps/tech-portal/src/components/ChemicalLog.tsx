@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { enqueueRequest } from '../offlineQueue';
 import { ChemicalQuantity } from '../domain/ChemicalQuantity';
+import { EpaRegistrationNumber } from '../domain/EpaRegistrationNumber';
 
 interface InventoryItem {
   id: string;
@@ -180,11 +181,25 @@ export const ChemicalLog: React.FC = () => {
       return;
     }
 
+    let epaRegObj: EpaRegistrationNumber | undefined;
+    if (epaRegistrationNo.trim()) {
+      try {
+        epaRegObj = new EpaRegistrationNumber(epaRegistrationNo);
+      } catch (err) {
+        setResultMessage({
+          type: 'error',
+          text: err instanceof Error ? err.message : 'Invalid EPA Registration Number',
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+
     const payload = {
       job_id: jobId || '00000000-0000-0000-0000-000000000001',
       technician_id: '00000000-0000-0000-0000-000000000002',
       chemical_name: chemicalName.trim(),
-      epa_registration_no: epaRegistrationNo.trim() || undefined,
+      epa_registration_no: epaRegObj?.getValue(),
       inventory_item_id: selectedItemId || undefined,
       quantity_used: quantityObj.getAmount(),
       unit: quantityObj.getUnit(),
