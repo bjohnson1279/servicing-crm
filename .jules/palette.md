@@ -127,3 +127,7 @@
 ## 2026-10-28 - Confirmation Dialogs for Local State Deletions
 **Learning:** Instant-delete buttons (like 'Remove zone' in InspectionWorkspace) that instantly mutate local state can cause irreversible data loss for users filling out complex forms. Since the data hasn't been saved to the server yet, an accidental click forces the user to start over.
 **Action:** Always wrap destructive state modifications (especially those deleting entire form sections) inside a native `window.confirm` dialog (`if (window.confirm('Are you sure?')) { ... }`) to prevent accidental data loss.
+
+## 2026-10-29 - List Item Button Loading States
+**Learning:** When dealing with mapped lists of components containing asynchronous buttons (such as retry buttons for a list of drafts), using a single generic boolean loading state (e.g., `busy`) will incorrectly disable or visually update all buttons in the list simultaneously. This creates a confusing UX and degrades accessibility as the `aria-busy` feedback isn't localized to the specific button the user interacted with.
+**Action:** Always use specific state trackers tied to a unique item identifier (e.g., `retryingKey = useState<string | null>(null)`) for asynchronous list item actions. Check `retryingKey === item.key` to precisely apply `aria-busy`, update button text, and manage disabled states on the exact element being processed.
