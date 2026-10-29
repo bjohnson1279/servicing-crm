@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { enqueueRequest } from '../offlineQueue';
+import { ChemicalQuantity } from '../domain/ChemicalQuantity';
 
 interface InventoryItem {
   id: string;
@@ -167,14 +168,26 @@ export const ChemicalLog: React.FC = () => {
       return;
     }
 
+    let quantityObj: ChemicalQuantity;
+    try {
+      quantityObj = new ChemicalQuantity(parseFloat(quantityUsed), unit);
+    } catch (err) {
+      setResultMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid chemical quantity or unit',
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const payload = {
       job_id: jobId || '00000000-0000-0000-0000-000000000001',
       technician_id: '00000000-0000-0000-0000-000000000002',
       chemical_name: chemicalName.trim(),
       epa_registration_no: epaRegistrationNo.trim() || undefined,
       inventory_item_id: selectedItemId || undefined,
-      quantity_used: parseFloat(quantityUsed) || 1,
-      unit,
+      quantity_used: quantityObj.getAmount(),
+      unit: quantityObj.getUnit(),
       target_pests: selectedPests,
       weather_conditions: { temp, windSpeed },
       notes: notes.trim() || undefined,
@@ -195,7 +208,7 @@ export const ChemicalLog: React.FC = () => {
         const data = await res.json();
         let message = `Chemical log recorded successfully!`;
         if (data.inventory_updated || data.inventoryUpdated) {
-          message += ` Auto-deducted ${quantityUsed} ${unit} from warehouse inventory.`;
+          message += ` Auto-deducted ${quantityObj.toString()} from warehouse inventory.`;
         }
         if (data.low_stock_warning || data.lowStockWarning) {
           message += ` ⚠️ Stock dropped below threshold! Purchase Order draft automatically created for reorder.`;
@@ -383,29 +396,42 @@ export const ChemicalLog: React.FC = () => {
           <div role="group" aria-labelledby="target-pests-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
             {COMMON_PESTS.map((pest) => {
               const checked = selectedPests.includes(pest);
+              const pestId = `pest-${pest.replace(/\s+/g, '-').toLowerCase()}`;
               return (
-                <label
+                <div
                   key={pest}
                   style={{
                     display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '13px',
-                    padding: '6px 8px',
+                    alignItems: 'stretch',
                     borderRadius: '6px',
                     border: `1px solid ${checked ? '#3b82f6' : '#e2e8f0'}`,
                     background: checked ? '#eff6ff' : '#f8fafc',
-                    cursor: 'pointer',
-                    userSelect: 'none',
                   }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() => togglePest(pest)}
-                  />
-                  <span>{pest}</span>
-                </label>
+                  <div style={{ display: 'flex', alignItems: 'center', paddingLeft: '8px' }}>
+                    <input
+                      id={pestId}
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => togglePest(pest)}
+                      style={{ cursor: 'pointer', margin: 0 }}
+                    />
+                  </div>
+                  <label
+                    htmlFor={pestId}
+                    style={{
+                      cursor: 'pointer',
+                      flexGrow: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '13px',
+                      padding: '6px 8px 6px 6px',
+                      userSelect: 'none'
+                    }}
+                  >
+                    {pest}
+                  </label>
+                </div>
               );
             })}
           </div>

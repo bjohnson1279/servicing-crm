@@ -113,3 +113,23 @@
 ## 2026-10-18 - Further Missing FK Indexes Found in Live Chat and Recurring Exceptions
 **Learning:** Found more missing foreign key indexes (`sender_id` in `chat_messages` from `016_live_chat.sql` and `contract_id` and `occurrence_id` in `recurring_exceptions` from `027_recurring_service_exceptions.sql`). While tenant ID and ID uniqueness constraint is common, missing explicit foreign keys indexes can create full table scan issues during joins.
 **Action:** Added `shared/database/036_missing_fk_indexes.sql` to explicitly index `sender_id`, `contract_id`, and `occurrence_id`. Always look out for missing foreign keys indexes for performance.
+## 2026-10-22 - Identifying missing foreign key indexes in early tables
+**Learning:** Found more missing foreign key indexes (`customer_id` and `campaign_id` in `automated_followups` from `011_marketing_retention.sql`, and `item_id` in `purchase_orders` from `012_inventory_management.sql`). While many later migrations have been corrected, earlier ones also suffer from missing indexes which can severely impact join performance.
+**Action:** Added `shared/database/037_missing_fk_indexes_pt4.sql` to explicitly index `customer_id`, `campaign_id`, and `item_id`. Continual vigilance for unindexed foreign keys is necessary.
+## 2026-10-25 - Finding Remaining Unindexed Foreign Keys
+**Learning:** Some migrations (like 022, 024, 025, 026, 027, 028, 029) introduced new tables and foreign keys (such as `warranty_policy_versions`, `inspection_requests`, `recurring_occurrences`, etc.) that were not indexed. Even `tenant_id` was missed in several tables (`job_cost_policies`, `commercial_accounts`).
+**Action:** Added `shared/database/038_missing_fk_indexes_pt5.sql` to index these missing foreign keys and `tenant_id` columns, completing the indexing for late-stage migrations.
+## 2024-10-24 - Unnecessary React.useMemo usage for small lists
+**Learning:** Found an anti-pattern where developers were using `React.useMemo` to map over simple lists in React components (like mapping DOM elements in `PropertyPhotos.tsx`). Memory guidelines indicate this is a micro-optimization with O(1) overhead that risks introducing stale closures, rather than providing actual performance benefits. (Note: Complex nodes like Leaflet Markers should still use it, per memory).
+**Action:** Avoid wrapping simple `.map()` functions for small lists of DOM elements in `useMemo`.
+
+## 2024-05-18 - [React] Lazy evaluation of `<details>` children components
+**Learning:** Components rendered unconditionally inside standard HTML `<details>` elements are immediately mounted and fetch data upon parent initial render, even though they remain visually hidden until expanded.
+**Action:** Always wrap heavy child components of `<details>` in a lazy-evaluation wrapper component (e.g. tracking toggle state using `onToggle` event listener) to defer execution and network requests until manually expanded by the user.
+
+## 2026-10-26 - PostgreSQL Foreign Key Referential Integrity Performance
+**Learning:** While multi-tenant applications often use composite indexes starting with `tenant_id` (e.g., `(tenant_id, property_id)`), PostgreSQL requires the foreign key column to be the *first* column in an index to efficiently enforce referential integrity. When a parent row is deleted, PostgreSQL checks the child table to cascade or restrict the deletion. A composite index starting with `tenant_id` cannot be efficiently used for a pure `WHERE property_id = $1` query during these internal checks, leading to severe performance bottlenecks (full table scans).
+**Action:** Added `shared/database/039_missing_fk_indexes_pt6.sql` to explicitly create single-column indexes on secondary foreign key columns (`property_id`, `job_id`, `contract_id`, `account_id`) to prevent full table scans during referential integrity operations.
+## 2026-10-18 - Missing property_id Foreign Key Index
+**Learning:** Even after extensive foreign key indexing sweeps, some tables like `property_devices` may only have their `property_id` indexed as the *second* column in a composite index (e.g. `(tenant_id, property_id, ...)`). This prevents PostgreSQL from using the index for referential integrity checks when deleting a property, causing a full table scan.
+**Action:** Always ensure that foreign keys have a dedicated single-column index or are the *first* column in a composite index. Added a migration for `property_devices(property_id)`.

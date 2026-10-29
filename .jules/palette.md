@@ -112,3 +112,18 @@
 ## 2026-10-17 - Explicit Form Labeling using htmlFor in DeviceWorkspace
 **Learning:** In the `DeviceWorkspace.tsx` component, form elements such as inputs, textareas, and selects were being wrapped implicitly inside `<label>` tags (e.g., `<label>Text <input/></label>`). While valid HTML, this implicit wrapping provides poor compatibility with some older screen readers and assistive technologies, and it violates the codebase's UX standards that dictate `<label htmlFor="...">` and `<input id="...">` pairings.
 **Action:** Always ensure that form labels are explicitly linked to their corresponding inputs using the `htmlFor` attribute on the `<label>` and the `id` attribute on the `<input>` or `<select>`. For statically rendered forms, use a `<div>` to structurally wrap the `<label>` and `<input>`, rather than nesting the input implicitly inside the label.
+
+## 2026-10-22 - Explicit Label Linking with Checkboxes
+**Learning:** When explicitly linking form checkboxes to their labels with `id` and `htmlFor` within styled grids (like pest selection in ChemicalLog), structurally separating the outer styled `<label>` into a generic `<div>` removes the clickable padding, degrading UX.
+**Action:** Keep the explicit linking, but structure the layout to ensure the entire padded area remains clickable without violating semantic rules or adding arbitrary div wrappers that steal click events.
+## 2026-10-23 - Convert implicit form labels to explicit labels
+**Learning:** Implicitly wrapped form elements (like `<label>Label text <input/></label>`) can cause accessibility issues with some screen readers. They also lack the strong explicit linkage that `htmlFor` and `id` provide.
+**Action:** Convert implicit label-wrapped form controls into explicitly linked sibling elements: `<label htmlFor="field-id">Label text</label> <input id="field-id"/>`. Wrap the pair in a parent `<div>` structure instead of a `<label>` tag to maintain block-level formatting without degrading UX or violating semantic rules.
+
+## 2026-10-24 - Add Required Indicator to Forms
+**Learning:** Relying only on HTML5 validation without visual indicators degrades accessibility and user confidence. Sighted users need immediate visual feedback (like an asterisk) complementing the hidden `required` attribute, while screen readers require `aria-hidden="true"` on the visual indicator to prevent redundant readouts (e.g., "star").
+**Action:** When adding `required` to form inputs, always accompany it with an accessible visual cue (e.g., `<span aria-hidden="true" className="text-red-500">*</span>`).
+
+## 2026-10-28 - Confirmation Dialogs for Local State Deletions
+**Learning:** Instant-delete buttons (like 'Remove zone' in InspectionWorkspace) that instantly mutate local state can cause irreversible data loss for users filling out complex forms. Since the data hasn't been saved to the server yet, an accidental click forces the user to start over.
+**Action:** Always wrap destructive state modifications (especially those deleting entire form sections) inside a native `window.confirm` dialog (`if (window.confirm('Are you sure?')) { ... }`) to prevent accidental data loss.

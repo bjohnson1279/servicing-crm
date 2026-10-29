@@ -44,11 +44,17 @@ export const SignatureCapture: React.FC = () => {
         />
       </div>
       <div style={{ marginTop: '10px' }}>
-        <button onClick={clearSignature}>Clear</button>
+        <button
+          onClick={clearSignature}
+          className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
+        >
+          Clear
+        </button>
         <button
           onClick={saveSignature}
           disabled={!hasSignature}
           title={!hasSignature ? "Please draw a signature before saving" : "Save signature"}
+          className="px-4 py-2 border border-blue-500 bg-blue-500 text-white rounded hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
           style={{
             marginLeft: '10px',
             opacity: !hasSignature ? 0.6 : 1,
@@ -59,7 +65,12 @@ export const SignatureCapture: React.FC = () => {
         </button>
       </div>
       <div style={{ marginTop: '20px' }}>
-        <button onClick={() => navigate(`/job/${id}`)}>Cancel</button>
+        <button
+          onClick={() => navigate(`/job/${id}`)}
+          className="px-4 py-2 text-gray-700 underline rounded hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2 transition-colors"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

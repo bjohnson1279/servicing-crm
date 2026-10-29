@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface Photo {
@@ -68,17 +68,6 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
     }
   };
 
-  const photoElements = useMemo(() => {
-    return photos.map(p => (
-      <div key={p.id} className="border rounded p-2">
-        {/* ⚡ Bolt Optimization: Added loading="lazy" to defer loading off-screen images and improve initial render time */}
-        <img src={p.url} alt={p.caption || 'Property photo'} loading="lazy" className="w-full h-32 object-cover mb-2" />
-        <p className="text-sm">{p.caption}</p>
-        <span className="text-xs text-gray-500">{new Date(p.uploaded_at).toLocaleDateString()}</span>
-      </div>
-    ));
-  }, [photos]);
-
   return (
     <div className="p-4 bg-white rounded shadow">
       <h3 className="text-lg font-bold mb-4">Property Photos</h3>
@@ -91,13 +80,14 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
       <form onSubmit={handleUpload} className="mb-4">
         <div className="mb-2">
           <label htmlFor="photo-upload" className="block text-sm font-medium mb-1">
-            Photo
+            Photo <span aria-hidden="true" className="text-red-500 ml-1">*</span>
           </label>
           <input
             id="photo-upload"
             type="file"
             accept="image/*"
             capture="environment"
+            required
             onChange={e => setFile(e.target.files?.[0] || null)}
             className="block w-full focus-visible:ring-2 focus-visible:outline-none"
           />
@@ -132,7 +122,14 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4">
-          {photoElements}
+          {photos.map(p => (
+            <div key={p.id} className="border rounded p-2">
+              {/* ⚡ Bolt Optimization: Added loading="lazy" to defer loading off-screen images and improve initial render time */}
+              <img src={p.url} alt={p.caption || 'Property photo'} loading="lazy" className="w-full h-32 object-cover mb-2" />
+              <p className="text-sm">{p.caption}</p>
+              <span className="text-xs text-gray-500">{new Date(p.uploaded_at).toLocaleDateString()}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
