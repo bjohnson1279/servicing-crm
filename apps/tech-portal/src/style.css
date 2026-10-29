@@ -402,3 +402,45 @@ code {
   outline: none;
   box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--text-h);
 }
+
+/* SignatureCapture buttons */
+.btn-signature-clear,
+.btn-signature-save,
+.btn-signature-cancel {
+  padding: 8px 16px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, opacity 0.2s;
+  font-family: inherit;
+  font-size: 15px;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-signature-clear {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+.btn-signature-clear:hover { background-color: #d1d5db; }
+.btn-signature-clear:focus-visible { outline: 2px solid #9ca3af; outline-offset: 2px; }
+
+.btn-signature-save {
+  background-color: #3b82f6;
+  color: #ffffff;
+  margin-left: 10px;
+}
+.btn-signature-save:hover:not([aria-disabled="true"]) { background-color: #2563eb; }
+.btn-signature-save:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
+.btn-signature-save[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-signature-cancel {
+  background-color: transparent;
+  color: #2563eb;
+  padding: 0 4px;
+}
+.btn-signature-cancel:hover { text-decoration: underline; }
+.btn-signature-cancel:focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; border-radius: 4px; }

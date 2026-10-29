@@ -17,7 +17,7 @@ describe('TimeTracker Component', () => {
 
   test('handles clock in successfully', async () => {
     const onStatusChange = vi.fn();
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({ status: 'success' }),
     });
@@ -32,7 +32,7 @@ describe('TimeTracker Component', () => {
   });
 
   test('displays error alert when clock in fails', async () => {
-    global.fetch = vi.fn().mockResolvedValue({
+    globalThis.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 500,
     });

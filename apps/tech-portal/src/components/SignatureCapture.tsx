@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
+import '../style.css'; // explicitly import style.css to ensure classes are applied
 
 export const SignatureCapture: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -26,7 +27,7 @@ export const SignatureCapture: React.FC = () => {
   };
 
   return (
-    <div>
+    <div style={{ textAlign: 'left' }}>
       <h2>Customer Signature - Job {id}</h2>
       {error && (
         <div role="alert" aria-live="assertive" style={{ color: '#991b1b', backgroundColor: '#fef2f2', padding: '10px', borderRadius: '4px', marginBottom: '10px', border: '1px solid #fecaca', width: '278px' }}>
@@ -43,23 +44,22 @@ export const SignatureCapture: React.FC = () => {
           canvasProps={{ width: 300, height: 200, className: 'sigCanvas', 'aria-label': 'Signature Pad' }}
         />
       </div>
-      <div style={{ marginTop: '10px' }}>
-        <button onClick={clearSignature}>Clear</button>
+      <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center' }}>
+        <button onClick={clearSignature} className="btn-signature-clear">Clear</button>
         <button
-          onClick={saveSignature}
-          disabled={!hasSignature}
-          title={!hasSignature ? "Please draw a signature before saving" : "Save signature"}
-          style={{
-            marginLeft: '10px',
-            opacity: !hasSignature ? 0.6 : 1,
-            cursor: !hasSignature ? 'not-allowed' : 'pointer'
+          onClick={(e) => {
+            if (!hasSignature) e.preventDefault();
+            else saveSignature();
           }}
+          aria-disabled={!hasSignature}
+          title={!hasSignature ? "Please draw a signature before saving" : "Save signature"}
+          className="btn-signature-save"
         >
           Save
         </button>
       </div>
       <div style={{ marginTop: '20px' }}>
-        <button onClick={() => navigate(`/job/${id}`)}>Cancel</button>
+        <button onClick={() => navigate(`/job/${id}`)} className="btn-signature-cancel">Cancel</button>
       </div>
     </div>
   );
