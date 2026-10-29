@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { enqueueRequest } from '../offlineQueue';
 import { ChemicalQuantity } from '../domain/ChemicalQuantity';
 import { EpaRegistrationNumber } from '../domain/EpaRegistrationNumber';
+import { WeatherConditions } from '../domain/WeatherConditions';
 
 interface InventoryItem {
   id: string;
@@ -195,6 +196,18 @@ export const ChemicalLog: React.FC = () => {
       }
     }
 
+    let weatherObj: WeatherConditions;
+    try {
+      weatherObj = new WeatherConditions(temp, windSpeed);
+    } catch (err) {
+      setResultMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid weather conditions',
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const payload = {
       job_id: jobId || '00000000-0000-0000-0000-000000000001',
       technician_id: '00000000-0000-0000-0000-000000000002',
@@ -204,7 +217,7 @@ export const ChemicalLog: React.FC = () => {
       quantity_used: quantityObj.getAmount(),
       unit: quantityObj.getUnit(),
       target_pests: selectedPests,
-      weather_conditions: { temp, windSpeed },
+      weather_conditions: weatherObj.toPayload(),
       notes: notes.trim() || undefined,
       photo_url: photo || undefined,
     };
