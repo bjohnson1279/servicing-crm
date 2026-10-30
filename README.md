@@ -103,13 +103,19 @@ All four backends are strictly organized into **7 domain modules** (vertical sli
 
 See [Docker runtime configuration and verification](docs/docker-runtime.md) for port, key, proxy and worker settings.
 
+### 1. Configure Environment Variables
+Copy the `.env.example` template to `.env` and configure your credentials:
+```bash
+cp .env.example .env
+```
+Ensure secrets (`JWT_SECRET`, `LARAVEL_APP_KEY`) and passwords (`POSTGRES_PASSWORD`, `REDIS_PASSWORD`) are configured appropriately for your environment.
 
-### 1. Boot the Stack via Docker Compose
+### 2. Boot the Stack via Docker Compose
 ```bash
 docker-compose up -d --build
 ```
 
-### 2. Run Database Migrations
+### 3. Run Database Migrations
 For a fresh, empty database only, apply the sequential SQL suite below. Existing databases require a backup and inspection of missing migrations; see [Docker runtime](docs/docker-runtime.md). Do not rerun the full suite against existing data.
 
 **Windows (PowerShell):**
@@ -128,7 +134,7 @@ for file in $(ls shared/database/*.sql | sort); do
 done
 ```
 
-### 3. Migration Sequence Reference
+### 4. Migration Sequence Reference
 - `001_initial_schema.sql`: Core multi-tenant foundation, users, properties, jobs, roles.
 - `002_expanded_domain.sql`: Technicians, canvass pins, commissions, training courses, and certifications.
 - `003_seed_data.sql`: Realistic mock data for tenants, dispatch boards, and staff directory.
@@ -156,6 +162,38 @@ done
 - **Express REST Health**: [http://localhost:3182/health](http://localhost:3182/health)
 - **FastAPI REST Health**: [http://localhost:3184/health](http://localhost:3184/health)
 - **Laravel REST Health**: [http://localhost:3181/api/v1/health](http://localhost:3181/api/v1/health)
+
+---
+
+## Documentation & Sub-Guides
+
+For detailed setup instructions, domain specs, and feature implementation plans, refer to the guides in `/docs`:
+
+### Setup & Operations Guides
+- [Docker Runtime Configuration & Verification](docs/docker-runtime.md)
+- [Callbacks & Warranty Claims Setup Guide](docs/callbacks-warranty-setup.md)
+- [Commercial Accounts & Multi-Site Hierarchy Setup Guide](docs/commercial-accounts-setup.md)
+- [Property Device Register & Inspection Setup Guide](docs/device-register-setup.md)
+- [Mobile Inspection & Treatment Evidence Setup Guide](docs/inspection-capture-setup.md)
+- [Job Authorization & Digital Sign-off Setup Guide](docs/job-authorization-setup.md)
+- [Job Cost Evidence & Profitability Tracking Setup Guide](docs/job-cost-evidence-setup.md)
+- [Verified Product Catalog & Service Reports Setup Guide](docs/product-catalog-setup.md)
+- [Recurring Service Exception Queue Setup Guide](docs/recurring-exception-queue-setup.md)
+
+### Feature Architecture & Implementation Plans
+- [Bait Station & Device Tracking Implementation Plan](docs/bait-station-device-tracking-implementation-plan.md)
+- [Callbacks & Warranty Claims Architecture Implementation Plan](docs/callbacks-warranty-implementation-plan.md)
+- [Commercial & Multi-Site Accounts Architecture Implementation Plan](docs/commercial-multi-site-accounts-implementation-plan.md)
+- [Mobile Inspection & Treatment Capture Architecture Implementation Plan](docs/inspection-treatment-implementation-plan.md)
+- [Job & Contract Profitability Analytics Architecture Implementation Plan](docs/job-contract-profitability-implementation-plan.md)
+- [Property Service Playbook Architecture Implementation Plan](docs/property-service-playbook-implementation-plan.md)
+- [Recurring Service Exception Queue Architecture Implementation Plan](docs/recurring-service-exception-queue-implementation-plan.md)
+- [Verified Product Catalog & Service Reports Architecture Implementation Plan](docs/verified-products-service-reports-implementation-plan.md)
+
+### API & Schema Specifications
+- [API Endpoint & Schema Reference](API_REFERENCE.md)
+- [OpenAPI 3.1 Specification](shared/contracts/openapi.yaml)
+- [GraphQL Schema Definition](shared/contracts/schema.graphql)
 
 ---
 
