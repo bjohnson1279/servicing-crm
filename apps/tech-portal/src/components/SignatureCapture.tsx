@@ -51,8 +51,8 @@ export const SignatureCapture: React.FC = () => {
           Clear
         </button>
         <button
-          onClick={saveSignature}
-          disabled={!hasSignature}
+          onClick={hasSignature ? saveSignature : (e) => e.preventDefault()}
+          aria-disabled={!hasSignature}
           title={!hasSignature ? "Please draw a signature before saving" : "Save signature"}
           className="px-4 py-2 border border-blue-500 bg-blue-500 text-white rounded hover:bg-blue-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors"
           style={{
