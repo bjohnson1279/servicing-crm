@@ -7,6 +7,18 @@ The platform operates across four interchangeable backends designed with identic
 - **Laravel Reference API**: `http://localhost:3181`
 - **GraphQL Apollo Server**: `http://localhost:3183/graphql`
 
+### Formal Contract Specifications
+- **OpenAPI 3.1 Specification**: [`shared/contracts/openapi.yaml`](shared/contracts/openapi.yaml)
+- **GraphQL Core Schema**: [`shared/contracts/schema.graphql`](shared/contracts/schema.graphql)
+- **Domain Contracts & Schemas**:
+  - Callbacks: [`callbacks.graphql`](shared/contracts/callbacks.graphql) | [`callbacks.prisma`](shared/contracts/callbacks.prisma)
+  - Product Catalog: [`catalog.graphql`](shared/contracts/catalog.graphql) | [`catalog.prisma`](shared/contracts/catalog.prisma)
+  - Commercial Accounts: [`commercial.graphql`](shared/contracts/commercial.graphql) | [`commercial.prisma`](shared/contracts/commercial.prisma)
+  - Property Devices: [`devices.graphql`](shared/contracts/devices.graphql) | [`devices.prisma`](shared/contracts/devices.prisma)
+  - Inspections: [`inspections.graphql`](shared/contracts/inspections.graphql) | [`inspections.prisma`](shared/contracts/inspections.prisma)
+  - Profitability Analytics: [`profitability.graphql`](shared/contracts/profitability.graphql) | [`profitability.prisma`](shared/contracts/profitability.prisma)
+  - Recurring Exceptions: [`recurring.graphql`](shared/contracts/recurring.graphql)
+
 ---
 
 ## 1. Dispatch Domain
