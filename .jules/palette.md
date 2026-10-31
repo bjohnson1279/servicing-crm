@@ -131,3 +131,7 @@
 ## 2026-10-29 - List Item Button Loading States
 **Learning:** When dealing with mapped lists of components containing asynchronous buttons (such as retry buttons for a list of drafts), using a single generic boolean loading state (e.g., `busy`) will incorrectly disable or visually update all buttons in the list simultaneously. This creates a confusing UX and degrades accessibility as the `aria-busy` feedback isn't localized to the specific button the user interacted with.
 **Action:** Always use specific state trackers tied to a unique item identifier (e.g., `retryingKey = useState<string | null>(null)`) for asynchronous list item actions. Check `retryingKey === item.key` to precisely apply `aria-busy`, update button text, and manage disabled states on the exact element being processed.
+
+## 2026-10-31 - Accessible tooltips for offline-disabled buttons
+**Learning:** Native `disabled` attributes on retry buttons prevent screen readers and mouse users from accessing `title` tooltips explaining why the button is inactive (e.g., being offline).
+**Action:** Replaced native `disabled` with `aria-disabled="true"`, custom CSS (`opacity`, `cursor`), and click interception to provide accessible context for offline functionality.

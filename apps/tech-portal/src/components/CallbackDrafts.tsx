@@ -22,14 +22,28 @@ export function CallbackDrafts({ jobId }: { jobId: string }) {
       <p className="text-sm text-gray-700"><strong>Findings:</strong> {d.body.findings}</p>
       <p className="text-sm text-gray-700"><strong>Summary:</strong> {d.body.summary}</p>
       {d.error && <p className="text-sm text-red-600">{d.error}</p>}
-      {d.status === 'needs_review' && <button className="mt-2 border rounded px-3 py-2 bg-blue-700 text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-blue-800 transition-colors" disabled={!navigator.onLine || retryingKey === d.key} aria-busy={retryingKey === d.key} onClick={async () => {
-        setRetryingKey(d.key);
-        setError('');
-        try {
-          const current = await callbackApi<CallbackCase>(`/${d.id}`);
-          if (!['scheduled','in_service'].includes(current.state)) { setError('This case has moved on. Review the case with your dispatcher before changing the saved outcome.'); return; }
-          await retryCallbackDraft(d.key,current.version); setDrafts(await callbackDrafts(jobId));
-        } catch (e) { setError((e as Error).message); } finally { setRetryingKey(null); }
-      }}>{retryingKey === d.key ? 'Retrying...' : 'I reviewed the current case; retry saved outcome'}</button>}
+      {d.status === 'needs_review' && <button
+        className="mt-2 border rounded px-3 py-2 bg-blue-700 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-blue-800 transition-colors"
+        aria-disabled={!navigator.onLine || retryingKey === d.key}
+        aria-busy={retryingKey === d.key}
+        title={!navigator.onLine ? 'You must be online to retry sync' : retryingKey === d.key ? 'Retrying sync...' : 'Retry saved outcome'}
+        style={{
+          opacity: (!navigator.onLine || retryingKey === d.key) ? 0.5 : 1,
+          cursor: (!navigator.onLine || retryingKey === d.key) ? 'not-allowed' : 'pointer'
+        }}
+        onClick={async (e) => {
+          if (!navigator.onLine || retryingKey === d.key) {
+            e.preventDefault();
+            return;
+          }
+          setRetryingKey(d.key);
+          setError('');
+          try {
+            const current = await callbackApi<CallbackCase>(`/${d.id}`);
+            if (!['scheduled','in_service'].includes(current.state)) { setError('This case has moved on. Review the case with your dispatcher before changing the saved outcome.'); return; }
+            await retryCallbackDraft(d.key,current.version); setDrafts(await callbackDrafts(jobId));
+          } catch (e) { setError((e as Error).message); } finally { setRetryingKey(null); }
+        }}
+      >{retryingKey === d.key ? 'Retrying...' : 'I reviewed the current case; retry saved outcome'}</button>}
   </div>)}</section>;
 }

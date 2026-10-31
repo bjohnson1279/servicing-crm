@@ -129,7 +129,7 @@ describe('CallbackDrafts Component', () => {
     render(<CallbackDrafts jobId={jobId} />);
 
     const retryBtn = await screen.findByRole('button', { name: /retry saved outcome/i });
-    expect(retryBtn).not.toBeDisabled();
+    expect(retryBtn).toHaveAttribute('aria-disabled', 'false');
 
     fireEvent.click(retryBtn);
 
@@ -200,6 +200,6 @@ describe('CallbackDrafts Component', () => {
     render(<CallbackDrafts jobId={jobId} />);
 
     const retryBtn = await screen.findByRole('button', { name: /retry saved outcome/i });
-    expect(retryBtn).toBeDisabled();
+    expect(retryBtn).toHaveAttribute('aria-disabled', 'true');
   });
 });
