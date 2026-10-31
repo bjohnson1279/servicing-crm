@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import '../style.css';
+import { JobStatus } from '../domain/JobStatus';
 
 interface TimeTrackerProps {
   jobId: string;
-  onStatusChange?: (status: string) => void;
+  onStatusChange?: (status: JobStatus) => void;
 }
 
 export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange }) => {
@@ -18,7 +19,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to clock in');
-      onStatusChange?.('On Site');
+      onStatusChange?.(JobStatus.ON_SITE);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -34,7 +35,7 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
         method: 'POST',
       });
       if (!res.ok) throw new Error('Failed to clock out');
-      onStatusChange?.('Completed');
+      onStatusChange?.(JobStatus.COMPLETED);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

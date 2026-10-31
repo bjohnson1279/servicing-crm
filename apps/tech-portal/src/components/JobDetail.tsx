@@ -43,7 +43,7 @@ export const JobDetail: React.FC = () => {
       )}
 
       {jobStatus.equals('En Route') || jobStatus.equals('On Site') ? (
-        <TimeTracker jobId={id || ''} onStatusChange={(s) => setJobStatus(new JobStatus(s))} />
+        <TimeTracker jobId={id || ''} onStatusChange={setJobStatus} />
       ) : null}
 
       <div style={{ marginTop: '20px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
