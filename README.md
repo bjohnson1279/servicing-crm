@@ -150,6 +150,36 @@ done
 - `011_marketing_retention.sql`: Marketing campaigns, channels, and automated follow-up sequences.
 - `012_inventory_management.sql`: Inventory items, minimum thresholds, and purchase order tracking.
 - `013_service_agreements_tenant_idx.sql`: Tenant isolation index hardening for service agreements.
+- `014_chemical_inventory_link.sql`: Inventory item references and EPA registration numbers for chemical application logs.
+- `015_sales_territories.sql`: Sales territories and Do-Not-Knock compliance registries.
+- `016_live_chat.sql`: Real-time chat conversations, messages, and canned response templates.
+- `017_pest_risk_scoring.sql`: AI-powered pest risk scoring and predictive resurgence models.
+- `018_missing_fk_indexes.sql`: Foreign key indexing optimizations across core domain models.
+- `019_missing_fk_indexes_pt2.sql`: Index optimizations for job contracts and related references.
+- `020_platform_hardening.sql`: API usage metrics, audit logging, notification preferences, and customer surveys.
+- `021_missing_fk_indexes_pt3.sql`: Index coverage for API usage metrics and audit logs.
+- `022_callbacks_warranty.sql`: Warranty policies, service callbacks, visits, events, and attachment models.
+- `023_callbacks_tenant_indexes.sql`: Tenant isolation index optimizations for callback and warranty tables.
+- `023_job_authorization.sql`: Invoker-rights job distance calculation and transactional job authorization procedures.
+- `024_callbacks_fk_indexes.sql`: Foreign key indexes for callback tracking tables.
+- `024_inspection_capture.sql`: Inspection workflow, revisions, evidence attachments, events, and request records.
+- `025_property_devices.sql`: Property bait station / device registers, location histories, and device events.
+- `025_warranty_fk_indexes.sql`: Foreign key indexes for service contract warranty policies.
+- `026_verified_product_catalog.sql`: Tenant product catalog, versioning, verified evidence documents, and requests.
+- `027_recurring_service_exceptions.sql`: Recurring schedule revisions, occurrences, exception queues, and event logs.
+- `028_job_cost_evidence.sql`: Job cost policy definitions, cost entries, settings events, and evidence tracking.
+- `029_commercial_accounts.sql`: Commercial multi-site account hierarchies, sites, contacts, and account events.
+- `030_inspection_capture_fk_indexes.sql`: Foreign key indexing for inspection revisions and attachments.
+- `031_property_devices_fk_indexes.sql`: Foreign key indexing for property device registers and locations.
+- `032_job_cost_evidence_fk_indexes.sql`: Foreign key indexing for job cost policy actors and cost entry logs.
+- `033_commercial_accounts_fk_indexes.sql`: Foreign key indexing for commercial account ownership and site links.
+- `034_catalog_fk_indexes.sql`: Foreign key indexing for catalog product versions and document verifications.
+- `035_recurring_fk_indexes.sql`: Foreign key indexing for recurring schedule exceptions and assessments.
+- `036_missing_fk_indexes.sql`: Foreign key indexing for live chat messages and related relations.
+- `037_missing_fk_indexes_pt4.sql`: Foreign key indexing for automated marketing followups.
+- `038_missing_fk_indexes_pt5.sql`: Comprehensive foreign key index optimizations across historical schema tables.
+- `039_missing_fk_indexes_pt6.sql`: Single-column foreign key index optimizations for referential integrity checks.
+- `040_missing_fk_indexes_pt7.sql`: Single-column index optimizations for callback visit jobs and remaining references.
 
 ---
 
