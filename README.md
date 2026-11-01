@@ -180,6 +180,7 @@ done
 - `038_missing_fk_indexes_pt5.sql`: Comprehensive foreign key index optimizations across historical schema tables.
 - `039_missing_fk_indexes_pt6.sql`: Single-column foreign key index optimizations for referential integrity checks.
 - `040_missing_fk_indexes_pt7.sql`: Single-column index optimizations for callback visit jobs and remaining references.
+- `041_missing_fk_indexes_pt8.sql`: Single-column index optimizations for service agreements customer, property, and contract references.
 
 ---
 
