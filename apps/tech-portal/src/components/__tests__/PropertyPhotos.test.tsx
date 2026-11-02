@@ -41,4 +41,14 @@ describe('PropertyPhotos Component', () => {
       expect(screen.getByText(/No photos available/i)).toBeInTheDocument();
     });
   });
+
+  test('upload button is aria-disabled when no file is selected', async () => {
+    vi.mocked(axios.get).mockResolvedValue({ data: [] });
+
+    render(<PropertyPhotos propertyId="prop-789" />);
+
+    const uploadButton = screen.getByRole('button', { name: /Upload Photo/i });
+    expect(uploadButton).toHaveAttribute('aria-disabled', 'true');
+    expect(uploadButton).toHaveAttribute('title', 'Please select a file to upload');
+  });
 });

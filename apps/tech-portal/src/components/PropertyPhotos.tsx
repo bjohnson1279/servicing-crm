@@ -107,9 +107,11 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
         </div>
         <button 
           type="submit" 
-          disabled={!file || loading}
+          onClick={(!file || loading) ? (e) => e.preventDefault() : undefined}
+          aria-disabled={!file || loading}
           aria-busy={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50 focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-offset-1"
+          title={loading ? "Uploading..." : !file ? "Please select a file to upload" : "Upload Photo"}
+          className={`bg-blue-500 text-white px-4 py-2 rounded focus-visible:ring-2 focus-visible:outline-none focus-visible:ring-offset-1 ${(!file || loading) ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {loading ? 'Uploading...' : 'Upload Photo'}
         </button>
