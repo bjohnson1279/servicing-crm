@@ -133,3 +133,7 @@
 ## 2026-10-27 - PostgreSQL Foreign Key Referential Integrity Performance Part 2
 **Learning:** Found additional missing foreign key single-column indexes for referential integrity (`job_id` on `callback_visits` and `inspections`, `inspection_id` on `inspection_attachments`, and `property_id` on `property_devices`). Single-column foreign key indexes are strictly necessary to avoid full table scans during cascaded deletes or standard join queries, even when multi-column tenant_id indexes are present.
 **Action:** Added `shared/database/040_missing_fk_indexes_pt7.sql` to explicitly index these columns and prevent performance bottlenecks.
+
+## 2026-10-28 - Identifying Missing FK Indexes added via ALTER TABLE
+**Learning:** Some foreign keys are not defined in the initial `CREATE TABLE` block, but are instead added later via `ALTER TABLE ... ADD COLUMN ... REFERENCES ...` statements (like `warranty_policy_id` and `source_job_id` on the `jobs` table in migration 022). These FKs are also prone to lacking explicit indexes, which can create full table scan issues during joins or cascading deletes.
+**Action:** Added `shared/database/042_missing_fk_indexes_pt9.sql` to explicitly index `source_job_id` and `warranty_policy_id` on `jobs` and `service_contracts`. Always look for FKs added via `ALTER TABLE` when auditing missing indexes.
