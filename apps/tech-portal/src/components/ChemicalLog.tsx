@@ -4,6 +4,7 @@ import { enqueueRequest } from '../offlineQueue';
 import { ChemicalQuantity } from '../domain/ChemicalQuantity';
 import { EpaRegistrationNumber } from '../domain/EpaRegistrationNumber';
 import { WeatherConditions } from '../domain/WeatherConditions';
+import { ApplicationMethod, ApplicationMethodType } from '../domain/ApplicationMethod';
 
 interface InventoryItem {
   id: string;
@@ -27,16 +28,6 @@ const COMMON_PESTS = [
   'Fleas & Ticks',
 ];
 
-const APPLICATION_METHODS = [
-  'Exterior Perimeter Barrier (Liquid Spray)',
-  'Broadcast Granular Application',
-  'Crack & Crevice Treatment',
-  'Wall Void Dusting / Injection',
-  'Tamper-Resistant Bait Stations',
-  'Direct Nest Treatment',
-  'Interior Baseboard Treatment',
-];
-
 export const ChemicalLog: React.FC = () => {
   const { id: jobId } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -49,7 +40,7 @@ export const ChemicalLog: React.FC = () => {
   const [quantityUsed, setQuantityUsed] = useState<string>('1.0');
   const [unit, setUnit] = useState<string>('oz');
   const [selectedPests, setSelectedPests] = useState<string[]>(['Ants']);
-  const [applicationMethod, setApplicationMethod] = useState<string>(APPLICATION_METHODS[0]);
+  const [applicationMethod, setApplicationMethod] = useState<ApplicationMethodType>(ApplicationMethod.VALID_METHODS[0]);
   const [temp, setTemp] = useState<string>('72°F');
   const [windSpeed, setWindSpeed] = useState<string>('3 mph');
   const [notes, setNotes] = useState<string>('');
@@ -208,6 +199,18 @@ export const ChemicalLog: React.FC = () => {
       return;
     }
 
+    let applicationMethodObj: ApplicationMethod;
+    try {
+      applicationMethodObj = new ApplicationMethod(applicationMethod);
+    } catch (err) {
+      setResultMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid application method',
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const payload = {
       job_id: jobId || '00000000-0000-0000-0000-000000000001',
       technician_id: '00000000-0000-0000-0000-000000000002',
@@ -216,6 +219,7 @@ export const ChemicalLog: React.FC = () => {
       inventory_item_id: selectedItemId || undefined,
       quantity_used: quantityObj.getAmount(),
       unit: quantityObj.getUnit(),
+      application_method: applicationMethodObj.getValue(),
       target_pests: selectedPests,
       weather_conditions: weatherObj.toPayload(),
       notes: notes.trim() || undefined,
@@ -407,10 +411,10 @@ export const ChemicalLog: React.FC = () => {
           <select
             id="application-method"
             value={applicationMethod}
-            onChange={(e) => setApplicationMethod(e.target.value)}
+            onChange={(e) => setApplicationMethod(e.target.value as ApplicationMethodType)}
             style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '14px' }}
           >
-            {APPLICATION_METHODS.map((m) => (
+            {ApplicationMethod.VALID_METHODS.map((m) => (
               <option key={m} value={m}>{m}</option>
             ))}
           </select>
