@@ -5,6 +5,7 @@ import { ChemicalQuantity } from '../domain/ChemicalQuantity';
 import { EpaRegistrationNumber } from '../domain/EpaRegistrationNumber';
 import { WeatherConditions } from '../domain/WeatherConditions';
 import { ApplicationMethod, ApplicationMethodType } from '../domain/ApplicationMethod';
+import { TargetPest } from '../domain/TargetPest';
 
 interface InventoryItem {
   id: string;
@@ -15,18 +16,6 @@ interface InventoryItem {
   unitCost?: number;
   location?: string;
 }
-
-const COMMON_PESTS = [
-  'Ants',
-  'Termites',
-  'Cockroaches',
-  'Spiders',
-  'Wasps & Hornets',
-  'Rodents',
-  'Bed Bugs',
-  'Mosquitoes',
-  'Fleas & Ticks',
-];
 
 export const ChemicalLog: React.FC = () => {
   const { id: jobId } = useParams<{ id: string }>();
@@ -211,6 +200,18 @@ export const ChemicalLog: React.FC = () => {
       return;
     }
 
+    let targetPestObjs: TargetPest[];
+    try {
+      targetPestObjs = selectedPests.map((p) => new TargetPest(p));
+    } catch (err) {
+      setResultMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Invalid target pest selected',
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     const payload = {
       job_id: jobId || '00000000-0000-0000-0000-000000000001',
       technician_id: '00000000-0000-0000-0000-000000000002',
@@ -220,7 +221,7 @@ export const ChemicalLog: React.FC = () => {
       quantity_used: quantityObj.getAmount(),
       unit: quantityObj.getUnit(),
       application_method: applicationMethodObj.getValue(),
-      target_pests: selectedPests,
+      target_pests: targetPestObjs.map((p) => p.getValue()),
       weather_conditions: weatherObj.toPayload(),
       notes: notes.trim() || undefined,
       photo_url: photo || undefined,
@@ -426,7 +427,7 @@ export const ChemicalLog: React.FC = () => {
             Target Pests Addressed
           </div>
           <div role="group" aria-labelledby="target-pests-label" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
-            {COMMON_PESTS.map((pest) => {
+            {TargetPest.COMMON_PESTS.map((pest) => {
               const checked = selectedPests.includes(pest);
               const pestId = `pest-${pest.replace(/\s+/g, '-').toLowerCase()}`;
               return (
