@@ -139,3 +139,7 @@
 ## 2026-11-15 - Accessible Tooltips for Validation-Disabled Buttons
 **Learning:** In the `PropertyPhotos.tsx` component, native `disabled` attributes on the "Upload Photo" button prevented screen readers and mouse users from accessing `title` tooltips explaining why the button was disabled (e.g., missing file or loading state).
 **Action:** Replaced the native `disabled` attribute with `aria-disabled="true"`, custom CSS classes for visual disabled state (`opacity-50`, `cursor-not-allowed`), and an `onClick` handler interception `e.preventDefault()` to gracefully disable action while keeping the element focusable so its context tooltip is accessible.
+
+## 2026-11-20 - Accessible tooltips for form submission disabled buttons
+**Learning:** Native `disabled` attributes on submit or action buttons (like those in `ChemicalLog` and `TimeTracker`) prevent screen readers from accessing `title` tooltips that explain why the button is inactive (e.g., loading state).
+**Action:** Replace the native `disabled` attribute with `aria-disabled="true"`, conditionally prevent the action via `onClick={(e) => e.preventDefault()}`, and rely on CSS attribute selectors (e.g., `[aria-disabled="true"]`) for the visual disabled state.

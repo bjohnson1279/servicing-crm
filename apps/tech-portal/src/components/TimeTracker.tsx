@@ -53,17 +53,19 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
       )}
       <div className="time-tracker-actions">
         <button
-          onClick={clockIn}
-          disabled={actionLoading !== null}
+          onClick={actionLoading !== null ? (e) => e.preventDefault() : clockIn}
+          aria-disabled={actionLoading !== null}
           aria-busy={actionLoading === 'in'}
+          title={actionLoading === 'in' ? 'Clocking In...' : 'Clock In'}
           className="btn-clock-in"
         >
           {actionLoading === 'in' ? 'Clocking In...' : 'Clock In'}
         </button>
         <button
-          onClick={clockOut}
-          disabled={actionLoading !== null}
+          onClick={actionLoading !== null ? (e) => e.preventDefault() : clockOut}
+          aria-disabled={actionLoading !== null}
           aria-busy={actionLoading === 'out'}
+          title={actionLoading === 'out' ? 'Clocking Out...' : 'Clock Out'}
           className="btn-clock-out"
         >
           {actionLoading === 'out' ? 'Clocking Out...' : 'Clock Out'}
