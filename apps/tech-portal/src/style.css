@@ -379,7 +379,7 @@ code {
   background-color: #22c55e;
 }
 
-.btn-clock-in:hover:not(:disabled) {
+.btn-clock-in:hover:not([aria-disabled="true"]) {
   background-color: #16a34a;
 }
 
@@ -387,12 +387,12 @@ code {
   background-color: #ef4444;
 }
 
-.btn-clock-out:hover:not(:disabled) {
+.btn-clock-out:hover:not([aria-disabled="true"]) {
   background-color: #dc2626;
 }
 
-.btn-clock-in:disabled,
-.btn-clock-out:disabled {
+.btn-clock-in[aria-disabled="true"],
+.btn-clock-out[aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
 }

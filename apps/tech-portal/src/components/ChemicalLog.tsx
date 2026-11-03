@@ -639,8 +639,10 @@ export const ChemicalLog: React.FC = () => {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             type="submit"
-            disabled={isSubmitting}
+            onClick={isSubmitting ? (e) => e.preventDefault() : undefined}
+            aria-disabled={isSubmitting}
             aria-busy={isSubmitting}
+            title={isSubmitting ? 'Saving & Updating Stock...' : 'Save & Log Application'}
             style={{
               flex: 1,
               padding: '12px',
