@@ -1,4 +1,5 @@
 import {useEffect,useState} from 'react';
+import { LazyDetails } from '../LazyDetails';
 import {catalogApi,catalogToken,CatalogError} from './catalogApi';
 import type {CatalogData,CatalogProduct,CatalogDocument} from './catalogApi';
 const empty=():CatalogData=>({trade_name:'',manufacturer:'',category:'pesticide',jurisdiction:'',identifier_status:'unknown',identifier_type:'',identifier_value:'',identifier_reason:'',label_required:true,sds_required:true,document_exception:'',inventory_item_id:null});
@@ -101,7 +102,7 @@ export default function CatalogWorkspace({mode,jobId}:{mode:'staff'|'technician'
     </fieldset>}
     {mode==='staff'&&current.status==='active'&&manager&&<button disabled={blocked||!reason.trim()} onClick={()=>change('withdraw')}>Withdraw active version</button>}
     {mode==='staff'&&!['draft','in_review'].includes(current.status)&&<button disabled={blocked||!reason.trim()} onClick={()=>change('next_version')}>Create successor draft</button>}
-    {mode==='staff'&&<details><summary>Catalog review history</summary><ul>{product.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></details>}
+    {mode==='staff'&&<LazyDetails summary="Catalog review history"><ul>{product.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></LazyDetails>}
    </>}
   </>}
   {pending&&!busy&&<button onClick={()=>run(pending.path,pending.body)}>Retry unconfirmed action</button>}

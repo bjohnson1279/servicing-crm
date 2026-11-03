@@ -1,11 +1,12 @@
 import React, { useState, ReactNode } from 'react';
 
 interface LazyDetailsProps {
+  className?: string;
   summary: ReactNode;
   children: ReactNode;
 }
 
-export const LazyDetails: React.FC<LazyDetailsProps> = ({ summary, children }) => {
+export const LazyDetails: React.FC<LazyDetailsProps> = ({ summary, children, className }) => {
   const [hasOpened, setHasOpened] = useState(false);
 
   // ⚡ Bolt: Defer rendering children of details elements until expanded.
@@ -13,7 +14,7 @@ export const LazyDetails: React.FC<LazyDetailsProps> = ({ summary, children }) =
   // triggering expensive network requests on initial page load, while
   // preserving component state if toggled closed later.
   return (
-    <details
+    <details className={className}
       onToggle={(e) => {
         if (e.currentTarget.open && !hasOpened) {
           setHasOpened(true);

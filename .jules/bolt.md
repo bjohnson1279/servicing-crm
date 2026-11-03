@@ -137,3 +137,7 @@
 ## 2026-10-28 - Identifying Missing FK Indexes added via ALTER TABLE
 **Learning:** Some foreign keys are not defined in the initial `CREATE TABLE` block, but are instead added later via `ALTER TABLE ... ADD COLUMN ... REFERENCES ...` statements (like `warranty_policy_id` and `source_job_id` on the `jobs` table in migration 022). These FKs are also prone to lacking explicit indexes, which can create full table scan issues during joins or cascading deletes.
 **Action:** Added `shared/database/042_missing_fk_indexes_pt9.sql` to explicitly index `source_job_id` and `warranty_policy_id` on `jobs` and `service_contracts`. Always look for FKs added via `ALTER TABLE` when auditing missing indexes.
+
+## 2024-05-18 - [React] Lazy evaluation of `<details>` children components
+**Learning:** Components rendered unconditionally inside standard HTML `<details>` elements are immediately mounted and fetch data upon parent initial render, even though they remain visually hidden until expanded.
+**Action:** Always wrap heavy child components of `<details>` in a lazy-evaluation wrapper component (e.g. tracking toggle state using `onToggle` event listener) to defer execution and network requests until manually expanded by the user.

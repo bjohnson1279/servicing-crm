@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { LazyDetails } from '../LazyDetails';
 import { inspectionApi, inspectionToken, InspectionError } from './inspectionApi';
 import type { Inspection, InspectionFindings, InspectionZone } from './inspectionApi';
 const empty=():InspectionFindings=>({summary:'',zones:[]});
@@ -87,7 +88,7 @@ export default function InspectionWorkspace({mode,jobId}:{mode:'staff'|'technici
     {mode==='staff'&&!['reviewed','cancelled'].includes(selected.state)&&<div><div><label htmlFor="cancel-reason">Cancellation reason</label> <input id="cancel-reason" value={reason} onChange={e=>setReason(e.target.value)} /></div><button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={busy||!reason.trim()} onClick={()=>change('cancel',{reason})}>Cancel inspection</button></div>}
     <h4>Inspection photos</h4>{selected.attachments.length===0?<p>No photos attached.</p>:<ul>{selected.attachments.map(a=><li key={a.id}><button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={busy} onClick={async()=>{setBusy(true);try{setPhoto(await inspectionApi('/'+selected.id+'/attachments/'+a.id));}catch(e){fail(e);}finally{setBusy(false);}}}>{a.name} · revision {a.revision}</button></li>)}</ul>}
     {photo&&<figure><img alt={photo.name} src={'data:'+photo.media_type+';base64,'+photo.data} style={{maxWidth:'100%',maxHeight:320}}/><figcaption>{photo.name}</figcaption></figure>}
-    <details><summary>Revision history</summary>{selected.revisions.map(r=><div key={r.revision}><h4>Revision {r.revision}{r.submitted_at?' · submitted':''}</h4><p>{r.findings.summary}</p><ul>{r.findings.zones.map((z,n)=><li key={n}>{z.name}: {z.evidence}, {z.severity}{z.inaccessible?', inaccessible':''} — {z.notes}</li>)}</ul>{r.review_reason&&<p>Staff review: {r.review_reason}</p>}</div>)}</details>
+    <LazyDetails summary="Revision history">{selected.revisions.map(r=><div key={r.revision}><h4>Revision {r.revision}{r.submitted_at?' · submitted':''}</h4><p>{r.findings.summary}</p><ul>{r.findings.zones.map((z,n)=><li key={n}>{z.name}: {z.evidence}, {z.severity}{z.inaccessible?', inaccessible':''} — {z.notes}</li>)}</ul>{r.review_reason&&<p>Staff review: {r.review_reason}</p>}</div>)}</LazyDetails>
    </article>}
   </>}
   {pending&&!busy&&<button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" onClick={()=>execute(pending.path,pending.body)}>Retry unconfirmed action</button>}
