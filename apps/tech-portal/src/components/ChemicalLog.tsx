@@ -617,7 +617,11 @@ export const ChemicalLog: React.FC = () => {
               <div style={{ marginTop: '6px' }}>
                 <button
                   type="button"
-                  onClick={() => setPhoto(null)}
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to remove this photo?')) {
+                      setPhoto(null);
+                    }
+                  }}
                   style={{
                     padding: '4px 10px',
                     fontSize: '12px',
