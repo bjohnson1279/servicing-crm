@@ -1,3 +1,4 @@
+import { LazyDetails } from '../LazyDetails';
 import { FormEvent, useEffect, useState } from 'react';
 import { callbackApi, CallbackCase, watchCallbacks } from './callbackApi';
 
@@ -131,8 +132,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
         <p>Average response: {report.average_first_response_hours == null ? 'Not recorded' : `${Number(report.average_first_response_hours).toFixed(1)} hours`} · Average resolution: {report.average_resolution_hours == null ? 'Not recorded' : `${Number(report.average_resolution_hours).toFixed(1)} hours`}</p>
         <p className="text-sm">Service-date cohort observed through today. Recent visits have less follow-up time.</p>
       </div>}
-      {mode !== 'technician' && settings.enabled && <details className="border rounded p-4">
-        <summary className="cursor-pointer font-semibold">Report a problem after service</summary>
+      {mode !== 'technician' && settings.enabled && <LazyDetails className="border rounded p-4" summary={<span className="cursor-pointer font-semibold">Report a problem after service</span>}>
         <form onSubmit={create} className="space-y-3 mt-3 max-w-xl">
           {choose('property_id','Service property',options.properties.filter(p => !customerId || p.customer_id === customerId).map(p => ({ value:p.id,text: mode === 'staff' ? `${p.customer_name} — ${p.address}` : p.address })),true)}
           {choose('source_job_id','Related completed visit (optional)',options.jobs.filter(j => j.property_id === fields.property_id).map(j => ({ value:j.id,text:new Date(j.completed_at).toLocaleString() })))}
@@ -145,7 +145,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           <p>Our team will review coverage before confirming service or charges.</p>
           <button className={button} disabled={busy}>Submit request</button>
         </form>
-      </details>}
+      </LazyDetails>}
       <div className="block space-y-1">
         <label htmlFor="status-filter">Filter by status</label>
         <select id="status-filter" className={controls} value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
@@ -169,7 +169,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       <p>{current.description}</p><p>Status: {label(current.state)}</p>
       {current.preferred_availability && <p>Preferred availability: {current.preferred_availability}</p>}
       {mode !== 'customer' && <><p>Coverage: {label(current.coverage)} — {current.coverage_reason}</p><p>Billing: {label(current.billing_disposition || 'pending')}</p>
-        {current.source_visit && <details><summary>Previous treatment applications</summary><ul>{current.source_visit.applications.map(a => <li key={a.id}>{a.chemical_name}: {a.quantity_used} {a.unit} · {new Date(a.applied_at).toLocaleString()}</li>)}</ul>{!current.source_visit.applications.length && <p>No applications recorded.</p>}</details>}</>}
+        {current.source_visit && <LazyDetails summary="Previous treatment applications"><ul>{current.source_visit.applications.map(a => <li key={a.id}>{a.chemical_name}: {a.quantity_used} {a.unit} · {new Date(a.applied_at).toLocaleString()}</li>)}</ul>{!current.source_visit.applications.length && <p>No applications recorded.</p>}</LazyDetails>}</>}
       <h3 className="font-semibold">Photos</h3>
       {current.attachments.map(a => <button className="underline mr-3" key={a.id} onClick={() => void viewPhoto(a.id)}>{a.name}</button>)}
       {!closed.includes(current.state) && (

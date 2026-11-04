@@ -1,3 +1,4 @@
+import { LazyDetails } from '../LazyDetails';
 import {useEffect,useState} from 'react';
 import {catalogApi,catalogToken,CatalogError} from './catalogApi';
 import type {CatalogData,CatalogProduct,CatalogDocument} from './catalogApi';
@@ -101,7 +102,7 @@ export default function CatalogWorkspace({mode,jobId}:{mode:'staff'|'technician'
     </fieldset>}
     {mode==='staff'&&current.status==='active'&&manager&&<button disabled={blocked||!reason.trim()} onClick={()=>change('withdraw')}>Withdraw active version</button>}
     {mode==='staff'&&!['draft','in_review'].includes(current.status)&&<button disabled={blocked||!reason.trim()} onClick={()=>change('next_version')}>Create successor draft</button>}
-    {mode==='staff'&&<details><summary>Catalog review history</summary><ul>{product.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></details>}
+    {mode==='staff'&&<LazyDetails summary="Catalog review history"><ul>{product.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></LazyDetails>}
    </>}
   </>}
   {pending&&!busy&&<button onClick={()=>run(pending.path,pending.body)}>Retry unconfirmed action</button>}

@@ -1,3 +1,4 @@
+import { LazyDetails } from '../LazyDetails';
 import {useEffect,useState} from 'react';
 import {deviceApi,deviceToken,DeviceError} from './deviceApi';
 import type {PropertyDevice} from './deviceApi';
@@ -61,7 +62,7 @@ export default function DeviceWorkspace({mode,jobId}:{mode:'staff'|'technician';
      {selected.lifecycle==='installed'&&<><div><label htmlFor="new-loc-zone">New location zone</label> <input id="new-loc-zone" maxLength={120} value={zone} onChange={e=>setZone(e.target.value)} /></div><div><label htmlFor="new-loc-desc">New location description</label> <textarea id="new-loc-desc" maxLength={4000} value={description} onChange={e=>setDescription(e.target.value)} /></div><button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={!reason.trim()||!zone.trim()||!description.trim()} onClick={()=>change('relocate',{zone,description})}>Record relocation</button><div><label htmlFor="replacement-label">Replacement permanent label</label> <input id="replacement-label" maxLength={80} value={label} onChange={e=>setLabel(e.target.value)} /></div><button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={!reason.trim()||!label.trim()||!zone.trim()||!description.trim()} onClick={()=>change('replace',{label,zone,description})}>Retire and register replacement</button><p>The replacement starts as planned and needs its own installation confirmation.</p></>}
      <button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={!reason.trim()} onClick={()=>change('retire')}>Retire device</button>
     </fieldset>}
-    <details><summary>Lifecycle history</summary><ul>{selected.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></details>
+    <LazyDetails summary="Lifecycle history"><ul>{selected.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></LazyDetails>
    </article>}
   </>}
   {pending&&!busy&&<button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" onClick={()=>run(pending.path,pending.body)}>Retry unconfirmed action</button>}
