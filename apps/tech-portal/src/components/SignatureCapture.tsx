@@ -20,9 +20,11 @@ export const SignatureCapture: React.FC = () => {
   };
 
   const clearSignature = () => {
-    sigCanvas.current?.clear();
-    setError(null);
-    setHasSignature(false);
+    if (window.confirm('Are you sure you want to clear the signature?')) {
+      sigCanvas.current?.clear();
+      setError(null);
+      setHasSignature(false);
+    }
   };
 
   return (

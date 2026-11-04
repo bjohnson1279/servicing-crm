@@ -143,3 +143,7 @@
 ## 2026-11-20 - Accessible tooltips for form submission disabled buttons
 **Learning:** Native `disabled` attributes on submit or action buttons (like those in `ChemicalLog` and `TimeTracker`) prevent screen readers from accessing `title` tooltips that explain why the button is inactive (e.g., loading state).
 **Action:** Replace the native `disabled` attribute with `aria-disabled="true"`, conditionally prevent the action via `onClick={(e) => e.preventDefault()}`, and rely on CSS attribute selectors (e.g., `[aria-disabled="true"]`) for the visual disabled state.
+
+## 2026-11-04 - Wrap destructive actions in window.confirm
+**Learning:** Destructive local state modifications (e.g. instantly removing a photo or clearing a signature canvas) cause accidental data loss and frustration.
+**Action:** Always wrap these destructive local actions in native `window.confirm` dialogs.
