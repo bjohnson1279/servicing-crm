@@ -229,7 +229,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       <h3 className="font-semibold">Case timeline</h3>
       <ol className="space-y-2">{current.events.map(e => <li key={e.id}><time>{new Date(e.created_at).toLocaleString()}</time> · {label(e.action)}{e.customer_message && <p>{e.customer_message}</p>}</li>)}</ol>
     </article>}
-    {mode === 'staff' && manager && settings && <details className="border rounded p-4"><summary>Warranty policy administration</summary>
+    {mode === 'staff' && manager && settings && <LazyDetails className="border rounded p-4" summary="Warranty policy administration">
       <form className="space-y-3" onSubmit={e => { e.preventDefault(); void act('/settings',{timezone:fields.timezone}); }}>{field('timezone','Contract date time zone (for example America/Denver)',true)}<button className={button} disabled={busy}>Save time zone</button></form>
       <form className="space-y-3" onSubmit={e => { e.preventDefault(); void act('/settings',{hourly_labor_rate:Number(fields.hourly_labor_rate)}); }}>{field('hourly_labor_rate','Hourly labor cost ($, applied to future visits)',true,'number')}<button className={button} disabled={busy}>Save labor rate</button></form>
       <form className="space-y-3 mt-3" onSubmit={async e => { e.preventDefault(); await act('/policies',{ name:fields.policy_name,version:Number(fields.policy_version),reporting_window_days:Number(fields.window_days),covered_pests:(fields.covered_pests || '').split(',').map(v => v.trim().toLowerCase()).filter(Boolean),exclusions:fields.exclusions || '' }); }}>
@@ -238,6 +238,6 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       <form className="space-y-3 mt-4" onSubmit={async e => { e.preventDefault(); await act('/policies/assign',{ policy_id:fields.policy_id,kind:fields.target_kind,target_id:fields.target_id }); }}>
         {choose('policy_id','Policy version',policies.map(p => ({value:p.id,text:`${p.name} v${p.version}`})),true)}{choose('target_kind','Assign to',[{value:'contract',text:'Contract'},{value:'job',text:'One-time service job'}],true)}{field('target_id','Contract or job ID',true)}<button className={button} disabled={busy}>Assign policy</button>
       </form>
-    </details>}
+    </LazyDetails>}
   </section>;
 }
