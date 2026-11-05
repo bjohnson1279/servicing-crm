@@ -30,6 +30,9 @@ const mockRoute: GeoLocation[] = [
   new GeoLocation(40.7300, -73.9900),
 ];
 
+const routePositions = mockRoute.map(loc => loc.toTuple());
+const mapCenter = new GeoLocation(40.7200, -73.9950).toTuple();
+
 export const DailyRoute: React.FC = () => {
   // Memoize marker rendering to prevent unnecessary recalculation of Map elements during component re-renders
   const markers = useMemo(() => {
@@ -42,14 +45,6 @@ export const DailyRoute: React.FC = () => {
         )
       )
     ));
-  }, []);
-
-  const routePositions = useMemo(() => {
-    return mockRoute.map(loc => loc.toTuple());
-  }, []);
-
-  const mapCenter = useMemo(() => {
-    return new GeoLocation(40.7200, -73.9950).toTuple();
   }, []);
 
   return (
