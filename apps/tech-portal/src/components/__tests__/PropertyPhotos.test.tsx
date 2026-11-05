@@ -9,6 +9,9 @@ vi.mock('axios');
 describe('PropertyPhotos Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
+    vi.stubGlobal('sessionStorage', {
+      getItem: vi.fn().mockReturnValue('fake-test-token'),
+    });
   });
 
   test('renders property photos header and file input', async () => {

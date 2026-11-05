@@ -23,7 +23,10 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
 
   const fetchPhotos = async () => {
     try {
-      const res = await axios.get(`/api/v1/properties/${propertyId}/photos`);
+      const token = sessionStorage.getItem('crm_access_token');
+      const res = await axios.get(`/api/v1/properties/${propertyId}/photos`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setPhotos(res.data);
     } catch (err) {
       console.error('Failed to fetch property photos');
@@ -55,8 +58,12 @@ const PropertyPhotos: React.FC<PropertyPhotosProps> = ({ propertyId, jobId }) =>
     formData.append('caption', caption);
 
     try {
+      const token = sessionStorage.getItem('crm_access_token');
       await axios.post(`/api/v1/properties/${propertyId}/photos`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
       });
       setFile(null);
       setCaption('');
