@@ -53,6 +53,8 @@ describe('offlineQueue', () => {
       writable: true,
     });
 
+    vi.stubGlobal('sessionStorage', { getItem: vi.fn().mockReturnValue('mock-token') });
+
     // Mock globalThis.fetch
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
       ok: true,
@@ -150,12 +152,12 @@ describe('offlineQueue', () => {
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
       expect(globalThis.fetch).toHaveBeenNthCalledWith(1, '/api/v1/chemical-log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer mock-token' },
         body: JSON.stringify({ item: 'A' }),
       });
       expect(globalThis.fetch).toHaveBeenNthCalledWith(2, '/api/v1/chemical-log', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer mock-token' },
         body: JSON.stringify({ item: 'B' }),
       });
 
@@ -212,7 +214,7 @@ describe('offlineQueue', () => {
 
       expect(globalThis.fetch).toHaveBeenCalledWith('/api/v1/auto-sync', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer mock-token' },
         body: JSON.stringify({ trigger: 'event' }),
       });
       expect(itemsMap.size).toBe(0);
