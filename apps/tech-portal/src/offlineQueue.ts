@@ -25,11 +25,15 @@ export const syncQueue = async () => {
   const store = tx.objectStore(STORE_NAME);
   const items = await store.getAll();
 
+  const token = sessionStorage.getItem('crm_access_token');
   for (const item of items) {
     try {
       await fetch(item.url, {
         method: item.method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(item.body),
       });
       await store.delete(item.id);

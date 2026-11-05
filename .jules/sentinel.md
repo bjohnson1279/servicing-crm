@@ -117,3 +117,8 @@
 **Vulnerability:** Missing Authorization header in API calls within `PropertyPhotos.tsx` (unauthenticated API calls).
 **Learning:** When not using a global Axios interceptor, individual components making HTTP requests may inadvertently omit authorization tokens, allowing unauthorized access or failing securely on the backend but exposing a broken component state.
 **Prevention:** Ensure all HTTP requests in the frontend pass the appropriate authorization token (e.g., from sessionStorage). Consider standardizing API clients to include tokens automatically.
+
+## 2026-11-05 - Missing Authorization Header in Offline Queue
+**Vulnerability:** Offline queue (`offlineQueue.ts`) sent stored API requests without authorization headers after network recovery.
+**Learning:** When queueing API requests while offline and replaying them when online, the replay logic must dynamically include the necessary authorization headers (e.g., from sessionStorage), as the original request context is lost. Failure to do so leads to unauthenticated requests that are either rejected by the server or potentially expose sensitive operations if backend auth checks are missing.
+**Prevention:** Ensure background sync or replay mechanisms always retrieve and attach the current, valid authentication token before dispatching requests.
