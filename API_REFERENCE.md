@@ -94,6 +94,24 @@ The platform operates across four interchangeable backends designed with identic
 ### `PATCH /api/v1/inventory/items/:id/quantity`
 - **Description**: Logs chemical usage or restocks. Automatically triggers purchase order drafts when quantity drops below threshold.
 
+### `GET /api/v1/inventory/epa-report`
+- **Description**: Generates an Environmental Protection Agency (EPA) compliance report aggregating chemical application logs, total application events, and cumulative usage quantities per chemical across the tenant.
+- **Parameters**: None. Authenticated by tenant session or JWT.
+- **Response**: `200 OK`
+  ```json
+  {
+    "totalApplications": 42,
+    "summary": [
+      {
+        "chemicalName": "Bifenthrin 7.9%",
+        "totalQuantity": 12.5,
+        "unit": "GALLONS"
+      }
+    ]
+  }
+  ```
+- **Workflow Usage**: Used by compliance managers and operations leads to audit regulated pesticide applications and generate statutory compliance filings.
+
 ---
 
 ## 2. Billing & Finance Domain
@@ -198,6 +216,40 @@ The platform operates across four interchangeable backends designed with identic
 ### `POST /api/webhooks/twilio/voice-gather`
 - **Description**: Twilio Voice TwiML IVR webhook. Connects automated robocalls to customer service if the customer presses `1`.
 
+### `GET /api/v1/comms/chat/conversations`
+- **Description**: Lists active and historical two-way live customer chat conversation threads for the CSR message inbox.
+- **Query Params**:
+  - `status` (optional string): Filter threads by status (`OPEN`, `WAITING_ON_CUSTOMER`, `WAITING_ON_AGENT`, `RESOLVED`).
+  - `customerId` (optional UUID): Filter conversations belonging to a specific customer.
+- **Response**: `200 OK`
+  ```json
+  [
+    {
+      "id": "uuid",
+      "customerId": "uuid",
+      "status": "OPEN"
+    }
+  ]
+  ```
+- **Workflow Usage**: Powers the back-office Customer Service Representative (CSR) real-time chat interface to triage inbound customer inquiries and dispatch follow-ups.
+
+### `GET /api/v1/comms/chat/canned-responses`
+- **Description**: Retrieves predefined canned response message templates for CSRs with quick shortcut keys.
+- **Parameters**: None. Authenticated by tenant session or JWT.
+- **Response**: `200 OK`
+  ```json
+  [
+    {
+      "id": "uuid",
+      "shortcut": "/eta",
+      "title": "Technician Arrival ETA",
+      "category": "DISPATCH",
+      "content": "Hello! Your technician is currently en route and estimated to arrive within the next 20-30 minutes. You will receive an SMS as soon as they pull up."
+    }
+  ]
+  ```
+- **Workflow Usage**: Used by CSRs in the live chat console to insert standard customer service replies via keyboard shortcuts (e.g., `/eta`, `/reschedule`, `/safety`).
+
 ---
 
 ## 5. Sales & Marketing Domain
@@ -233,6 +285,42 @@ The platform operates across four interchangeable backends designed with identic
 
 ### `POST /api/v1/marketing/followups`
 - **Description**: Schedules automated customer check-ins and re-service reminders.
+
+### `GET /api/v1/sales/territories`
+- **Description**: Lists defined sales territory polygons with quota targets and active status markers.
+- **Parameters**: None. Authenticated by tenant session or JWT.
+- **Response**: `200 OK`
+  ```json
+  [
+    {
+      "id": "uuid",
+      "name": "Northwest Metro",
+      "polygonCoordinates": [
+        [40.7608, -111.8910],
+        [40.7708, -111.8810],
+        [40.7508, -111.8710]
+      ],
+      "quotaTarget": 15000.00,
+      "isActive": true
+    }
+  ]
+  ```
+- **Workflow Usage**: Rendered on the sales manager territory map to allocate geographic sectors to field sales reps and track regional quota goals.
+
+### `GET /api/v1/sales/territories/compliance/do-not-knock`
+- **Description**: Retrieves registered Do-Not-Knock addresses and ordinances within sales territories to prevent unauthorized canvassing.
+- **Parameters**: None. Authenticated by tenant session or JWT.
+- **Response**: `200 OK`
+  ```json
+  [
+    {
+      "id": "uuid",
+      "address": "123 Elm Street",
+      "reason": "Customer Request"
+    }
+  ]
+  ```
+- **Workflow Usage**: Consulted by door-to-door sales representatives and canvass map overlays before knocking on properties to maintain legal compliance with municipal and HOA restrictions.
 
 ---
 
