@@ -113,3 +113,7 @@
 **Vulnerability:** The catalog component (`CatalogWorkspace.tsx`) rendered user-provided URLs (`source_url`) directly into anchor tags (`<a href={d.source_url}>`) without checking their protocol. If an attacker inputs `javascript:alert(1)`, clicking the link executes arbitrary JavaScript (DOM-based XSS).
 **Learning:** HTML5 validation (e.g. `type="url"`) can be bypassed programmatically or via API. Relying on `type="url"` does not prevent dangerous protocols like `javascript:` or `data:` from being persisted and rendered into interactive DOM elements.
 **Prevention:** Always sanitize URLs before rendering them into `href` or `src` attributes by enforcing a strict allowlist of secure protocols (e.g., verifying `.startsWith('http://') || .startsWith('https://')` and falling back to `about:blank` if invalid).
+## 2026-11-05 - Missing Authorization Header in Isolated Component
+**Vulnerability:** Missing Authorization header in API calls within `PropertyPhotos.tsx` (unauthenticated API calls).
+**Learning:** When not using a global Axios interceptor, individual components making HTTP requests may inadvertently omit authorization tokens, allowing unauthorized access or failing securely on the backend but exposing a broken component state.
+**Prevention:** Ensure all HTTP requests in the frontend pass the appropriate authorization token (e.g., from sessionStorage). Consider standardizing API clients to include tokens automatically.
