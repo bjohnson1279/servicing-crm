@@ -14,6 +14,9 @@ describe('GeoLocation Value Object', () => {
     expect(() => new GeoLocation(-90.1, 0)).toThrow(/out of bounds/i);
     expect(() => new GeoLocation(90.1, 0)).toThrow(/out of bounds/i);
     expect(() => new GeoLocation(NaN, 0)).toThrow(/Invalid latitude/i);
+    expect(() => new GeoLocation('40' as unknown as number, 0)).toThrow(/Invalid latitude/i);
+    expect(() => new GeoLocation(Infinity, 0)).toThrow(/Invalid latitude/i);
+    expect(() => new GeoLocation(-Infinity, 0)).toThrow(/Invalid latitude/i);
     expect(new GeoLocation(-90, 0).getLatitude()).toBe(-90);
     expect(new GeoLocation(90, 0).getLatitude()).toBe(90);
   });
@@ -21,9 +24,28 @@ describe('GeoLocation Value Object', () => {
   test('validates longitude bounds (-180 to +180)', () => {
     expect(() => new GeoLocation(0, -180.1)).toThrow(/out of bounds/i);
     expect(() => new GeoLocation(0, 180.1)).toThrow(/out of bounds/i);
+    expect(() => new GeoLocation(0, NaN)).toThrow(/Invalid longitude/i);
+    expect(() => new GeoLocation(0, '-74' as unknown as number)).toThrow(/Invalid longitude/i);
     expect(() => new GeoLocation(0, Infinity)).toThrow(/Invalid longitude/i);
+    expect(() => new GeoLocation(0, -Infinity)).toThrow(/Invalid longitude/i);
     expect(new GeoLocation(0, -180).getLongitude()).toBe(-180);
     expect(new GeoLocation(0, 180).getLongitude()).toBe(180);
+  });
+
+  test('evaluates validity using GeoLocation.isValid', () => {
+    expect(GeoLocation.isValid(0, 0)).toBe(true);
+    expect(GeoLocation.isValid(-90, -180)).toBe(true);
+    expect(GeoLocation.isValid(90, 180)).toBe(true);
+    expect(GeoLocation.isValid(-90.1, 0)).toBe(false);
+    expect(GeoLocation.isValid(90.1, 0)).toBe(false);
+    expect(GeoLocation.isValid(0, -180.1)).toBe(false);
+    expect(GeoLocation.isValid(0, 180.1)).toBe(false);
+    expect(GeoLocation.isValid(NaN, 0)).toBe(false);
+    expect(GeoLocation.isValid(0, NaN)).toBe(false);
+    expect(GeoLocation.isValid(Infinity, 0)).toBe(false);
+    expect(GeoLocation.isValid(0, Infinity)).toBe(false);
+    expect(GeoLocation.isValid('0' as unknown as number, 0)).toBe(false);
+    expect(GeoLocation.isValid(0, '0' as unknown as number)).toBe(false);
   });
 
   test('correctly evaluates equality between GeoLocation instances', () => {
@@ -33,6 +55,8 @@ describe('GeoLocation Value Object', () => {
 
     expect(loc1.equals(loc2)).toBe(true);
     expect(loc1.equals(loc3)).toBe(false);
+    expect(loc1.equals(null as unknown as GeoLocation)).toBe(false);
+    expect(loc1.equals(undefined as unknown as GeoLocation)).toBe(false);
   });
 
   test('creates instance from tuple using fromTuple static method', () => {
@@ -96,15 +120,15 @@ describe('GeoLocation Value Object', () => {
   });
 
   test('validates non-numeric types and infinities in constructor', () => {
-    expect(() => new GeoLocation('40.7128' as any, -74.006)).toThrow(/Invalid latitude value/);
-    expect(() => new GeoLocation(null as any, -74.006)).toThrow(/Invalid latitude value/);
-    expect(() => new GeoLocation(-Infinity, 0)).toThrow(/Invalid latitude value/);
-    expect(() => new GeoLocation(Infinity, 0)).toThrow(/Invalid latitude value/);
+    expect(() => new GeoLocation('40.7128' as any, -74.006)).toThrow(/Invalid latitude/i);
+    expect(() => new GeoLocation(null as any, -74.006)).toThrow(/Invalid latitude/i);
+    expect(() => new GeoLocation(-Infinity, 0)).toThrow(/Invalid latitude/i);
+    expect(() => new GeoLocation(Infinity, 0)).toThrow(/Invalid latitude/i);
 
-    expect(() => new GeoLocation(40.7128, '-74.006' as any)).toThrow(/Invalid longitude value/);
-    expect(() => new GeoLocation(40.7128, undefined as any)).toThrow(/Invalid longitude value/);
-    expect(() => new GeoLocation(0, -Infinity)).toThrow(/Invalid longitude value/);
-    expect(() => new GeoLocation(0, Infinity)).toThrow(/Invalid longitude value/);
+    expect(() => new GeoLocation(40.7128, '-74.006' as any)).toThrow(/Invalid longitude/i);
+    expect(() => new GeoLocation(40.7128, undefined as any)).toThrow(/Invalid longitude/i);
+    expect(() => new GeoLocation(0, -Infinity)).toThrow(/Invalid longitude/i);
+    expect(() => new GeoLocation(0, Infinity)).toThrow(/Invalid longitude/i);
   });
 
   test('safely evaluates equality with null, undefined, self, and mismatched coordinates', () => {
@@ -146,10 +170,10 @@ describe('GeoLocation Value Object', () => {
     const loc = new GeoLocation(40.7128, -74.006);
 
     expect(() => loc.distanceToInMiles(null as any)).toThrow(
-      'Target location is required to calculate distance.'
+      /Target location is required/i
     );
     expect(() => loc.distanceToInKm(undefined as any)).toThrow(
-      'Target location is required to calculate distance.'
+      /Target location is required/i
     );
   });
 
