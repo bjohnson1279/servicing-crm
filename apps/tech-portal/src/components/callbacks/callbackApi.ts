@@ -48,10 +48,12 @@ export interface CallbackVisit {
   labor_minutes?: number; follow_up?: boolean;
   labor_cost?: number; material_cost?: number; total_cost?: number; cost_complete?: boolean;
 }
+import type { CallbackCaseStateValue } from '../../domain/CallbackCaseState';
+
 export interface CallbackCase {
   id: string; property_id: string; customer_id: string; property_address: string; customer_name: string;
   pest_code: string; description: string; preferred_availability: string; source_job_id?: string;
-  state: string; coverage: string; coverage_reason?: string; billing_disposition?: string;
+  state: CallbackCaseStateValue; coverage: string; coverage_reason?: string; billing_disposition?: string;
   reported_at: string; response_due_at: string; version: number;
   events: { id: string; action: string; customer_message?: string; created_at: string }[];
   visits: CallbackVisit[];

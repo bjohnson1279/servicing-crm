@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { callbackDrafts, retryCallbackDraft } from '../callbackOfflineQueue';
 import { callbackApi, CallbackCase } from './callbacks/callbackApi';
+import { CallbackCaseState } from '../domain/CallbackCaseState';
 
 export function CallbackDrafts({ jobId }: { jobId: string }) {
   const [drafts,setDrafts] = useState<{ key:string; id:string; status:string; error?:string; body:{ findings:string; summary:string } }[]>([]);
@@ -40,7 +41,8 @@ export function CallbackDrafts({ jobId }: { jobId: string }) {
           setError('');
           try {
             const current = await callbackApi<CallbackCase>(`/${d.id}`);
-            if (!['scheduled','in_service'].includes(current.state)) { setError('This case has moved on. Review the case with your dispatcher before changing the saved outcome.'); return; }
+            const stateVO = CallbackCaseState.isValid(current.state) ? new CallbackCaseState(current.state) : undefined;
+            if (!stateVO || !stateVO.canReceiveOutcome()) { setError('This case has moved on. Review the case with your dispatcher before changing the saved outcome.'); return; }
             await retryCallbackDraft(d.key,current.version); setDrafts(await callbackDrafts(jobId));
           } catch (e) { setError((e as Error).message); } finally { setRetryingKey(null); }
         }}
