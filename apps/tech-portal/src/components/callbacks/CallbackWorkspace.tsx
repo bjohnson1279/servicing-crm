@@ -1,6 +1,7 @@
 import { LazyDetails } from '../LazyDetails';
 import { FormEvent, useEffect, useState } from 'react';
 import { callbackApi, CallbackCase, watchCallbacks } from './callbackApi';
+import { CallbackCaseState } from '../../domain/CallbackCaseState';
 
 interface Options {
   properties: { id: string; address: string; customer_id: string; customer_name: string }[];
@@ -10,7 +11,6 @@ interface Options {
 }
 type Fields = Record<string, string>;
 const label = (value: string) => value.replace(/_/g, ' ');
-const closed = ['resolved', 'declined', 'cancelled'];
 const controls = 'border rounded p-2 w-full bg-white text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 hover:border-gray-400 transition-colors';
 const button = 'border rounded px-3 py-2 bg-blue-700 text-white disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 hover:bg-blue-800 transition-colors';
 
@@ -34,6 +34,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
   const [policies, setPolicies] = useState<{ id: string; name: string; version: number }[]>([]);
   const [report, setReport] = useState<{ eligible_source_jobs: number; source_jobs_with_callback: number; total_cases: number; unlinked_cases: number; average_first_response_hours: number | null; average_resolution_hours: number | null; additional_visits: number }>();
   const current = items.find(item => item.id === selected);
+  const currentState = current ? new CallbackCaseState(current.state) : undefined;
   const manager = settings?.role === 'MANAGER' || settings?.role === 'SUPER_ADMIN';
 
   async function refresh() {
@@ -149,7 +150,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       <div className="block space-y-1">
         <label htmlFor="status-filter">Filter by status</label>
         <select id="status-filter" className={controls} value={filter} onChange={e => { setFilter(e.target.value); setOffset(0); }}>
-          <option value="">All statuses</option>{['submitted','triage','awaiting_customer','approved','scheduled','in_service','awaiting_review','resolved','declined','cancelled'].map(s => <option key={s} value={s}>{label(s)}</option>)}
+          <option value="">All statuses</option>{CallbackCaseState.VALID_STATES.map(s => <option key={s} value={s}>{label(s)}</option>)}
         </select>
       </div>
       {!items.length && <p>No service requests match this view.</p>}
@@ -172,7 +173,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
         {current.source_visit && <LazyDetails summary="Previous treatment applications"><ul>{current.source_visit.applications.map(a => <li key={a.id}>{a.chemical_name}: {a.quantity_used} {a.unit} · {new Date(a.applied_at).toLocaleString()}</li>)}</ul>{!current.source_visit.applications.length && <p>No applications recorded.</p>}</LazyDetails>}</>}
       <h3 className="font-semibold">Photos</h3>
       {current.attachments.map(a => <button className="underline mr-3" key={a.id} onClick={() => void viewPhoto(a.id)}>{a.name}</button>)}
-      {!closed.includes(current.state) && (
+      {currentState?.canAddAttachment() && (
         <div className="block space-y-1">
           <label htmlFor="add-photo">Add photo (JPEG or PNG, up to 1 MB)</label>
           <input id="add-photo" type="file" accept="image/jpeg,image/png" disabled={busy} onChange={e => { if (e.target.files?.[0]) void upload(e.target.files[0]); }} />
@@ -195,7 +196,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
         </form>}
       </div>)}
       {mode === 'staff' && <div className="space-y-3">
-        {['submitted','triage','awaiting_customer'].includes(current.state) && <>
+        {currentState?.canBeAssessedOrDecided() && <>
           {choose('source_job_id','Confirm source visit',options.jobs.filter(j => j.property_id === current.property_id).map(j => ({ value:j.id,text:new Date(j.completed_at).toLocaleString() })))}
           <button className={button} disabled={busy} onClick={() => void command('assess-coverage', { source_job_id: fields.source_job_id || current.source_job_id || null })}>Assess coverage</button>
           {field('reason','Internal decision reason',true)}{field('customer_message','Explanation to customer',true)}
@@ -204,18 +205,18 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           {fields.billing_disposition === 'quoted_paid' && <>{field('quote_amount','New return-service quote amount ($)',false,'number')}<button className={button} disabled={busy || Number(fields.quote_amount)<=0 || !fields.quote_amount} onClick={() => void command('quotes',{total_amount:Number(fields.quote_amount)})}>Send return-service quote</button></>}
           <div className="flex gap-3 flex-wrap">{[['approve','Approve return service'],['decline','Decline request'],['request_information','Request information']].map(([decision,title]) => <button className={button} key={decision} disabled={busy || !fields.reason || !fields.customer_message} onClick={() => void command('decision',{ ...fields,decision })}>{title}</button>)}</div>
         </>}
-        {['approved','awaiting_review'].includes(current.state) && <>
+        {currentState?.canScheduleVisit() && <>
           {field('scheduled_start','Return visit date and time',true,'datetime-local')}{choose('technician_id','Technician (optional; can assign in dispatch)',(options.technicians || []).map(t => ({value:t.id,text:t.name})))}
           <button className={button} disabled={busy || !fields.scheduled_start} onClick={async () => { await command('visits',{ scheduled_start:new Date(fields.scheduled_start).toISOString(),technician_id:fields.technician_id || null,request_key:requestKey }); setRequestKey(crypto.randomUUID()); }}>Schedule return visit</button>
         </>}
-        {current.state === 'awaiting_review' && <>{field('resolution_code','Resolution category',true)}{field('summary','Resolution summary',true)}{field('customer_message','Resolution explanation to customer',true)}
+        {currentState?.isAwaitingReview() && <>{field('resolution_code','Resolution category',true)}{field('summary','Resolution summary',true)}{field('customer_message','Resolution explanation to customer',true)}
           <button className={button} disabled={busy || !fields.summary || !fields.resolution_code || !fields.customer_message} onClick={() => void command('resolution',fields)}>Resolve case</button></>}
-        {current.state === 'resolved' && <>{field('reason','Reason to reopen',true)}<button className={button} disabled={busy || !fields.reason} onClick={() => void command('reopen',fields)}>Reopen case</button></>}
-        {!closed.includes(current.state) && <>{field('cancel_reason','Cancellation reason')}<button className={button} disabled={busy || !fields.cancel_reason} onClick={() => void command('cancel',{ reason:fields.cancel_reason })}>Cancel request</button></>}
+        {currentState?.isResolved() && <>{field('reason','Reason to reopen',true)}<button className={button} disabled={busy || !fields.reason} onClick={() => void command('reopen',fields)}>Reopen case</button></>}
+        {currentState?.isOpen() && <>{field('cancel_reason','Cancellation reason')}<button className={button} disabled={busy || !fields.cancel_reason} onClick={() => void command('cancel',{ reason:fields.cancel_reason })}>Cancel request</button></>}
       </div>}
-      {mode === 'customer' && current.state === 'awaiting_customer' && <>{field('message','Your reply',true)}<button className={button} disabled={busy || !fields.message} onClick={() => void command('reply',{ message:fields.message })}>Send reply</button></>}
-      {mode === 'customer' && current.state === 'approved' && current.quote?.status === 'sent' && <button className={button} disabled={busy} onClick={() => void command('accept-quote')}>Accept return-service quote (${Number(current.quote.total_amount).toFixed(2)})</button>}
-      {mode === 'technician' && ['scheduled','in_service'].includes(current.state) && <form className="space-y-3" onSubmit={async e => {
+      {mode === 'customer' && currentState?.isAwaitingCustomer() && <>{field('message','Your reply',true)}<button className={button} disabled={busy || !fields.message} onClick={() => void command('reply',{ message:fields.message })}>Send reply</button></>}
+      {mode === 'customer' && currentState?.isApproved() && current.quote?.status === 'sent' && <button className={button} disabled={busy} onClick={() => void command('accept-quote')}>Accept return-service quote (${Number(current.quote.total_amount).toFixed(2)})</button>}
+      {mode === 'technician' && currentState?.canReceiveOutcome() && <form className="space-y-3" onSubmit={async e => {
         e.preventDefault();
         const visit = current.visits.find(v => v.job_id === jobId);
         if (!visit) return;
