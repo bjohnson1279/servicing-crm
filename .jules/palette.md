@@ -147,3 +147,6 @@
 ## 2026-11-04 - Wrap destructive actions in window.confirm
 **Learning:** Destructive local state modifications (e.g. instantly removing a photo or clearing a signature canvas) cause accidental data loss and frustration.
 **Action:** Always wrap these destructive local actions in native `window.confirm` dialogs.
+## 2023-11-06 - Explicit Form Labeling using htmlFor
+**Learning:** In the `CatalogWorkspace.tsx`, `DeviceWorkspace.tsx`, and `InspectionWorkspace.tsx` components, form elements such as inputs were being wrapped implicitly inside `<label>` tags (e.g., `<label>Text <input/></label>`). While valid HTML, this implicit wrapping provides poor compatibility with some older screen readers and assistive technologies, and it violates the codebase is UX standards that dictate `<label htmlFor="...">` and `<input id="...">` pairings.
+**Action:** Always ensure that form labels are explicitly linked to their corresponding inputs using the `htmlFor` attribute on the `<label>` and the `id` attribute on the `<input>` or `<select>`. For statically rendered forms, use a `<div>` to structurally wrap the `<label>` and `<input>`, rather than nesting the input implicitly inside the label.
