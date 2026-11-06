@@ -17,17 +17,23 @@ describe('ChemicalQuantity Value Object', () => {
     expect(ChemicalQuantity.isValidUnit('granules')).toBe(true);
     expect(ChemicalQuantity.isValidUnit('liters')).toBe(false);
     expect(ChemicalQuantity.isValidUnit('')).toBe(false);
+    expect(ChemicalQuantity.isValidUnit('OZ')).toBe(false);
   });
 
   test('throws error for non-positive or non-numeric amount', () => {
     expect(() => new ChemicalQuantity(0, 'oz')).toThrow(/Amount must be a positive number/);
     expect(() => new ChemicalQuantity(-5, 'fl oz')).toThrow(/Amount must be a positive number/);
     expect(() => new ChemicalQuantity(NaN, 'gallons')).toThrow(/Amount must be a positive number/);
+    expect(() => new ChemicalQuantity('10' as unknown as number, 'oz')).toThrow(/Amount must be a positive number/);
+    expect(() => new ChemicalQuantity(null as unknown as number, 'oz')).toThrow(/Amount must be a positive number/);
+    expect(() => new ChemicalQuantity(undefined as unknown as number, 'oz')).toThrow(/Amount must be a positive number/);
   });
 
   test('throws error for invalid chemical quantity unit', () => {
     expect(() => new ChemicalQuantity(1, 'liters')).toThrow(/Invalid chemical quantity unit/);
     expect(() => new ChemicalQuantity(1, '')).toThrow(/Invalid chemical quantity unit/);
+    expect(() => new ChemicalQuantity(1, null as unknown as string)).toThrow(/Invalid chemical quantity unit/);
+    expect(() => new ChemicalQuantity(1, undefined as unknown as string)).toThrow(/Invalid chemical quantity unit/);
   });
 
   test('checks equality between ChemicalQuantity instances', () => {
