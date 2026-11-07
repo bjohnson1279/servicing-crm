@@ -142,8 +142,8 @@ describe('CatalogWorkspace Component', () => {
     const nextBtn = screen.getByRole('button', { name: 'Next' });
     const prevBtn = screen.getByRole('button', { name: 'Previous' });
 
-    expect(prevBtn).toBeDisabled();
-    expect(nextBtn).toBeEnabled();
+    expect(prevBtn).toHaveAttribute('aria-disabled', 'true');
+    expect(nextBtn).toHaveAttribute('aria-disabled', 'false');
 
     // Click next page
     fireEvent.click(nextBtn);
@@ -192,7 +192,7 @@ describe('CatalogWorkspace Component', () => {
     ).toBeInTheDocument();
 
     const createBtn = screen.getByRole('button', { name: 'Create product draft' });
-    expect(createBtn).toBeDisabled();
+    expect(createBtn).toHaveAttribute('aria-disabled', 'true');
 
     // Fill code and trade name
     fireEvent.change(screen.getByLabelText('Permanent product code'), { target: { value: 'CHEM-002' } });
@@ -200,12 +200,12 @@ describe('CatalogWorkspace Component', () => {
     fireEvent.change(screen.getByLabelText('Manufacturer'), { target: { value: 'ChemCorp' } });
 
     // Still disabled without action reason
-    expect(createBtn).toBeDisabled();
+    expect(createBtn).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.change(screen.getByLabelText('Action reason'), {
       target: { value: 'Adding new registered termiticide' },
     });
-    expect(createBtn).toBeEnabled();
+    expect(createBtn).toHaveAttribute('aria-disabled', 'false');
 
     fireEvent.click(createBtn);
 
@@ -268,12 +268,12 @@ describe('CatalogWorkspace Component', () => {
     const saveBtn = screen.getByRole('button', { name: 'Save draft' });
 
     // Reason required
-    expect(submitBtn).toBeDisabled();
-    expect(saveBtn).toBeDisabled();
+    expect(submitBtn).toHaveAttribute('aria-disabled', 'true');
+    expect(saveBtn).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.change(screen.getByLabelText('Action reason'), { target: { value: 'Updated jurisdiction' } });
-    expect(submitBtn).toBeEnabled();
-    expect(saveBtn).toBeEnabled();
+    expect(submitBtn).toHaveAttribute('aria-disabled', 'false');
+    expect(saveBtn).toHaveAttribute('aria-disabled', 'false');
 
     // Edit field to make dirty
     fireEvent.change(screen.getByLabelText('Jurisdiction'), {
@@ -283,7 +283,7 @@ describe('CatalogWorkspace Component', () => {
     expect(
       screen.getByText('Save changed product details before adding evidence or submitting.')
     ).toBeInTheDocument();
-    expect(submitBtn).toBeDisabled();
+    expect(submitBtn).toHaveAttribute('aria-disabled', 'true');
 
     // Save draft
     fireEvent.click(saveBtn);
@@ -306,7 +306,7 @@ describe('CatalogWorkspace Component', () => {
     // After save, reason was cleared by choose(); re-enter reason to enable submit
     expect(await screen.findByText('Product details are saved.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('Action reason'), { target: { value: 'Submitting updated draft' } });
-    expect(submitBtn).toBeEnabled();
+    expect(submitBtn).toHaveAttribute('aria-disabled', 'false');
 
     fireEvent.click(submitBtn);
 
@@ -377,7 +377,7 @@ describe('CatalogWorkspace Component', () => {
     fireEvent.change(screen.getByLabelText(/PDF copy/i), { target: { files: [invalidFile] } });
 
     const addDocBtn = screen.getByRole('button', { name: 'Add document' });
-    expect(addDocBtn).toBeEnabled();
+    expect(addDocBtn).toHaveAttribute('aria-disabled', 'false');
     fireEvent.click(addDocBtn);
 
     expect(await screen.findByText('Choose a PDF up to 2 MB.')).toBeInTheDocument();
@@ -417,12 +417,12 @@ describe('CatalogWorkspace Component', () => {
 
     // Remove document: re-enter action reason as addDocument reset reason
     const removeBtn = screen.getByRole('button', { name: 'Remove Specimen Label 2026' });
-    expect(removeBtn).toBeDisabled();
+    expect(removeBtn).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.change(screen.getByLabelText('Action reason'), {
       target: { value: 'Removing obsolete label' },
     });
-    expect(removeBtn).toBeEnabled();
+    expect(removeBtn).toHaveAttribute('aria-disabled', 'false');
 
     fireEvent.click(removeBtn);
 
@@ -497,16 +497,16 @@ describe('CatalogWorkspace Component', () => {
     const rejectBtn = screen.getByRole('button', { name: 'Reject source review' });
 
     // Buttons require action reason
-    expect(activateBtn).toBeDisabled();
-    expect(rejectBtn).toBeDisabled();
+    expect(activateBtn).toHaveAttribute('aria-disabled', 'true');
+    expect(rejectBtn).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.change(screen.getByLabelText('Action reason'), {
       target: { value: 'Verified against EPA registry and SDS database' },
     });
 
     // Checkboxes must all be checked and reviewDue must be filled
-    expect(activateBtn).toBeDisabled();
-    expect(rejectBtn).toBeEnabled();
+    expect(activateBtn).toHaveAttribute('aria-disabled', 'true');
+    expect(rejectBtn).toHaveAttribute('aria-disabled', 'false');
 
     // Check all 4 verification checkboxes
     fireEvent.click(screen.getByLabelText('Trade name and manufacturer match the sources'));
@@ -519,7 +519,7 @@ describe('CatalogWorkspace Component', () => {
       target: { value: '2027-02-01T12:00' },
     });
 
-    expect(activateBtn).toBeEnabled();
+    expect(activateBtn).toHaveAttribute('aria-disabled', 'false');
     fireEvent.click(activateBtn);
 
     await waitFor(() => {
@@ -540,12 +540,12 @@ describe('CatalogWorkspace Component', () => {
 
     // Now product is active; reason was reset by choose(); re-enter reason to enable withdraw
     const withdrawBtn = await screen.findByRole('button', { name: 'Withdraw active version' });
-    expect(withdrawBtn).toBeDisabled();
+    expect(withdrawBtn).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.change(screen.getByLabelText('Action reason'), {
       target: { value: 'Withdrawing obsolete registration' },
     });
-    expect(withdrawBtn).toBeEnabled();
+    expect(withdrawBtn).toHaveAttribute('aria-disabled', 'false');
 
     fireEvent.click(withdrawBtn);
 
@@ -559,12 +559,12 @@ describe('CatalogWorkspace Component', () => {
     // For non-draft / non-in_review version, successor draft can be created
     // Re-enter action reason since withdraw reset it
     const nextVersionBtn = await screen.findByRole('button', { name: 'Create successor draft' });
-    expect(nextVersionBtn).toBeDisabled();
+    expect(nextVersionBtn).toHaveAttribute('aria-disabled', 'true');
 
     fireEvent.change(screen.getByLabelText('Action reason'), {
       target: { value: 'Creating replacement version' },
     });
-    expect(nextVersionBtn).toBeEnabled();
+    expect(nextVersionBtn).toHaveAttribute('aria-disabled', 'false');
 
     fireEvent.click(nextVersionBtn);
 
