@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { MapContainer, TileLayer, Polyline, Marker, Popup } from 'react-leaflet';
 import { Link } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
@@ -33,20 +33,18 @@ const mockRoute: GeoLocation[] = [
 const routePositions = mockRoute.map(loc => loc.toTuple());
 const mapCenter = new GeoLocation(40.7200, -73.9950).toTuple();
 
-export const DailyRoute: React.FC = () => {
-  // Memoize marker rendering to prevent unnecessary recalculation of Map elements during component re-renders
-  const markers = useMemo(() => {
-    return mockJobs.map(job => (
-      React.createElement(Marker as any, { key: job.id, position: job.location.toTuple() },
-        React.createElement(Popup as any, null,
-          job.title,
-          React.createElement('br'),
-          React.createElement(Link, { to: `/job/${job.id}` }, 'View Details')
-        )
-      )
-    ));
-  }, []);
+// ⚡ Bolt Optimization: Move static markers outside component scope to preserve referential equality without useMemo overhead.
+const staticMarkers = mockJobs.map(job => (
+  React.createElement(Marker as any, { key: job.id, position: job.location.toTuple() },
+    React.createElement(Popup as any, null,
+      job.title,
+      React.createElement('br'),
+      React.createElement(Link, { to: `/job/${job.id}` }, 'View Details')
+    )
+  )
+));
 
+export const DailyRoute: React.FC = () => {
   return (
     <div>
       <h2>Daily Route</h2>
@@ -57,7 +55,7 @@ export const DailyRoute: React.FC = () => {
             attribution: "&copy; OpenStreetMap contributors"
           }),
           React.createElement(Polyline as any, { positions: routePositions, color: "blue" }),
-          markers
+          staticMarkers
         )}
       </div>
     </div>
