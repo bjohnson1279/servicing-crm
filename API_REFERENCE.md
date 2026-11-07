@@ -199,6 +199,219 @@ The platform operates across four interchangeable backends designed with identic
 - **Description**: Uploads a property photo from the Technician PWA (`multipart/form-data`).
 - **Fields**: `photo` (file), `caption` (text), `tag` (`EXTERIOR`, `ATTIC`, `CRAWL_SPACE`, `DAMAGE`).
 
+### `GET /api/v1/commercial/settings`
+- **Description**: Retrieves current tenant commercial account directory configuration and caller role.
+- **Headers**: `Authorization: Bearer <token>` (Required).
+- **Access**: Staff roles (`SUPER_ADMIN`, `MANAGER`, `DISPATCHER`, `CUSTOMER_SERVICE_REP`).
+- **Response** (`200 OK`):
+  ```json
+  {
+    "enabled": true,
+    "role": "MANAGER"
+  }
+  ```
+
+### `POST /api/v1/commercial/settings`
+- **Description**: Enables or disables the commercial account directory for the tenant.
+- **Headers**: `Authorization: Bearer <token>` (Required).
+- **Access**: `MANAGER` or `SUPER_ADMIN`.
+- **Payload**:
+  ```json
+  {
+    "enabled": true
+  }
+  ```
+- **Parameters**: `enabled` (boolean, Required).
+- **Response** (`200 OK`): Updated settings object.
+
+### `GET /api/v1/commercial`
+- **Description**: Lists commercial accounts with pagination and filtering.
+- **Headers**: `Authorization: Bearer <token>` (Required).
+- **Query Params**:
+  * `state` (string, Optional: `active`, `archived`)
+  * `q` (string, Optional: text search by account name or code)
+  * `limit` (integer, Optional, default: 25, range: 1–100)
+  * `offset` (integer, Optional, default: 0)
+- **Response** (`200 OK`):
+  ```json
+  {
+    "items": [
+      {
+        "id": "uuid",
+        "code": "ACME",
+        "name": "Acme Stores",
+        "owner_id": "uuid",
+        "owner_name": "manager@example.com",
+        "state": "active",
+        "version": 1,
+        "active_site_count": 2,
+        "ownership_review_count": 0,
+        "contact_review_count": 0,
+        "created_at": "2026-10-01T12:00:00Z",
+        "updated_at": "2026-10-01T12:00:00Z"
+      }
+    ],
+    "has_more": false
+  }
+  ```
+
+### `POST /api/v1/commercial`
+- **Description**: Creates a new tenant commercial account with a permanent code and name.
+- **Headers**: `Authorization: Bearer <token>` (Required).
+- **Access**: `MANAGER` or `SUPER_ADMIN`.
+- **Payload**:
+  ```json
+  {
+    "code": "ACME",
+    "name": "Acme Stores",
+    "owner_id": "uuid (optional)",
+    "reason": "Commercial multi-site coordination",
+    "request_key": "uuid"
+  }
+  ```
+- **Parameters**:
+  * `code` (string, Required: 1–80 chars alphanumeric, normalized to uppercase)
+  * `name` (string, Required: 1–160 chars)
+  * `owner_id` (uuid, Optional: staff owner, defaults to caller)
+  * `reason` (string, Required: 1–2000 chars action audit reason)
+  * `request_key` (uuid, Required: idempotency key)
+- **Response** (`200 OK`): Created commercial account object.
+
+### `GET /api/v1/commercial/options`
+- **Description**: Search helper returning eligible linkable properties, staff owner candidates, or customer contact sources.
+- **Headers**: `Authorization: Bearer <token>` (Required).
+- **Query Params**:
+  * `kind` (string, Optional: `owners`, `contacts`, or omit for unlinked properties)
+  * `customer_id` (uuid, Required when `kind=contacts`)
+  * `q` (string, Optional: filter by name, address, or email)
+  * `limit` (integer, Optional, default: 25, range: 1–100)
+  * `offset` (integer, Optional, default: 0)
+- **Response** (`200 OK`): Paginated choices with dependency previews.
+
+### `GET /api/v1/commercial/:id`
+- **Description**: Retrieves single commercial account details, active site counts, and review alerts.
+- **Path Params**: `id` (uuid, Required).
+- **Response** (`200 OK`): Commercial account detail object.
+
+### `POST /api/v1/commercial/:id`
+- **Description**: Updates commercial account name or reassigns staff owner. Code is permanent.
+- **Path Params**: `id` (uuid, Required).
+- **Access**: `MANAGER` or `SUPER_ADMIN`.
+- **Payload**:
+  ```json
+  {
+    "version": 1,
+    "name": "Acme Retail Group",
+    "owner_id": "uuid (optional)",
+    "reason": "Corporate re-branding",
+    "request_key": "uuid"
+  }
+  ```
+- **Parameters**: `version` (integer, Required), `name` (string, Optional), `owner_id` (uuid, Optional), `reason` (string, Required), `request_key` (uuid, Required).
+- **Response** (`200 OK`): Updated commercial account object.
+
+### `POST /api/v1/commercial/:id/archive`
+- **Description**: Archives a commercial account. Requires acknowledgment that service and billing obligations remain unchanged.
+- **Path Params**: `id` (uuid, Required).
+- **Payload**: `{"version": 1, "acknowledge_dependencies": true, "reason": "...", "request_key": "uuid"}`.
+- **Response** (`200 OK`): Archived commercial account object (`state: "archived"`).
+
+### `POST /api/v1/commercial/:id/reopen`
+- **Description**: Reopens an archived commercial account.
+- **Path Params**: `id` (uuid, Required).
+- **Payload**: `{"version": 1, "reason": "...", "request_key": "uuid"}`.
+- **Response** (`200 OK`): Active commercial account object (`state: "active"`).
+
+### `GET /api/v1/commercial/:id/sites`
+- **Description**: Paginated roster of sites linked to the commercial account.
+- **Path Params**: `id` (uuid, Required).
+- **Query Params**: `state` (optional: `active`, `archived`), `limit` (1–100), `offset`.
+- **Response** (`200 OK`): `{ "items": [...], "has_more": false }`.
+
+### `POST /api/v1/commercial/:id/sites`
+- **Description**: Links an eligible property as a commercial site under the account.
+- **Path Params**: `id` (uuid, Required: account ID).
+- **Payload**:
+  ```json
+  {
+    "version": 1,
+    "property_id": "uuid",
+    "code": "NORTH",
+    "name": "North Branch",
+    "timezone": "America/Denver",
+    "acknowledge_dependencies": true,
+    "reason": "Link existing service property to corporate account",
+    "request_key": "uuid"
+  }
+  ```
+- **Parameters**: `version` (account version, Required), `property_id` (uuid, Required), `code` (string, Required: 1–80 chars), `name` (string, Required: 1–160 chars), `timezone` (string, Required: valid IANA timezone), `acknowledge_dependencies` (boolean, Required if active jobs/contracts/devices/callbacks exist), `reason` (string, Required), `request_key` (uuid, Required).
+- **Response** (`200 OK`): Linked site object with eager-loaded dependency counts.
+
+### `GET /api/v1/commercial/:id/sites/:siteId`
+- **Description**: Retrieves single site details, customer snapshot, and timezone.
+- **Path Params**: `id` (uuid, Required: account ID), `siteId` (uuid, Required: site ID).
+- **Response** (`200 OK`): Commercial site detail view.
+
+### `POST /api/v1/commercial/:id/sites/:siteId`
+- **Description**: Updates site name or directory timezone using optimistic site version.
+- **Path Params**: `id` (uuid, Required), `siteId` (uuid, Required).
+- **Payload**: `{"version": 1, "name": "...", "timezone": "America/Denver", "reason": "...", "request_key": "uuid"}`.
+- **Response** (`200 OK`): Updated site object.
+
+### `POST /api/v1/commercial/:id/sites/:siteId/archive`
+- **Description**: Archives site membership, making property eligible for other accounts while retaining history.
+- **Path Params**: `id` (uuid, Required), `siteId` (uuid, Required).
+- **Payload**: `{"version": 1, "acknowledge_dependencies": true, "reason": "...", "request_key": "uuid"}`.
+- **Response** (`200 OK`): Archived site object.
+
+### `POST /api/v1/commercial/:id/sites/:siteId/reopen`
+- **Description**: Reopens archived site membership (fails if property is currently active in another account).
+- **Path Params**: `id` (uuid, Required), `siteId` (uuid, Required).
+- **Payload**: `{"version": 1, "reason": "...", "request_key": "uuid"}`.
+- **Response** (`200 OK`): Reopened site object.
+
+### `GET /api/v1/commercial/:id/contacts`
+- **Description**: Retrieves scoped commercial contacts for the account or a specific site.
+- **Path Params**: `id` (uuid, Required: account ID).
+- **Query Params**: `site_id` (uuid, Optional), `state` (Optional: `active`, `archived`), `review` (boolean, Optional: `true` lists redacted contacts needing source review), `limit`, `offset`.
+- **Response** (`200 OK`): `{ "items": [...], "has_more": false }`.
+
+### `POST /api/v1/commercial/:id/contacts`
+- **Description**: Creates or updates an account- or site-scoped commercial contact.
+- **Path Params**: `id` (uuid, Required: account ID).
+- **Payload**:
+  ```json
+  {
+    "contact_id": "uuid (optional for update)",
+    "version": 1,
+    "site_id": "uuid (optional for site-scoped contact)",
+    "responsibility": "corporate",
+    "name": "Jane Doe",
+    "email": "jane@example.com",
+    "phone": "555-0100",
+    "is_primary": true,
+    "customer_id": "uuid (optional source link)",
+    "source_email_id": "uuid (optional source link)",
+    "source_phone_id": "uuid (optional source link)",
+    "reason": "Assign primary corporate coordinator",
+    "request_key": "uuid"
+  }
+  ```
+- **Parameters**: `responsibility` (`corporate`, `on_site`, `billing`, `emergency`), `name` (string), `email` / `phone` (string), `is_primary` (boolean), `reason` (string), `request_key` (uuid).
+- **Response** (`200 OK`): Contact object.
+
+### `POST /api/v1/commercial/:id/contacts/:contactId/archive`
+- **Description**: Archives an existing commercial contact.
+- **Path Params**: `id` (uuid, Required), `contactId` (uuid, Required).
+- **Payload**: `{"version": 1, "reason": "...", "request_key": "uuid"}`.
+- **Response** (`200 OK`): Archived contact object.
+
+### `GET /api/v1/commercial/:id/events`
+- **Description**: Paginated immutable audit event stream for commercial account, site, and contact modifications.
+- **Path Params**: `id` (uuid, Required).
+- **Query Params**: `limit` (1–100), `offset`.
+- **Response** (`200 OK`): `{ "items": [...], "has_more": false }`.
+
 ---
 
 ## 4. Communications & Real-Time Domain
