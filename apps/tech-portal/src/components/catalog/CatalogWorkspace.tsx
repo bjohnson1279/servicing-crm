@@ -2,6 +2,7 @@ import { LazyDetails } from '../LazyDetails';
 import {useEffect,useState} from 'react';
 import {catalogApi,catalogToken,CatalogError} from './catalogApi';
 import type {CatalogData,CatalogProduct,CatalogDocument} from './catalogApi';
+import {CatalogVersionStatus} from '../../domain/CatalogVersionStatus';
 const empty=():CatalogData=>({trade_name:'',manufacturer:'',category:'pesticide',jurisdiction:'',identifier_status:'unknown',identifier_type:'',identifier_value:'',identifier_reason:'',label_required:true,sds_required:true,document_exception:'',inventory_item_id:null});
 const noChecks=()=>({identity_matches:false,identifier_matches:false,jurisdiction_matches:false,documents_current:false});
 const localNow=()=>new Date(Date.now()-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
@@ -14,7 +15,8 @@ export default function CatalogWorkspace({mode,jobId}:{mode:'staff'|'technician'
  const [docType,setDocType]=useState('label'),[docName,setDocName]=useState(''),[sourceKind,setSourceKind]=useState('manufacturer'),[authority,setAuthority]=useState(''),[sourceUrl,setSourceUrl]=useState(''),[sourceDate,setSourceDate]=useState(''),[dateReason,setDateReason]=useState(''),[retrieved,setRetrieved]=useState(localNow),[file,setFile]=useState<File>();
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[pending,setPending]=useState<{path:string;body:Record<string,unknown>}>();
  const current=product?.versions.find(v=>v.revision===revision),manager=['MANAGER','SUPER_ADMIN'].includes(role),blocked=busy||!!pending;
- const editable=mode==='staff'&&(!product||current?.status==='draft');
+ const currentStatus=current&&CatalogVersionStatus.isValid(current.status)?new CatalogVersionStatus(current.status):undefined;
+ const editable=mode==='staff'&&(!product||currentStatus?.isDraft());
  useEffect(()=>{const timer=setInterval(()=>setToken(catalogToken()),2000);return()=>clearInterval(timer);},[]);
  useEffect(()=>{setCode('');setData(empty());setReason('');setProduct(undefined);setDirty(false);setDocName('');setAuthority('');setSourceUrl('');setSourceDate('');setDateReason('');setFile(undefined);setChecks(noChecks());setReviewDue('');setOffset(0);setFilter('');},[token]);
  function fail(e:unknown){setNotice(e instanceof Error?e.message:'Catalog request failed');if(e instanceof CatalogError&&[401,403,404].includes(e.status)){setProduct(undefined);setItems([]);setData(empty());setDirty(false);}}
@@ -56,12 +58,12 @@ export default function CatalogWorkspace({mode,jobId}:{mode:'staff'|'technician'
   {!token&&<p>Sign in through your organization to view product references.</p>}
   {token&&!enabled&&!busy&&<div><p>The product catalog is not enabled for your organization.</p>{manager&&<button onClick={async()=>{setBusy(true);try{await catalogApi('/settings',{enabled:true});await load();}catch(e){fail(e);}finally{setBusy(false);}}}>Enable product catalog</button>}</div>}
   {enabled&&<>
-   {mode==='staff'&&<div><label htmlFor="version-status-4643">Version status</label> <select id="version-status-4643" disabled={blocked||dirty} value={filter} onChange={e=>{setOffset(0);setFilter(e.target.value);}}><option value="">All versions</option>{['draft','in_review','active','rejected','superseded','withdrawn'].map(s=><option key={s}>{s}</option>)}</select></div>}
+   {mode==='staff'&&<div><label htmlFor="version-status-4643">Version status</label> <select id="version-status-4643" disabled={blocked||dirty} value={filter} onChange={e=>{setOffset(0);setFilter(e.target.value);}}><option value="">All versions</option>{CatalogVersionStatus.VALID_STATUSES.map(s=><option key={s}>{s}</option>)}</select></div>}
    <button disabled={busy||dirty} onClick={async()=>{setBusy(true);try{await load();if(product)await open(product.id);}catch(e){fail(e);}finally{setBusy(false);}}}>Refresh</button>
    {items.length===0?<p>{mode==='staff'?'No products match this view. Create a draft with source-backed product details.':'No active, review-current product references are available for this assigned job.'}</p>:<ul>{items.map(p=><li key={p.id}><button disabled={blocked||dirty} onClick={()=>open(p.id)}>{p.code} — {p.versions[p.versions.length-1]?.data.trade_name}</button></li>)}</ul>}
    <button disabled={blocked||dirty||offset===0} onClick={()=>setOffset(o=>Math.max(0,o-25))}>Previous</button> <button disabled={blocked||dirty||!more} onClick={()=>setOffset(o=>o+25)}>Next</button>
    {product&&<div><h3 className="font-semibold">{product.code}</h3><div><label htmlFor="product-version-9081">Product version</label> <select id="product-version-9081" disabled={blocked||dirty} value={revision} onChange={e=>choose(product,Number(e.target.value))}>{product.versions.map(v=><option key={v.revision} value={v.revision}>{v.revision} · {v.status.replace(/_/g,' ')}</option>)}</select></div>
-    {current&&<p>Status: {current.status.replace(/_/g,' ')}{current.verified_at?' · reviewed '+new Date(current.verified_at).toLocaleString():''}{current.review_due_at?' · review due '+new Date(current.review_due_at).toLocaleString():''}</p>}
+    {current&&<p>Status: {currentStatus?.getLabel()||current.status.replace(/_/g,' ')}{current.verified_at?' · reviewed '+new Date(current.verified_at).toLocaleString():''}{current.review_due_at?' · review due '+new Date(current.review_due_at).toLocaleString():''}</p>}
     {mode==='staff'&&<button disabled={blocked||dirty} onClick={()=>{setProduct(undefined);setData(empty());setCode('');setReason('');setDirty(false);}}>New product draft</button>}
    </div>}
    {(mode==='staff'||product)&&<fieldset disabled={blocked||!editable} className="border rounded p-4 space-y-3"><legend>{editable?'Product details':'Product reference'}</legend>
@@ -94,14 +96,14 @@ export default function CatalogWorkspace({mode,jobId}:{mode:'staff'|'technician'
      <div><label htmlFor="source-retrieved">Source retrieved at</label> <input id="source-retrieved" type="datetime-local" value={retrieved} onChange={e=>setRetrieved(e.target.value)} /></div>
      <button disabled={!reason.trim()||!docName.trim()||!authority.trim()||(!sourceUrl.trim()&&!file)||(!sourceDate&&!dateReason.trim())||!retrieved} onClick={addDocument}>Add document</button>
     </fieldset>}
-    {mode==='staff'&&manager&&current.status==='in_review'&&<fieldset disabled={blocked}><legend>Manager source verification</legend>
+    {mode==='staff'&&manager&&currentStatus?.isInReview()&&<fieldset disabled={blocked}><legend>Manager source verification</legend>
      {Object.entries({identity_matches:'Trade name and manufacturer match the sources',identifier_matches:'Identifier or not-applicable status matches the sources',jurisdiction_matches:'Jurisdiction matches the evidence reviewed',documents_current:'Required source documents are current and reviewed'}).map(([k,label])=><div key={k}><input id={`verification-check-${k}`} type="checkbox" checked={checks[k as keyof typeof checks]} onChange={e=>setChecks(c=>({...c,[k]:e.target.checked}))}/> <label htmlFor={`verification-check-${k}`}>{label}</label></div>)}
      <div><label htmlFor="review-due">Next source review due</label> <input id="review-due" type="datetime-local" value={reviewDue} onChange={e=>setReviewDue(e.target.value)} /></div>
      <button disabled={!reason.trim()||!Object.values(checks).every(Boolean)||!reviewDue} onClick={()=>{try{void change('activate',{checks,review_due_at:new Date(reviewDue).toISOString()});}catch(e){fail(e);}}}>Activate reviewed version</button>
      <button disabled={!reason.trim()} onClick={()=>change('reject')}>Reject source review</button>
     </fieldset>}
-    {mode==='staff'&&current.status==='active'&&manager&&<button disabled={blocked||!reason.trim()} onClick={()=>change('withdraw')}>Withdraw active version</button>}
-    {mode==='staff'&&!['draft','in_review'].includes(current.status)&&<button disabled={blocked||!reason.trim()} onClick={()=>change('next_version')}>Create successor draft</button>}
+    {mode==='staff'&&currentStatus?.isActive()&&manager&&<button disabled={blocked||!reason.trim()} onClick={()=>change('withdraw')}>Withdraw active version</button>}
+    {mode==='staff'&&currentStatus?.canCreateSuccessorDraft()&&<button disabled={blocked||!reason.trim()} onClick={()=>change('next_version')}>Create successor draft</button>}
     {mode==='staff'&&<LazyDetails summary="Catalog review history"><ul>{product.events.map(e=><li key={e.id}>{e.action} · {e.reason} · {new Date(e.created_at).toLocaleString()}</li>)}</ul></LazyDetails>}
    </>}
   </>}
