@@ -51,7 +51,10 @@ export const ChemicalLog: React.FC = () => {
   useEffect(() => {
     const fetchInventory = async () => {
       try {
-        const res = await fetch('/api/v1/inventory/items');
+        const token = sessionStorage.getItem('crm_access_token');
+        const res = await fetch('/api/v1/inventory/items', {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
+        });
         if (res.ok) {
           const data = await res.json();
           setInventoryItems(data);
@@ -231,9 +234,13 @@ export const ChemicalLog: React.FC = () => {
     setResultMessage(null);
 
     try {
+      const token = sessionStorage.getItem('crm_access_token');
       const res = await fetch('/api/v1/inventory/chemical-logs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify(payload),
       });
 

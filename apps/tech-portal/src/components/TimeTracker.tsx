@@ -15,8 +15,10 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
     setActionLoading('in');
     setError(null);
     try {
+      const token = sessionStorage.getItem('crm_access_token');
       const res = await fetch(`/api/jobs/${jobId}/clock-in`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
       });
       if (!res.ok) throw new Error('Failed to clock in');
       onStatusChange?.(JobStatus.ON_SITE);
@@ -31,8 +33,10 @@ export const TimeTracker: React.FC<TimeTrackerProps> = ({ jobId, onStatusChange 
     setActionLoading('out');
     setError(null);
     try {
+      const token = sessionStorage.getItem('crm_access_token');
       const res = await fetch(`/api/jobs/${jobId}/clock-out`, {
         method: 'POST',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : undefined,
       });
       if (!res.ok) throw new Error('Failed to clock out');
       onStatusChange?.(JobStatus.COMPLETED);
