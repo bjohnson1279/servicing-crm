@@ -1,7 +1,8 @@
 import type { DeviceLifecycleValue } from '../../domain/DeviceLifecycle';
+import type { DeviceTypeValue } from '../../domain/DeviceType';
 
 export interface PropertyDevice {
- id:string;property_id:string;property_address:string;label:string;device_type:string;lifecycle:DeviceLifecycleValue;version:number;location_version:number;
+ id:string;property_id:string;property_address:string;label:string;device_type:DeviceTypeValue;lifecycle:DeviceLifecycleValue;version:number;location_version:number;
  manufacturer_serial?:string;historical_installation:boolean;installed_at?:string;replaces_device_id?:string;replacement_device_id?:string;
  locations:{version:number;zone:string;description:string;latitude?:number;longitude?:number;accuracy_meters?:number;reason:string;effective_at:string}[];
  events:{id:string;action:string;reason:string;created_at:string}[];

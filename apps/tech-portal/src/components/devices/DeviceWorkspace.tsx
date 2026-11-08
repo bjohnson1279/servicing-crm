@@ -3,13 +3,14 @@ import {useEffect,useState} from 'react';
 import {deviceApi,deviceToken,DeviceError} from './deviceApi';
 import type {PropertyDevice} from './deviceApi';
 import {DeviceLifecycle} from '../../domain/DeviceLifecycle';
+import {DeviceType, type DeviceTypeValue} from '../../domain/DeviceType';
 interface Options{properties:{id:string;address:string;customer_name:string}[];equipment:{id:string;name:string;sku:string}[];jobs:{id:string;property_id:string;scheduled_start:string}[]}
 export default function DeviceWorkspace({mode,jobId}:{mode:'staff'|'technician';jobId?:string}){
  const [token,setToken]=useState(deviceToken()),[enabled,setEnabled]=useState(false),[role,setRole]=useState('');
  const [items,setItems]=useState<PropertyDevice[]>([]),[selected,setSelected]=useState<PropertyDevice>();
  const [options,setOptions]=useState<Options>({properties:[],equipment:[],jobs:[]});
  const [property,setProperty]=useState(''),[offset,setOffset]=useState(0),[more,setMore]=useState(false),[filter,setFilter]=useState('');
- const [label,setLabel]=useState(''),[kind,setKind]=useState('bait_station'),[serial,setSerial]=useState(''),[equipment,setEquipment]=useState('');
+ const [label,setLabel]=useState(''),[kind,setKind]=useState<DeviceTypeValue>('bait_station'),[serial,setSerial]=useState(''),[equipment,setEquipment]=useState('');
  const [zone,setZone]=useState(''),[description,setDescription]=useState(''),[reason,setReason]=useState('');
  const [lookup,setLookup]=useState(''),[installJob,setInstallJob]=useState(''),[historical,setHistorical]=useState(false);
  const [busy,setBusy]=useState(false),[notice,setNotice]=useState(''),[pending,setPending]=useState<{path:string;body:Record<string,unknown>}>();
@@ -44,7 +45,7 @@ export default function DeviceWorkspace({mode,jobId}:{mode:'staff'|'technician';
    <button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={blocked||offset===0} onClick={()=>setOffset(o=>Math.max(0,o-25))}>Previous</button> <button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={blocked||!more} onClick={()=>setOffset(o=>o+25)}>Next</button>
    {mode==='staff'&&!selected&&<fieldset disabled={blocked} className="border rounded p-4 space-y-3"><legend>Register planned device</legend>
     <div><label htmlFor="perm-label">Permanent label</label> <input id="perm-label" maxLength={80} value={label} onChange={e=>setLabel(e.target.value)} /></div>
-    <div><label htmlFor="device-type-1192">Device type</label> <select id="device-type-1192" value={kind} onChange={e=>setKind(e.target.value)}>{['bait_station','trap','monitor'].map(t=><option key={t}>{t}</option>)}</select></div>
+    <div><label htmlFor="device-type-1192">Device type</label> <select id="device-type-1192" value={kind} onChange={e=>setKind(e.target.value as DeviceTypeValue)}>{DeviceType.VALID_DEVICE_TYPES.map(t=><option key={t} value={t}>{new DeviceType(t).getLabel()}</option>)}</select></div>
     <div><label htmlFor="mfg-serial">Manufacturer serial (optional)</label> <input id="mfg-serial" maxLength={160} value={serial} onChange={e=>setSerial(e.target.value)} /></div>
     <div><label htmlFor="equipment-item-optional-3979">Equipment item (optional)</label> <select id="equipment-item-optional-3979" value={equipment} onChange={e=>setEquipment(e.target.value)}><option value="">None</option>{options.equipment.map(i=><option key={i.id} value={i.id}>{i.name} ({i.sku})</option>)}</select></div>
     <div><label htmlFor="loc-zone">Location zone</label> <input id="loc-zone" maxLength={120} value={zone} onChange={e=>setZone(e.target.value)} /></div>
@@ -54,8 +55,9 @@ export default function DeviceWorkspace({mode,jobId}:{mode:'staff'|'technician';
    </fieldset>}
    {selected&&(()=>{
     const lifecycleVO = new DeviceLifecycle(selected.lifecycle);
+    const deviceTypeVO = new DeviceType(selected.device_type);
     return (
-    <article className="border rounded p-4 space-y-3"><h3 className="font-semibold">{selected.label} · {selected.lifecycle}</h3><p>{selected.property_address} · {selected.device_type.replace(/_/g,' ')}</p><p>Device ID: {selected.id}</p>
+    <article className="border rounded p-4 space-y-3"><h3 className="font-semibold">{selected.label} · {selected.lifecycle}</h3><p>{selected.property_address} · {deviceTypeVO.getLabel()}</p><p>Device ID: {selected.id}</p>
     {lifecycleVO.isRetired()&&<p>Retired device — do not service. Its label continues to identify this original device.</p>}
     {selected.replacement_device_id&&<p>Replacement device: {selected.replacement_device_id}</p>}{selected.replaces_device_id&&<p>Replaces device: {selected.replaces_device_id}</p>}
     {mode==='staff'&&<button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" disabled={blocked} onClick={()=>{setSelected(undefined);setZone('');setDescription('');setReason('');}}>Register another device</button>}
