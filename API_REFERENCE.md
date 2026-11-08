@@ -94,6 +94,33 @@ The platform operates across four interchangeable backends designed with identic
 ### `PATCH /api/v1/inventory/items/:id/quantity`
 - **Description**: Logs chemical usage or restocks. Automatically triggers purchase order drafts when quantity drops below threshold.
 
+### `POST /api/v1/inventory/chemical-logs`
+- **Description**: Records a field technician chemical application log for a job. Automatically decrements linked inventory quantities and triggers low-stock reorder workflows when thresholds are crossed.
+- **Parameters**:
+  - `job_id` (body, required UUID): The job for which the chemical application took place.
+  - `technician_id` (body, required UUID): The technician who applied the chemical treatment.
+  - `chemical_name` (body, required string): Trade name or active formulation of the chemical applied.
+  - `quantity_used` (body, required number): Amount of chemical applied.
+  - `unit` (body, required string): Measurement unit for applied chemical (e.g. `oz`, `fl oz`, `gallons`, `lbs`).
+  - `application_method` (body, required string): Method of application (e.g. `Broadcast Spray`, `Perimeter Barrier`, `Crack & Crevice`, `Spot Treatment`, `Direct Injection`, `Bait Placement`).
+  - `target_pests` (body, required array of strings): Array of targeted pest categories (e.g. `["Ants", "Spiders"]`).
+  - `epa_registration_no` (body, optional string): EPA registration number of the applied chemical formulation.
+  - `inventory_item_id` (body, optional UUID): Linked warehouse inventory item ID to auto-deduct stock.
+  - `weather_conditions` (body, optional object): On-site ambient weather data containing `temperature` (string) and `windSpeed` (string).
+  - `notes` (body, optional string): Additional technician observations or treatment notes.
+  - `photo_url` (body, optional string): URL or data URI of evidence photo captured on site.
+- **Response**: `200 OK` or `201 Created`
+  ```json
+  {
+    "id": "uuid",
+    "job_id": "uuid",
+    "inventory_updated": true,
+    "low_stock_warning": false,
+    "message": "Chemical log recorded successfully!"
+  }
+  ```
+- **Workflow Usage**: Used by field technicians in the Technician PWA during or immediately upon completion of on-site service jobs. Supports offline queued synchronization via IndexedDB when field network connectivity is unavailable.
+
 ### `GET /api/v1/inventory/epa-report`
 - **Description**: Generates an Environmental Protection Agency (EPA) compliance report aggregating chemical application logs, total application events, and cumulative usage quantities per chemical across the tenant.
 - **Parameters**: None. Authenticated by tenant session or JWT.
