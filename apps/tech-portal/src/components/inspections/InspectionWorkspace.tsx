@@ -3,8 +3,10 @@ import { useEffect, useState } from 'react';
 import { inspectionApi, inspectionToken, InspectionError } from './inspectionApi';
 import type { Inspection, InspectionFindings, InspectionZone } from './inspectionApi';
 import { InspectionState } from '../../domain/InspectionState';
+import { InspectionEvidence } from '../../domain/InspectionEvidence';
+import { InspectionSeverity } from '../../domain/InspectionSeverity';
 const empty=():InspectionFindings=>({summary:'',zones:[]});
-const newZone=():InspectionZone=>({name:'',pests:[],evidence:'unknown',severity:'unknown',inaccessible:false,notes:''});
+const newZone=():InspectionZone=>({name:'',pests:[],evidence:InspectionEvidence.UNKNOWN.getValue(),severity:InspectionSeverity.UNKNOWN.getValue(),inaccessible:false,notes:''});
 export default function InspectionWorkspace({mode,jobId}:{mode:'staff'|'technician';jobId?:string}) {
  const [token,setToken]=useState(inspectionToken());
  const [settings,setSettings]=useState<{enabled:boolean;role:string}>();
@@ -76,8 +78,8 @@ export default function InspectionWorkspace({mode,jobId}:{mode:'staff'|'technici
      {findings.zones.map((z,index)=><fieldset key={index} className="border rounded p-3"><legend>Zone {index+1}</legend>
       <div><label htmlFor={`zone-name-${index}`}>Zone name</label> <input id={`zone-name-${index}`} value={z.name} maxLength={120} onChange={e=>edit(index,'name',e.target.value)} /></div>
       <div><label htmlFor={`zone-pests-${index}`}>Pests (comma separated)</label> <input id={`zone-pests-${index}`} value={z.pests.join(', ')} onChange={e=>edit(index,'pests',e.target.value.split(',').map(x=>x.trim()))} /></div>
-      <div><label htmlFor={`evidence-9644-${index}`}>Evidence</label> <select id={`evidence-9644-${index}`} value={z.evidence} onChange={e=>edit(index,'evidence',e.target.value)}>{['unknown','observed','reported','none'].map(x=><option key={x}>{x}</option>)}</select></div>
-      <div><label htmlFor={`severity-7645-${index}`}>Severity</label> <select id={`severity-7645-${index}`} value={z.severity} onChange={e=>edit(index,'severity',e.target.value)}>{['unknown','low','moderate','high'].map(x=><option key={x}>{x}</option>)}</select></div>
+      <div><label htmlFor={`evidence-9644-${index}`}>Evidence</label> <select id={`evidence-9644-${index}`} value={z.evidence} onChange={e=>edit(index,'evidence',e.target.value as any)}>{InspectionEvidence.VALID_EVIDENCES.map(x=><option key={x} value={x}>{x}</option>)}</select></div>
+      <div><label htmlFor={`severity-7645-${index}`}>Severity</label> <select id={`severity-7645-${index}`} value={z.severity} onChange={e=>edit(index,'severity',e.target.value as any)}>{InspectionSeverity.VALID_SEVERITIES.map(x=><option key={x} value={x}>{x}</option>)}</select></div>
       <div><input id={`zone-inaccessible-${index}`} type="checkbox" checked={z.inaccessible} onChange={e=>edit(index,'inaccessible',e.target.checked)} /> <label htmlFor={`zone-inaccessible-${index}`}>Inaccessible area</label></div>
       <div><label htmlFor={`zone-notes-${index}`}>Observations, conditions, concerns or access reason</label> <textarea id={`zone-notes-${index}`} value={z.notes} maxLength={4000} onChange={e=>edit(index,'notes',e.target.value)} /></div>
       <button className="px-3 py-1.5 border rounded hover:bg-gray-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 transition-colors disabled:opacity-50" onClick={()=>{if(window.confirm('Are you sure you want to remove this zone and its findings?')){setFindings(f=>({...f,zones:f.zones.filter((_,n)=>n!==index)}));setDirty(true);}}}>Remove zone {index+1}</button>
