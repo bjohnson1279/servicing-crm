@@ -540,6 +540,7 @@ export const ChemicalLog: React.FC = () => {
                     <button
                       type="button"
                       onClick={capturePhoto}
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 hover:bg-sky-600 transition-colors"
                       style={{
                         flex: 1,
                         padding: '10px',
@@ -560,6 +561,7 @@ export const ChemicalLog: React.FC = () => {
                         stream?.getTracks().forEach((track) => track.stop());
                         setCameraActive(false);
                       }}
+                      className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 hover:bg-slate-300 transition-colors"
                       style={{
                         padding: '10px',
                         background: '#e2e8f0',
@@ -578,6 +580,7 @@ export const ChemicalLog: React.FC = () => {
                   <button
                     type="button"
                     onClick={startCamera}
+                    className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 hover:bg-slate-200 transition-colors"
                     style={{
                       padding: '8px 14px',
                       background: '#f1f5f9',
@@ -591,6 +594,7 @@ export const ChemicalLog: React.FC = () => {
                     📷 Open Camera
                   </button>
                   <label
+                    className="focus-within:ring-2 focus-within:ring-slate-500 focus-within:ring-offset-2 hover:bg-slate-200 transition-colors"
                     style={{
                       padding: '8px 14px',
                       background: '#f1f5f9',
@@ -606,7 +610,7 @@ export const ChemicalLog: React.FC = () => {
                       type="file"
                       accept="image/*"
                       onChange={handleFileUpload}
-                      style={{ display: 'none' }}
+                      className="sr-only"
                     />
                   </label>
                 </div>
@@ -629,6 +633,7 @@ export const ChemicalLog: React.FC = () => {
                       setPhoto(null);
                     }
                   }}
+                  className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 hover:bg-red-100 transition-colors"
                   style={{
                     padding: '4px 10px',
                     fontSize: '12px',
@@ -654,6 +659,7 @@ export const ChemicalLog: React.FC = () => {
             aria-disabled={isSubmitting}
             aria-busy={isSubmitting}
             title={isSubmitting ? 'Saving & Updating Stock...' : 'Save & Log Application'}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 hover:bg-green-700 transition-colors"
             style={{
               flex: 1,
               padding: '12px',
@@ -671,6 +677,7 @@ export const ChemicalLog: React.FC = () => {
           </button>
           <Link
             to={`/job/${jobId}`}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 hover:bg-slate-200 transition-colors"
             style={{
               padding: '12px 16px',
               background: '#f1f5f9',
