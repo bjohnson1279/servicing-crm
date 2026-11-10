@@ -1,4 +1,7 @@
-export interface InspectionZone { name:string; pests:string[]; evidence:string; severity:string; inaccessible:boolean; notes:string }
+import type { InspectionEvidenceValue } from '../../domain/InspectionEvidence';
+import type { InspectionSeverityValue } from '../../domain/InspectionSeverity';
+
+export interface InspectionZone { name:string; pests:string[]; evidence:InspectionEvidenceValue; severity:InspectionSeverityValue; inaccessible:boolean; notes:string }
 export interface InspectionFindings { summary:string; zones:InspectionZone[] }
 export interface Inspection {
  id:string;job_id:string;state:string;version:number;revision:number;property_address:string;customer_name:string;job_status:string;
