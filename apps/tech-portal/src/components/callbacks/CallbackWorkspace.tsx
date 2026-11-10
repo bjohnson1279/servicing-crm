@@ -2,6 +2,7 @@ import { LazyDetails } from '../LazyDetails';
 import { FormEvent, useEffect, useState } from 'react';
 import { callbackApi, CallbackCase, watchCallbacks } from './callbackApi';
 import { CallbackCaseState } from '../../domain/CallbackCaseState';
+import { BillingDisposition } from '../../domain/BillingDisposition';
 
 interface Options {
   properties: { id: string; address: string; customer_id: string; customer_name: string }[];
@@ -35,6 +36,9 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
   const [report, setReport] = useState<{ eligible_source_jobs: number; source_jobs_with_callback: number; total_cases: number; unlinked_cases: number; average_first_response_hours: number | null; average_resolution_hours: number | null; additional_visits: number }>();
   const current = items.find(item => item.id === selected);
   const currentState = current ? new CallbackCaseState(current.state) : undefined;
+  const currentBillingDisposition = current?.billing_disposition && BillingDisposition.isValid(current.billing_disposition)
+    ? new BillingDisposition(current.billing_disposition)
+    : undefined;
   const manager = settings?.role === 'MANAGER' || settings?.role === 'SUPER_ADMIN';
 
   async function refresh() {
@@ -169,7 +173,7 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
       <h2 className="text-xl font-semibold">{current.pest_code} — {current.property_address}</h2>
       <p>{current.description}</p><p>Status: {label(current.state)}</p>
       {current.preferred_availability && <p>Preferred availability: {current.preferred_availability}</p>}
-      {mode !== 'customer' && <><p>Coverage: {label(current.coverage)} — {current.coverage_reason}</p><p>Billing: {label(current.billing_disposition || 'pending')}</p>
+      {mode !== 'customer' && <><p>Coverage: {label(current.coverage)} — {current.coverage_reason}</p><p>Billing: {currentBillingDisposition ? currentBillingDisposition.getLabel() : 'Pending'}</p>
         {current.source_visit && <LazyDetails summary="Previous treatment applications"><ul>{current.source_visit.applications.map(a => <li key={a.id}>{a.chemical_name}: {a.quantity_used} {a.unit} · {new Date(a.applied_at).toLocaleString()}</li>)}</ul>{!current.source_visit.applications.length && <p>No applications recorded.</p>}</LazyDetails>}</>}
       <h3 className="font-semibold">Photos</h3>
       {current.attachments.map(a => <button className="underline mr-3" key={a.id} onClick={() => void viewPhoto(a.id)}>{a.name}</button>)}
@@ -200,9 +204,9 @@ export default function CallbackWorkspace({ mode, customerId, jobId, queueOutcom
           {choose('source_job_id','Confirm source visit',options.jobs.filter(j => j.property_id === current.property_id).map(j => ({ value:j.id,text:new Date(j.completed_at).toLocaleString() })))}
           <button className={button} disabled={busy} onClick={() => void command('assess-coverage', { source_job_id: fields.source_job_id || current.source_job_id || null })}>Assess coverage</button>
           {field('reason','Internal decision reason',true)}{field('customer_message','Explanation to customer',true)}
-          {choose('billing_disposition','Return visit billing',[{value:'no_charge',text:'Covered — no charge'},{value:'goodwill',text:'Goodwill — manager approval'},{value:'quoted_paid',text:'Paid — customer quote acceptance required'}])}
-          {fields.billing_disposition === 'quoted_paid' && choose('quote_id','Sent quote',(options.quotes || []).filter(q => q.property_id === current.property_id).map(q => ({value:q.id,text:`$${Number(q.total_amount).toFixed(2)} — ${q.id.slice(0,8)}`})),true)}
-          {fields.billing_disposition === 'quoted_paid' && <>{field('quote_amount','New return-service quote amount ($)',false,'number')}<button className={button} disabled={busy || Number(fields.quote_amount)<=0 || !fields.quote_amount} onClick={() => void command('quotes',{total_amount:Number(fields.quote_amount)})}>Send return-service quote</button></>}
+          {choose('billing_disposition','Return visit billing',BillingDisposition.VALID_DISPOSITIONS.map(d => ({ value: d, text: new BillingDisposition(d).getLabel() })))}
+          {fields.billing_disposition === BillingDisposition.QUOTED_PAID.getValue() && choose('quote_id','Sent quote',(options.quotes || []).filter(q => q.property_id === current.property_id).map(q => ({value:q.id,text:`$${Number(q.total_amount).toFixed(2)} — ${q.id.slice(0,8)}`})),true)}
+          {fields.billing_disposition === BillingDisposition.QUOTED_PAID.getValue() && <>{field('quote_amount','New return-service quote amount ($)',false,'number')}<button className={button} disabled={busy || Number(fields.quote_amount)<=0 || !fields.quote_amount} onClick={() => void command('quotes',{total_amount:Number(fields.quote_amount)})}>Send return-service quote</button></>}
           <div className="flex gap-3 flex-wrap">{[['approve','Approve return service'],['decline','Decline request'],['request_information','Request information']].map(([decision,title]) => <button className={button} key={decision} disabled={busy || !fields.reason || !fields.customer_message} onClick={() => void command('decision',{ ...fields,decision })}>{title}</button>)}</div>
         </>}
         {currentState?.canScheduleVisit() && <>
