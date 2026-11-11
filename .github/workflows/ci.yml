@@ -69,11 +69,11 @@ jobs:
           echo "available=false" >> $GITHUB_OUTPUT
         fi
 
-    - name: Use Node.js 20
+    - name: Use Node.js 22
       if: steps.check_express.outputs.available == 'true'
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
         cache: 'npm'
         cache-dependency-path: 'backends/express-api/package-lock.json'
         
@@ -129,11 +129,11 @@ jobs:
           fi
         fi
 
-    - name: Use Node.js 20
+    - name: Use Node.js 22
       if: steps.check_portal.outputs.should_run == 'true'
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '22'
         
     - name: Build Portal
       if: steps.check_portal.outputs.should_run == 'true'
