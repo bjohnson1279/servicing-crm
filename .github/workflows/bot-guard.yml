@@ -151,6 +151,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Enabling squash merge for PR #${{ github.event.pull_request.number }}"
-          gh pr merge ${{ github.event.pull_request.number }} -R ${{ github.repository }} --squash --delete-branch --auto || \
-          gh pr merge ${{ github.event.pull_request.number }} -R ${{ github.repository }} --squash --admin --delete-branch || \
-          gh pr merge ${{ github.event.pull_request.number }} -R ${{ github.repository }} --squash --delete-branch || true
+          gh pr merge ${{ github.event.pull_request.number }} -R ${{ github.repository }} --squash --delete-branch --auto

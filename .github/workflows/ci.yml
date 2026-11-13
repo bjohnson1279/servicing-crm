@@ -2,175 +2,200 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  changes:
+  verify-source:
     runs-on: ubuntu-latest
-    outputs:
-      express-api: ${{ steps.filter.outputs.express-api }}
-      admin-portal: ${{ steps.filter.outputs.admin-portal }}
-      customer-portal: ${{ steps.filter.outputs.customer-portal }}
-      tech-portal: ${{ steps.filter.outputs.tech-portal }}
+    timeout-minutes: 5
     steps:
-    - uses: actions/checkout@v4
-    - uses: dorny/paths-filter@v3
-      id: filter
-      with:
-        filters: |
-          express-api:
-            - 'backends/express-api/**'
-            - 'shared/**'
-            - '.github/workflows/ci.yml'
-          admin-portal:
-            - 'apps/admin-portal/**'
-            - 'shared/**'
-            - '.github/workflows/ci.yml'
-          customer-portal:
-            - 'apps/customer-portal/**'
-            - 'shared/**'
-            - '.github/workflows/ci.yml'
-          tech-portal:
-            - 'apps/tech-portal/**'
-            - 'shared/**'
-            - '.github/workflows/ci.yml'
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Check for merge conflict markers
+        run: |
+          if git grep -n -I -E '^(<{7}|={7}|>{7}|\|{7})([[:space:]]|$)'; then
+            echo "::error::Resolve merge conflict markers before merging."
+            exit 1
+          fi
+      - name: Require application source
+        run: |
+          for component in backends/{express-api,graphql-api,fastapi-api,laravel-api} apps/{admin-portal,customer-portal,tech-portal}; do
+            case "$component" in
+              *fastapi*) manifest=requirements.txt ;;
+              *laravel*) manifest=composer.json ;;
+              *) manifest=package.json ;;
+            esac
+            if [ ! -s "$component/$manifest" ]; then
+              echo "::error::Required source is missing: $component/$manifest. Tests cannot be skipped."
+              exit 1
+            fi
+          done
 
-  test-express-api:
-    needs: changes
-    if: github.event_name == 'push' || needs.changes.outputs.express-api == 'true'
+  ci-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/ci-gate.test.mjs
+
+  test-node-backends:
+    needs: verify-source
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [express-api, graphql-api]
+    defaults:
+      run:
+        working-directory: backends/${{ matrix.backend }}
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: backends/${{ matrix.backend }}/package-lock.json
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+      - name: Run required tests
+        run: npm test -- --runInBand
 
-    - name: Check for Merge Conflict Markers
-      run: |
-        echo "Scanning codebase for git merge conflict markers..."
-        if git grep -n -I -E '^(<{7}|={7}|>{7}|\|{7})([[:space:]]|$)'; then
-          echo "::error::Merge conflict markers detected in tracked files! Please resolve conflicts before merging."
-          exit 1
-        fi
-        echo "No conflict markers detected."
-    
-    - name: Check Express API Availability
-      id: check_express
-      run: |
-        if [ -f "backends/express-api/package.json" ]; then
-          echo "available=true" >> $GITHUB_OUTPUT
-        else
-          echo "backends/express-api is not checked out in this runner. Skipping."
-          echo "available=false" >> $GITHUB_OUTPUT
-        fi
+  test-fastapi:
+    needs: verify-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -r backends/fastapi-api/requirements.txt -r tests/requirements.txt
+      - name: Run native tests
+        working-directory: backends/fastapi-api
+        run: python -m pytest -q
+      - name: Run adapter and authentication tests
+        run: python -m pytest tests/test_*adapters.py tests/test_callback_auth.py -q
 
-    - name: Use Node.js 22
-      if: steps.check_express.outputs.available == 'true'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'npm'
-        cache-dependency-path: 'backends/express-api/package-lock.json'
-        
-    - name: Install dependencies
-      if: steps.check_express.outputs.available == 'true'
-      working-directory: backends/express-api
-      run: npm ci
-      
-    - name: Generate Prisma Client
-      if: steps.check_express.outputs.available == 'true'
-      working-directory: backends/express-api
-      run: npx prisma generate
-      
-    - name: Typecheck
-      if: steps.check_express.outputs.available == 'true'
-      working-directory: backends/express-api
-      run: npx tsc --noEmit
-      
-    - name: Run Tests
-      if: steps.check_express.outputs.available == 'true'
-      working-directory: backends/express-api
-      run: npm test
+  test-laravel:
+    needs: verify-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --prefer-dist
+        working-directory: backends/laravel-api
+      - name: Run native tests
+        working-directory: backends/laravel-api
+        env:
+          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+        run: vendor/bin/phpunit --fail-on-empty-test-suite
+      - name: Run standalone domain and adapter checks
+        run: |
+          for suite in backends/laravel-api/tests/Unit/Domain/*/run_tests.php tests/*_auth.php; do
+            php "$suite"
+          done
+
+  test-canonical:
+    needs: verify-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [callbacks, catalog, commercial, devices, inspections, jobs, profitability, recurring]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --prefix backends/express-api
+      - run: npm ci --prefix backends/graphql-api
+      - run: npm install --prefix .callback-test-runtime --no-save --package-lock=false @electric-sql/pglite@0.5.8
+      - name: Replay migrations and run domain/transport assertions
+        run: node tests/${{ matrix.suite }}.integration.mjs
 
   build-portals:
-    needs: changes
+    needs: verify-source
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         portal: [admin-portal, customer-portal, tech-portal]
-    
+    defaults:
+      run:
+        working-directory: apps/${{ matrix.portal }}
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Check Portal Availability and Changes
-      id: check_portal
-      run: |
-        if [ ! -f "apps/${{ matrix.portal }}/package.json" ]; then
-          echo "Portal apps/${{ matrix.portal }} is not checked out in this runner. Skipping."
-          echo "should_run=false" >> $GITHUB_OUTPUT
-        elif [ "${{ github.event_name }}" = "push" ]; then
-          echo "Push event on default branch; running full build."
-          echo "should_run=true" >> $GITHUB_OUTPUT
-        else
-          CHANGED="${{ needs.changes.outputs[matrix.portal] }}"
-          if [ "$CHANGED" = "true" ]; then
-            echo "Portal apps/${{ matrix.portal }} has modifications. Running build."
-            echo "should_run=true" >> $GITHUB_OUTPUT
-          else
-            echo "Portal apps/${{ matrix.portal }} has no changes in this PR. Skipping."
-            echo "should_run=false" >> $GITHUB_OUTPUT
-          fi
-        fi
-
-    - name: Use Node.js 22
-      if: steps.check_portal.outputs.should_run == 'true'
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        
-    - name: Build Portal
-      if: steps.check_portal.outputs.should_run == 'true'
-      run: |
-        cd apps/${{ matrix.portal }}
-        npm ci
-        npm test --if-present
-        npm run build
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci
+      - name: Run required portal tests
+        if: matrix.portal != 'customer-portal'
+        run: npm test
+      # Customer portal has no test suite yet; its production build is required.
+      - run: npm run build
 
   docker-build:
-    needs: [changes, test-express-api, build-portals]
+    needs: verify-source
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: github.event_name == 'push'
-    
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Check Dockerfile Availability
-      id: check_docker
-      run: |
-        if [ -f "backends/express-api/Dockerfile" ]; then
-          echo "available=true" >> $GITHUB_OUTPUT
-        else
-          echo "Dockerfile not present in runner. Skipping."
-          echo "available=false" >> $GITHUB_OUTPUT
-        fi
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v5
+        with:
+          context: ./backends/express-api
+          push: false
+          tags: servicing-crm/express-api:latest
 
-    - name: Set up Docker Buildx
-      if: steps.check_docker.outputs.available == 'true'
-      uses: docker/setup-buildx-action@v3
-      
-    - name: Build Express API Image
-      if: steps.check_docker.outputs.available == 'true'
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backends/express-api
-        push: false
-        tags: servicing-crm/express-api:latest
-
+  ci-required:
+    name: CI required
+    if: ${{ always() }}
+    needs: [verify-source, ci-policy, test-node-backends, test-fastapi, test-laravel, test-canonical, build-portals, docker-build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require every validation job to pass
+        env:
+          CI_RESULTS: ${{ toJSON(needs) }}
+        run: node scripts/ci-gate.mjs
