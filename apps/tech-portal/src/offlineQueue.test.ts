@@ -200,6 +200,22 @@ describe('offlineQueue', () => {
       expect(itemsMap.has(1)).toBe(true);
       expect(itemsMap.has(2)).toBe(false);
     });
+
+    it('retains item in queue when server returns non-2xx error response', async () => {
+      await enqueueRequest('/api/v1/error-endpoint', 'POST', { test: 'err' });
+
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({ error: 'Internal Server Error' }),
+      } as any);
+
+      await syncQueue();
+
+      expect(console.error).toHaveBeenCalledWith('Failed to sync item 1: server returned status 500');
+      expect(itemsMap.size).toBe(1);
+      expect(itemsMap.has(1)).toBe(true);
+    });
   });
 
   describe('window online event listener', () => {
