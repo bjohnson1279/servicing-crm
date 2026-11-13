@@ -13,7 +13,7 @@ export const initDB = async () => {
   });
 };
 
-export const enqueueRequest = async (url: string, method: string, body: any) => {
+export const enqueueRequest = async (url: string, method: string, body: unknown) => {
   const db = await initDB();
   await db.add(STORE_NAME, { url, method, body, timestamp: Date.now() });
 };
@@ -28,7 +28,7 @@ export const syncQueue = async () => {
   const token = sessionStorage.getItem('crm_access_token');
   for (const item of items) {
     try {
-      await fetch(item.url, {
+      const response = await fetch(item.url, {
         method: item.method,
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +36,11 @@ export const syncQueue = async () => {
         },
         body: JSON.stringify(item.body),
       });
-      await store.delete(item.id);
+      if (response.ok) {
+        await store.delete(item.id);
+      } else {
+        console.error(`Failed to sync item ${item.id}: server returned status ${response.status}`);
+      }
     } catch (e) {
       console.error('Failed to sync item');
     }

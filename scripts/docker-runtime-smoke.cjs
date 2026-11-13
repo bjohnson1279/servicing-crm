@@ -19,6 +19,7 @@ async function main() {
    ['laravel-api','/api/v1/health','/api/v1/jobs']
   ];
   const selected = (process.env.CRM_SMOKE_BACKENDS || backends.map(([name])=>name).join(',')).split(',');
+  const selectedSet = new Set(selected);
   if (selected.some(name=>!backends.some(([service])=>service===name))) throw new Error('Unknown CRM_SMOKE_BACKENDS service');
   const settings=['inspections','devices','catalog','recurring','profitability','commercial'];
   let failures = 0;
@@ -36,7 +37,7 @@ async function main() {
     console.log('PASS '+service+' '+route+' '+response.status);
    } catch(error) { failures++; console.error('FAIL '+service+' '+route+': '+error.message); }
   }
-  for (const [service,health,jobs] of backends.filter(([service])=>selected.includes(service))) {
+  for (const [service,health,jobs] of backends.filter(([service])=>selectedSet.has(service))) {
    await check(service,8000,health,200,false);
    await check(service,8000,jobs,200);
    for(const feature of settings) await check(service,8000,'/api/v1/'+feature+'/settings',200);
