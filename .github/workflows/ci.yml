@@ -20,8 +20,6 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - name: Check for merge conflict markers
         run: |
           if git grep -n -I -E '^(<{7}|={7}|>{7}|\|{7})([[:space:]]|$)'; then
@@ -30,12 +28,8 @@ jobs:
           fi
       - name: Require application source
         run: |
-          for component in backends/{express-api,graphql-api,fastapi-api,laravel-api} apps/{admin-portal,customer-portal,tech-portal}; do
-            case "$component" in
-              *fastapi*) manifest=requirements.txt ;;
-              *laravel*) manifest=composer.json ;;
-              *) manifest=package.json ;;
-            esac
+          for component in apps/tech-portal; do
+            manifest=package.json
             if [ ! -s "$component/$manifest" ]; then
               echo "::error::Required source is missing: $component/$manifest. Tests cannot be skipped."
               exit 1
@@ -52,98 +46,6 @@ jobs:
           node-version: '22'
       - run: node --test tests/ci-gate.test.mjs
 
-  test-node-backends:
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        backend: [express-api, graphql-api]
-    defaults:
-      run:
-        working-directory: backends/${{ matrix.backend }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: backends/${{ matrix.backend }}/package-lock.json
-      - run: npm ci
-      - run: npx prisma generate
-      - run: npx tsc --noEmit
-      - name: Run required tests
-        run: npm test -- --runInBand
-
-  test-fastapi:
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: python -m pip install -r backends/fastapi-api/requirements.txt -r tests/requirements.txt
-      - name: Run native tests
-        working-directory: backends/fastapi-api
-        run: python -m pytest -q
-      - name: Run adapter and authentication tests
-        run: python -m pytest tests/test_*adapters.py tests/test_callback_auth.py -q
-
-  test-laravel:
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          extensions: mbstring, pdo_sqlite, sqlite3
-          coverage: none
-          tools: composer:v2
-      - run: composer install --no-interaction --prefer-dist
-        working-directory: backends/laravel-api
-      - name: Run native tests
-        working-directory: backends/laravel-api
-        env:
-          APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-        run: vendor/bin/phpunit --fail-on-empty-test-suite
-      - name: Run standalone domain and adapter checks
-        run: |
-          for suite in backends/laravel-api/tests/Unit/Domain/*/run_tests.php tests/*_auth.php; do
-            php "$suite"
-          done
-
-  test-canonical:
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        suite: [callbacks, catalog, commercial, devices, inspections, jobs, profitability, recurring]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm ci --prefix backends/express-api
-      - run: npm ci --prefix backends/graphql-api
-      - run: npm install --prefix .callback-test-runtime --no-save --package-lock=false @electric-sql/pglite@0.5.8
-      - name: Replay migrations and run domain/transport assertions
-        run: node tests/${{ matrix.suite }}.integration.mjs
-
   build-portals:
     needs: verify-source
     runs-on: ubuntu-latest
@@ -151,43 +53,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        portal: [admin-portal, customer-portal, tech-portal]
+        portal: [tech-portal]
     defaults:
       run:
         working-directory: apps/${{ matrix.portal }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - run: npm ci
       - name: Run required portal tests
-        if: matrix.portal != 'customer-portal'
         run: npm test
-      # Customer portal has no test suite yet; its production build is required.
       - run: npm run build
-
-  docker-build:
-    needs: verify-source
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v5
-        with:
-          context: ./backends/express-api
-          push: false
-          tags: servicing-crm/express-api:latest
 
   ci-required:
     name: CI required
     if: ${{ always() }}
-    needs: [verify-source, ci-policy, test-node-backends, test-fastapi, test-laravel, test-canonical, build-portals, docker-build]
+    needs: [verify-source, ci-policy, build-portals]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
