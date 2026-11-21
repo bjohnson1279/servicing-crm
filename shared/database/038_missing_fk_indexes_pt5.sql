@@ -7,8 +7,7 @@ CREATE INDEX IF NOT EXISTS idx_jobs_contract_id ON jobs(contract_id);
 CREATE INDEX IF NOT EXISTS idx_automated_followups_tenant_id ON automated_followups(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_purchase_orders_tenant_id ON purchase_orders(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_tenant_id ON audit_logs(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_warranty_policy_versions_warranty_policy_id ON warranty_policy_versions(warranty_policy_id);
-CREATE INDEX IF NOT EXISTS idx_warranty_policy_versions_source_job_id ON warranty_policy_versions(source_job_id);
+CREATE INDEX IF NOT EXISTS idx_warranty_policy_versions_tenant_id ON warranty_policy_versions(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_service_callbacks_tenant_id ON service_callbacks(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_inspections_tenant_id ON inspections(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_inspection_revisions_inspection_id ON inspection_revisions(inspection_id);
@@ -29,4 +28,4 @@ CREATE INDEX IF NOT EXISTS idx_job_cost_requests_tenant_id ON job_cost_requests(
 CREATE INDEX IF NOT EXISTS idx_job_cost_settings_events_tenant_id ON job_cost_settings_events(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_commercial_accounts_tenant_id ON commercial_accounts(tenant_id);
 CREATE INDEX IF NOT EXISTS idx_commercial_requests_tenant_id ON commercial_requests(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_service_contracts_contract_id ON service_contracts(contract_id);
+CREATE INDEX IF NOT EXISTS idx_service_agreements_contract_id ON service_agreements(contract_id);
