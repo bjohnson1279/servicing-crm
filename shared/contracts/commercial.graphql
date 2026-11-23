@@ -2,6 +2,7 @@ extend type Query {
  commercialSettings: JSON!
  commercialAccounts(state: String, q: String, limit: Int, offset: Int): JSON!
  commercialAccount(id: UUID!): JSON!
+ commercialAccountSummary(id: UUID!): JSON!
  commercialSites(id: UUID!, state: String, limit: Int, offset: Int): JSON!
  commercialSite(id: UUID!, site_id: UUID!): JSON!
  commercialContacts(id: UUID!, site_id: UUID, state: String, review: Boolean, limit: Int, offset: Int): JSON!
