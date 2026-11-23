@@ -76,6 +76,16 @@ await api('assess',{request_key:crypto.randomUUID()});eq((await api('list',{cont
 const once=id(25);await db.query("INSERT INTO service_contracts(id,tenant_id,customer_id,property_id,cadence,start_date) VALUES($1,$2,$3,$4,'ONE_TIME',$5)",[once,tenant,customer,property,due]);
 await api('assess',{request_key:crypto.randomUUID()});eq((await db.query('SELECT count(*)::int n FROM recurring_occurrences WHERE contract_id=$1',[once])).rows[0].n,0);
 eq((await db.query('SELECT count(*)::int n FROM recurring_occurrences WHERE contract_id=$1 AND nominal_date>$2::date',[contract,due])).rows[0].n,0);
+// Slice 2: Operator exception resolution action ('resolve')
+await db.query("UPDATE jobs SET status='cancelled' WHERE id=$1",[visit]);
+await api('assess',{request_key:crypto.randomUUID()});
+const openToResolve=(await api('list',{contract_id:contract})).items[0];
+await denied('resolve',{id:openToResolve.id,resolution:'dismissed',reason:'Tech denied'},'P0403',techUser);
+await denied('resolve',{id:openToResolve.id,resolution:'invalid_type',reason:'Bad'},'P0400');
+const resolvedItem=await api('resolve',{id:openToResolve.id,resolution:'rescheduled',reason:'Customer requested next week'});
+eq(resolvedItem.state,'resolved');
+eq(resolvedItem.evidence.resolution,'rescheduled');
+await denied('resolve',{id:openToResolve.id,resolution:'dismissed',reason:'Already resolved'},'P0409');
 console.log(checks+' recurring database checks passed');
 await testRecurringAdapters(db,{tenant,manager,techUser,customerUser,exception:exception.id});
 await db.close();

@@ -96,6 +96,14 @@ await denied('update',{id:account.id,version:1,name:'Stale version',reason:'Bad 
 eq((await api('options',{kind:'owners'})).items.some(o=>o.id===dispatcher),true);
 eq((await db.query('SELECT count(*)::int n FROM payments')).rows[0].n,0);
 eq((await db.query('SELECT count(*)::int n FROM notification_queue')).rows[0].n,0);
+// Slice 2: Consolidated Multi-Site Account Summary ('summary')
+await denied('summary',{id:account.id},'P0403',techUser);
+await denied('summary',{},'P0400');
+const summary=await api('summary',{id:account.id});
+eq(summary.account.id,account.id);
+eq(summary.active_site_count,1);
+eq(summary.archived_site_count,1);
+eq(summary.sites.length,2);
 console.log(checks+' commercial database checks passed');
 await testCommercialAdapters(db,{tenant,manager,techUser,customerUser,account:account.id,site:site.id});
 await db.close();
