@@ -1,0 +1,2 @@
+extend type Query { playbookRuns(job_id: UUID, property_id: UUID, state: String): JSON! playbookRun(id: UUID!): JSON! playbookSettings: JSON! playbookOptions: JSON! }
+extend type Mutation { playbookCommand(action: String!, input: JSON!): JSON! }
