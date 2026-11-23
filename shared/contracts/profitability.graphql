@@ -1,2 +1,2 @@
-extend type Query { jobCosts(complete: Boolean, contract_id: UUID, property_id: UUID, from: Date, through: Date, limit: Int, offset: Int): JSON! jobCost(id: UUID!): JSON! profitabilitySettings: JSON! }
+extend type Query { jobCosts(complete: Boolean, contract_id: UUID, property_id: UUID, from: Date, through: Date, limit: Int, offset: Int): JSON! jobCost(id: UUID!): JSON! profitabilitySettings: JSON! profitabilityRollup(complete: Boolean, contract_id: UUID, property_id: UUID, from: Date, through: Date): JSON! }
 extend type Mutation { profitabilityCommand(action: String!, input: JSON!): JSON! }
