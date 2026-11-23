@@ -70,6 +70,13 @@ eq((await jobApi('clock_out',{id:job},techUser2)).status,'completed');
 await denied('save',{id:i.id,version:i.version,request_key:key(),findings},'P0409',techUser2);
 await db.query("UPDATE users SET role='CUSTOMER' WHERE id=$1",[techUser2]);
 await denied('get',{id:i.id},'P0403',techUser2);
+// Slice 2: Treatment Proposal Generation ('propose_treatment')
+await denied('propose_treatment',{id:i.id,recommended_service:'Perimeter barrier',notes:'Customer denied'},'P0403',techUser2);
+await denied('propose_treatment',{id:i.id,recommended_service:'',notes:''},'P0400',manager);
+const proposed=await api('propose_treatment',{id:i.id,recommended_service:'Quarterly Perimeter Barrier',estimated_amount:'185.00',notes:'Treat pantry exterior entry points'},manager);
+eq(proposed.proposal.recommended_service,'Quarterly Perimeter Barrier');
+eq(proposed.proposal.estimated_amount,'185.00');
+eq(proposed.events.some(e=>e.action==='propose_treatment'),true);
 console.log(checks+' inspection database checks passed');
 await testInspectionAdapters(db,{tenant,manager,techUser,customerUser,inspection:i.id,job,photo:i.attachments[0].id,version:i.version});
 await db.close();

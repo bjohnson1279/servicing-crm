@@ -75,6 +75,12 @@ await denied('document_get',{id:p.id,job_id:job,document_id:p.versions[1].docume
 await mutate('next_version');revision=3;await mutate('submit');
 const activation={id:p.id,revision,version:p.versions[2].version,reason:'Verified sources again',request_key:key(),checks,review_due_at};
 p=await api('activate',activation);eq((await api('activate',activation)).id,p.id);
+// Slice 2: Catalog Verification & Compliance Summary ('compliance_summary')
+await denied('compliance_summary',{},'P0403',techUser);
+const compSummary=await api('compliance_summary',{},manager);
+assert.ok(compSummary.total_products>=2);
+assert.ok(compSummary.active_verified_count>=1);
+count+=2;
 await db.query("UPDATE users SET role='DISPATCHER' WHERE id=$1",[manager]);await denied('activate',activation,'P0403');
 console.log(count+' catalog database checks passed');
 await testCatalogAdapters(db,{tenant,manager,techUser,customerUser,job,product:p.id,revision,document:p.versions[2].documents[0].id});

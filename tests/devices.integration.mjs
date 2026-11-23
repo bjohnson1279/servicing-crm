@@ -55,6 +55,13 @@ eq((await api('get',{id:d.id,job_id:job},techUser2)).id,d.id);
 await db.query("UPDATE users SET role='CUSTOMER' WHERE id=$1",[techUser2]);await denied('get',{id:d.id,job_id:job},'P0403',techUser2);
 await db.query("UPDATE jobs SET status='completed' WHERE id=$1",[job]);await denied('get',{id:d.id,job_id:job},'P0404',techUser);
 eq((await api('list',{limit:1})).has_more,true);eq((await api('list',{offset:1,limit:1})).items.length,1);
+// Slice 2: Field Device Service & Activity Logging ('record_service')
+const svcDevice=await api('create',{...input,label:'BS-004',request_key:key()});
+await denied('record_service',{id:svcDevice.id,activity_level:'low',bait_consumed_pct:25,action_taken:'Checked planned device'},'P0409');
+await api('install',{id:svcDevice.id,version:svcDevice.version,reason:'Install for service test',request_key:key(),historical_installation:true});
+await denied('record_service',{id:svcDevice.id,activity_level:'invalid',bait_consumed_pct:25,action_taken:'Bad'},'P0400');
+const serviced=await api('record_service',{id:svcDevice.id,activity_level:'moderate',bait_consumed_pct:50,action_taken:'Replaced 2 bait blocks',reason:'Quarterly station check'});
+eq(serviced.events.some(e=>e.action==='serviced'&&e.details.bait_consumed_pct===50),true);
 console.log(checks+' device register checks passed');
 await db.query("UPDATE jobs SET status='scheduled',technician_id=$1 WHERE id=$2",[tech,job]);
 await testDeviceAdapters(db,{tenant,manager,techUser,customerUser,property,job,device:d.id,version:d.version});
