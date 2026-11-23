@@ -77,6 +77,12 @@ eq((await db.query('SELECT count(*)::int n FROM job_cost_entries WHERE job_id=$1
 
 await api('settings',{enabled:false});await denied('record',manual,'P0503');await api('settings',{enabled:true});
 eq((await db.query("SELECT count(*)::int n FROM job_cost_settings_events WHERE tenant_id=$1",[tenant])).rows[0].n>=3,true);
+// Slice 2: Tenant & Contract Cost/Revenue Rollup ('rollup')
+await denied('rollup',{},'P0403',techUser);
+const rollup=await api('rollup',{});
+eq(rollup.currency,'USD');
+eq(rollup.total_jobs,1);
+eq(rollup.total_known_cost,'65.10');
 console.log(checks+' job cost database checks passed');
 await testProfitabilityAdapters(db,{tenant,manager,techUser,customerUser,job});
 await db.close();
