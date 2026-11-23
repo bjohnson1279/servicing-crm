@@ -64,6 +64,14 @@ vi.mock('../catalog/CatalogWorkspace', () => ({
   ),
 }));
 
+vi.mock('../playbooks/PlaybookWorkspace', () => ({
+  default: ({ jobId }: { jobId?: string }) => (
+    <div data-testid="playbook-workspace">
+      PlaybookWorkspace Mock ({jobId})
+    </div>
+  ),
+}));
+
 describe('JobDetail Component', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
@@ -181,12 +189,14 @@ describe('JobDetail Component', () => {
     renderWithRoute('/job/job-workspaces');
 
     // Check summaries are present
+    expect(screen.getByText('Property service playbook')).toBeInTheDocument();
     expect(screen.getByText('Inspection findings')).toBeInTheDocument();
     expect(screen.getByText('Property devices')).toBeInTheDocument();
     expect(screen.getByText('Reviewed product references')).toBeInTheDocument();
     expect(screen.getByText('Callback context and outcome')).toBeInTheDocument();
 
     // Workspaces should not be mounted initially due to LazyDetails
+    expect(screen.queryByTestId('playbook-workspace')).not.toBeInTheDocument();
     expect(screen.queryByTestId('inspection-workspace')).not.toBeInTheDocument();
     expect(screen.queryByTestId('device-workspace')).not.toBeInTheDocument();
     expect(screen.queryByTestId('catalog-workspace')).not.toBeInTheDocument();

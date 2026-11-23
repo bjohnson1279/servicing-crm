@@ -7,6 +7,7 @@ import { CallbackDrafts } from './CallbackDrafts';
 import InspectionWorkspace from './inspections/InspectionWorkspace';
 import DeviceWorkspace from './devices/DeviceWorkspace';
 import CatalogWorkspace from './catalog/CatalogWorkspace';
+import PlaybookWorkspace from './playbooks/PlaybookWorkspace';
 import { LazyDetails } from './LazyDetails';
 import { JobStatus } from '../domain/JobStatus';
 
@@ -25,6 +26,7 @@ export const JobDetail: React.FC = () => {
   return (
     <div>
       <h2>Job Detail - {id}</h2>
+      <LazyDetails summary="Property service playbook"><PlaybookWorkspace jobId={id} /></LazyDetails>
       <LazyDetails summary="Inspection findings"><InspectionWorkspace mode="technician" jobId={id} /></LazyDetails>
       <LazyDetails summary="Property devices"><DeviceWorkspace mode="technician" jobId={id} /></LazyDetails>
       <LazyDetails summary="Reviewed product references"><CatalogWorkspace mode="technician" jobId={id} /></LazyDetails>
