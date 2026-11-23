@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 import { PGlite } from '../.callback-test-runtime/node_modules/@electric-sql/pglite/dist/index.js';
+import { testPlaybookAdapters } from './playbook-adapters.mjs';
 
 const db = new PGlite();
 const root = new URL('../shared/database/', import.meta.url);
@@ -226,4 +227,35 @@ checks++;
 await assert.rejects(db.query("DELETE FROM playbook_events"), e => e.code === 'P0409');
 checks++;
 
+// 10. Slice 2: Property Template Assignments, Template Retirement, and Job Completion Gate
+await denied('assign_template', { property_id: property, checklist_version_id: tpl2.id }, 'P0403', techUser);
+const assigned = await api('assign_template', {
+  property_id: property,
+  checklist_version_id: tpl2.id,
+  service_type: 'quarterly_pest',
+});
+eq(assigned.property_id, property);
+eq(assigned.checklist_version_id, tpl2.id);
+
+await denied('retire_template', { checklist_version_id: tpl1.id }, 'P0403', techUser);
+const retiredTpl = await api('retire_template', { checklist_version_id: tpl1.id });
+eq(retiredTpl.status, 'retired');
+
+await denied('completion_check', { job_id: job }, 'P0404', techUser2);
+const compCheck = await api('completion_check', { job_id: job }, techUser);
+eq(compCheck.has_playbook, true);
+eq(compCheck.can_complete, true);
+eq(compCheck.state, 'reviewed');
+
 console.log(`PASS: ${checks} property service playbook SQL lifecycle, RBAC, and audit checks`);
+await testPlaybookAdapters(db, {
+  tenant,
+  manager,
+  techUser,
+  techUser2,
+  customerUser,
+  property,
+  job,
+  run: run1.id,
+});
+await db.close();
