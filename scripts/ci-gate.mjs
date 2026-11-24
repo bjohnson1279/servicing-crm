@@ -1,5 +1,5 @@
 // Keep this list aligned with ci-required.needs in .github/workflows/ci.yml.
-const required = ['verify-source', 'ci-policy', 'build-portals'];
+const required = ['verify-source', 'ci-policy', 'build-portals', 'verify-migrations'];
 
 try {
   const results = JSON.parse(process.env.CI_RESULTS ?? '{}');
