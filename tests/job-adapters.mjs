@@ -27,9 +27,16 @@ export async function testJobAdapters(db,f) {
   eq((await app.inject({url:'/technicians/',headers:{authorization:token(f.techUser)}})).json().length,1);
   const created=await app.inject({method:'POST',url:'/jobs/',headers:{authorization:token(f.manager)},payload:{customerId:f.customer,propertyId:f.property}});
   eq(created.statusCode,201);eq(created.json().tenantId,f.tenant);
+  const sigRes=await app.inject({method:'POST',url:'/jobs/'+created.json().id+'/signature',headers:{authorization:token(f.manager)},payload:{signatureDataUrl:'data:image/png;base64,EXPRESS_SIG'}});
+  eq(sigRes.statusCode,200);
+  const sigGet=await app.inject({url:'/jobs/'+created.json().id+'/signature',headers:{authorization:token(f.manager)}});
+  eq(sigGet.statusCode,200);eq(sigGet.json().signatureDataUrl,'data:image/png;base64,EXPRESS_SIG');
   const gql=require('../backends/graphql-api/src/domains/dispatch/jobResolvers.ts').jobResolvers;
   for(const [ctx,status] of [[{},401],[{authorization:token(f.manager,f.other)},401]]){await assert.rejects(gql.Query.jobs(null,{},ctx),e=>e.extensions.status===status);checks++;}
   eq((await gql.Query.jobs(null,{}, {authorization:token(f.techUser)})).length,0);
+  const gqlSig=await gql.Mutation.recordJobSignature(null,{id:created.json().id,signatureDataUrl:'data:image/png;base64,GQL_SIG'},{authorization:token(f.manager)});
+  eq(gqlSig.signatureDataUrl,'data:image/png;base64,GQL_SIG');
+  eq((await gql.Query.jobSignature(null,{id:created.json().id},{authorization:token(f.manager)})).signatureDataUrl,'data:image/png;base64,GQL_SIG');
   await assert.rejects(gql.Mutation.createJob(null,{customerId:f.customer,propertyId:f.property},{authorization:token(f.techUser)}),e=>e.extensions.status===403);checks++;
   const dispatch=require('../backends/graphql-api/src/domains/dispatch/resolvers.ts').dispatchResolvers;
   await assert.rejects(dispatch.Mutation.emergencyDispatch(null,{}, {authorization:token(f.techUser)}),e=>e.extensions.status===403);checks++;
