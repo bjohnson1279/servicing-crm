@@ -116,4 +116,31 @@ const rollup = await callApi('profitability_api', 'rollup');
 assert.equal(rollup.currency, 'USD');
 assert.equal(rollup.total_jobs, 0);
 
-console.log(`Verified ${applied} SQL migrations, ${requiredFunctions.length} canonical PL/pgSQL APIs, and live Slice 1+2 smoke checks.`);
+// Verify Job Signature capture ('record_signature' & 'get_signature') via job_api
+const { rows: [custUser] } = await db.query(
+  `INSERT INTO users (tenant_id, email, password_hash, role) VALUES ($1, 'ci-cust@example.test', 'hash', 'CUSTOMER') RETURNING id`,
+  [tenant.id]
+);
+const { rows: [cust] } = await db.query(
+  `INSERT INTO customers (user_id, name) VALUES ($1, 'CI Customer') RETURNING id`,
+  [custUser.id]
+);
+const { rows: [prop] } = await db.query(
+  `INSERT INTO properties (customer_id, address) VALUES ($1, '123 CI Lane') RETURNING id`,
+  [cust.id]
+);
+const { rows: [job] } = await db.query(
+  `INSERT INTO jobs (tenant_id, customer_id, property_id, status) VALUES ($1, $2, $3, 'in_progress') RETURNING id`,
+  [tenant.id, cust.id, prop.id]
+);
+const sig = await callApi('job_api', 'record_signature', {
+  id: job.id,
+  signatureDataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==',
+  capturedAt: '2026-11-24T12:00:00Z',
+});
+assert.equal(sig.job_id, job.id);
+assert.equal(sig.signature_data_url, 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg==');
+const fetchedSig = await callApi('job_api', 'get_signature', { id: job.id });
+assert.equal(fetchedSig.id, sig.id);
+
+console.log(`Verified ${applied} SQL migrations, ${requiredFunctions.length} canonical PL/pgSQL APIs, and live Slice 1+2 + Job Signature smoke checks.`);
