@@ -423,4 +423,31 @@ describe('DeviceWorkspace Component', () => {
     expect(screen.queryByRole('article')).not.toBeInTheDocument();
     expect(screen.getByText('No devices match this view. Select a property to register a planned device.')).toBeInTheDocument();
   });
+
+  it('records a field service visit for an installed device in technician mode', async () => {
+    const installedDevice: PropertyDevice = { ...mockDevice, lifecycle: 'installed' };
+    vi.mocked(deviceApi).mockImplementation(async (path: string) => {
+      if (path === '/settings') return { enabled: true, role: 'TECHNICIAN' };
+      if (path.startsWith('/?')) return { items: [installedDevice], has_more: false };
+      if (path.startsWith('/dev-1?')) return installedDevice;
+      if (path === '/dev-1/record_service') return installedDevice;
+      return {};
+    });
+
+    render(<DeviceWorkspace mode="technician" jobId="job-101" />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /BS-01 — 123 Main St · installed/i }));
+    fireEvent.change(await screen.findByLabelText('Activity level'), { target: { value: 'high' } });
+    fireEvent.change(screen.getByLabelText('Bait consumed (%)'), { target: { value: '75' } });
+    fireEvent.change(screen.getByLabelText('Action taken'), { target: { value: 'Replenished bait blocks' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Record service visit' }));
+
+    expect(await screen.findByText('Field service visit recorded.')).toBeInTheDocument();
+    expect(deviceApi).toHaveBeenCalledWith('/dev-1/record_service', {
+      activity_level: 'high',
+      bait_consumed_pct: 75,
+      action_taken: 'Replenished bait blocks',
+      job_id: 'job-101',
+    });
+  });
 });

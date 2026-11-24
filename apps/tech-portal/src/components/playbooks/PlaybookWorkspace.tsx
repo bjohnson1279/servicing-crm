@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { playbookApi, playbookToken, PlaybookError } from './playbookApi';
 import type { PlaybookRun } from './playbookApi';
+import { queuePlaybookSubmission, syncPlaybookSubmissions } from '../../playbookOfflineQueue';
 
 export default function PlaybookWorkspace({ jobId }: { jobId?: string }) {
   const [token] = useState(playbookToken());
@@ -13,6 +14,7 @@ export default function PlaybookWorkspace({ jobId }: { jobId?: string }) {
   const [followUp, setFollowUp] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [completionGate, setCompletionGate] = useState<{ ready: boolean; blocking_reasons?: string[] }>();
 
   function fail(e: unknown) {
     setNotice(e instanceof Error ? e.message : 'Playbook request failed');
@@ -60,6 +62,15 @@ export default function PlaybookWorkspace({ jobId }: { jobId?: string }) {
     setFollowUp(Boolean(run.follow_up_flagged));
   }
 
+  useEffect(() => {
+    const onSync = (e: Event) => {
+      const detail = (e as CustomEvent<string>).detail;
+      if (detail) setNotice(detail);
+    };
+    window.addEventListener('playbook_sync', onSync);
+    return () => window.removeEventListener('playbook_sync', onSync);
+  }, []);
+
   async function act(path: string, body: Record<string, unknown>) {
     setBusy(true);
     setNotice('');
@@ -69,6 +80,20 @@ export default function PlaybookWorkspace({ jobId }: { jobId?: string }) {
       setNotice('Saved and confirmed by the server.');
       await load();
     } catch (e) {
+      if (e instanceof PlaybookError && e.status === 0 && path.endsWith('/submit') && selected) {
+        try {
+          await queuePlaybookSubmission(selected.id, {
+            ...body,
+            job_id: selected.job_id,
+            request_key: crypto.randomUUID(),
+          });
+          setNotice('Saved offline; will sync when connection is restored.');
+          return;
+        } catch (queueErr) {
+          fail(queueErr);
+          return;
+        }
+      }
       fail(e);
     } finally {
       setBusy(false);
@@ -104,6 +129,48 @@ export default function PlaybookWorkspace({ jobId }: { jobId?: string }) {
               <h3 className="font-semibold">
                 {selected.property_address || selected.property_id} · {selected.state}
               </h3>
+              <div className="flex gap-2">
+                <button
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const check = await playbookApi<{ ready: boolean; blocking_reasons?: string[] }>(
+                        '/completion-check?job_id=' + encodeURIComponent(selected.job_id)
+                      );
+                      setCompletionGate(check);
+                    } catch (e) {
+                      fail(e);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Check completion gate
+                </button>
+                <button
+                  disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      await syncPlaybookSubmissions();
+                      await load();
+                    } catch (e) {
+                      fail(e);
+                    } finally {
+                      setBusy(false);
+                    }
+                  }}
+                >
+                  Sync offline queue
+                </button>
+              </div>
+              {completionGate && (
+                <p role="note">
+                  Completion gate: {completionGate.ready ? 'Ready for job completion' : 'Blocked'}
+                  {completionGate.blocking_reasons?.length ? ` (${completionGate.blocking_reasons.join(', ')})` : ''}
+                </p>
+              )}
               <p>Access: {selected.brief_snapshot.access_instructions}</p>
               {selected.brief_snapshot.known_hazards && <p>Hazards: {selected.brief_snapshot.known_hazards}</p>}
               {selected.brief_snapshot.pets_notes && <p>Pets: {selected.brief_snapshot.pets_notes}</p>}
